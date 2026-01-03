@@ -6,6 +6,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../models/readme_element.dart';
 import '../models/snippet.dart';
 import '../providers/project_provider.dart';
+import '../utils/templates.dart';
 import 'canvas_item.dart';
 
 class EditorCanvas extends StatelessWidget {
@@ -178,6 +179,8 @@ class EditorCanvas extends StatelessWidget {
 
   Widget _buildEmptyState(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
+    final provider = Provider.of<ProjectProvider>(context, listen: false);
+
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -206,6 +209,43 @@ class EditorCanvas extends StatelessWidget {
               fontSize: 14,
               color: colorScheme.onSurface.withAlpha(150),
             ),
+          ),
+          const SizedBox(height: 24),
+          OutlinedButton.icon(
+            icon: const Icon(Icons.file_copy_outlined),
+            label: const Text('Load a Template'),
+            onPressed: () {
+              showDialog(
+                context: context,
+                builder: (context) => AlertDialog(
+                  title: Text('Choose a Template', style: GoogleFonts.inter(fontWeight: FontWeight.bold)),
+                  content: SizedBox(
+                    width: 400,
+                    child: ListView.builder(
+                      shrinkWrap: true,
+                      itemCount: Templates.all.length,
+                      itemBuilder: (context, index) {
+                        final template = Templates.all[index];
+                        return ListTile(
+                          title: Text(template.name, style: GoogleFonts.inter(fontWeight: FontWeight.w600)),
+                          subtitle: Text(template.description, style: GoogleFonts.inter(fontSize: 12)),
+                          onTap: () {
+                            provider.loadTemplate(template);
+                            Navigator.pop(context);
+                          },
+                        );
+                      },
+                    ),
+                  ),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(context),
+                      child: const Text('Cancel'),
+                    ),
+                  ],
+                ),
+              );
+            },
           ),
         ],
       ),

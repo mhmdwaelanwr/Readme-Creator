@@ -376,6 +376,34 @@ class ProjectProvider with ChangeNotifier {
     notifyListeners();
   }
 
+  void moveElementUp(String id) {
+    final index = _elements.indexWhere((e) => e.id == id);
+    if (index > 0) {
+      reorderElements(index, index); // reorderElements expects newIndex to be where it lands.
+      // Wait, reorderElements logic:
+      // if old < new, new -= 1.
+      // To move up: old=index, new=index-1.
+      // if index > index-1 (true), new -= 1? No.
+      // Let's just use swap logic for simple up/down.
+      _recordHistory();
+      final item = _elements.removeAt(index);
+      _elements.insert(index - 1, item);
+      _saveState();
+      notifyListeners();
+    }
+  }
+
+  void moveElementDown(String id) {
+    final index = _elements.indexWhere((e) => e.id == id);
+    if (index != -1 && index < _elements.length - 1) {
+      _recordHistory();
+      final item = _elements.removeAt(index);
+      _elements.insert(index + 1, item);
+      _saveState();
+      notifyListeners();
+    }
+  }
+
   void duplicateElement(String id) {
     _recordHistory();
     final index = _elements.indexWhere((e) => e.id == id);

@@ -102,20 +102,12 @@ class _ComponentsPanelState extends State<ComponentsPanel> {
                 decoration: InputDecoration(
                   hintText: 'Search components...',
                   prefixIcon: const Icon(Icons.search),
-                  suffixIcon: _searchQuery.isNotEmpty
-                      ? IconButton(
-                          icon: const Icon(Icons.clear, size: 18),
-                          onPressed: () => _searchController.clear(),
-                        )
-                      : null,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide: BorderSide.none,
-                  ),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                   filled: true,
-                  fillColor: Theme.of(context).colorScheme.surfaceContainerHighest.withAlpha(100),
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  fillColor: isDark ? Colors.grey[800] : Colors.grey[100],
                 ),
+                style: GoogleFonts.inter(),
               ),
             ),
             const Divider(height: 1),

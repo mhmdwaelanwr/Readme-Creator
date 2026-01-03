@@ -101,10 +101,42 @@ class HealthCheckService {
     // 5. Check GitHub Stats
     for (final element in elements) {
       if (element is GitHubStatsElement) {
-        if (element.repoName.trim().isEmpty || !element.repoName.contains('/')) {
+        if (element.repoName.trim().isEmpty) {
           issues.add(HealthIssue(
-            message: 'Invalid GitHub repository format (use user/repo).',
+            message: 'GitHub Stats missing repository name.',
             severity: IssueSeverity.error,
+            elementId: element.id,
+          ));
+        } else if (!element.repoName.contains('/')) {
+          issues.add(HealthIssue(
+            message: 'Invalid GitHub repository format. Use "user/repo".',
+            severity: IssueSeverity.warning,
+            elementId: element.id,
+          ));
+        }
+      }
+    }
+
+    // 6. Check Contributors
+    for (final element in elements) {
+      if (element is ContributorsElement) {
+        if (element.repoName.trim().isEmpty) {
+          issues.add(HealthIssue(
+            message: 'Contributors element missing repository name.',
+            severity: IssueSeverity.error,
+            elementId: element.id,
+          ));
+        }
+      }
+    }
+
+    // 7. Check Code Blocks
+    for (final element in elements) {
+      if (element is CodeBlockElement) {
+        if (element.code.trim().isEmpty) {
+          issues.add(HealthIssue(
+            message: 'Code block is empty.',
+            severity: IssueSeverity.warning,
             elementId: element.id,
           ));
         }
@@ -114,4 +146,3 @@ class HealthCheckService {
     return issues;
   }
 }
-

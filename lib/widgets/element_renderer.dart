@@ -66,17 +66,23 @@ class ElementRenderer extends StatelessWidget {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Image.memory(
-              e.localData!,
-              width: e.width,
-              errorBuilder: (context, error, stackTrace) => const Icon(Icons.broken_image, size: 50),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: Image.memory(
+                e.localData!,
+                width: e.width,
+                errorBuilder: (context, error, stackTrace) => const Icon(Icons.broken_image, size: 50),
+              ),
             ),
             if (e.altText.isNotEmpty)
-              Text(e.altText, style: const TextStyle(color: Colors.grey, fontSize: 12)),
+              Padding(
+                padding: const EdgeInsets.only(top: 4.0),
+                child: Text(e.altText, style: GoogleFonts.inter(color: Colors.grey, fontSize: 12)),
+              ),
           ],
         );
       }
-      if (e.url.isEmpty) return const Text('Empty Image URL', style: TextStyle(color: Colors.red));
+      if (e.url.isEmpty) return Text('Empty Image URL', style: GoogleFonts.inter(color: Colors.red));
 
       Widget imageWidget;
       if (e.url.toLowerCase().endsWith('.svg')) {
@@ -97,9 +103,12 @@ class ElementRenderer extends StatelessWidget {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          imageWidget,
+          ClipRRect(borderRadius: BorderRadius.circular(8), child: imageWidget),
           if (e.altText.isNotEmpty)
-            Text(e.altText, style: const TextStyle(color: Colors.grey, fontSize: 12)),
+            Padding(
+              padding: const EdgeInsets.only(top: 4.0),
+              child: Text(e.altText, style: GoogleFonts.inter(color: Colors.grey, fontSize: 12)),
+            ),
         ],
       );
     } else if (element is LinkButtonElement) {
@@ -149,12 +158,23 @@ class ElementRenderer extends StatelessWidget {
           final item = entry.value;
           final prefix = e.isOrdered ? '${index + 1}.' : '•';
           return Padding(
-            padding: const EdgeInsets.symmetric(vertical: 2.0),
+            padding: const EdgeInsets.symmetric(vertical: 4.0),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                SizedBox(width: 24, child: Text(prefix, style: TextStyle(fontWeight: FontWeight.bold, color: textColor))),
-                Expanded(child: Text(item, style: TextStyle(color: textColor))),
+                SizedBox(
+                  width: 24,
+                  child: Text(
+                    prefix,
+                    style: GoogleFonts.inter(fontWeight: FontWeight.bold, color: textColor),
+                  ),
+                ),
+                Expanded(
+                  child: Text(
+                    item,
+                    style: GoogleFonts.inter(color: textColor, height: 1.5),
+                  ),
+                ),
               ],
             ),
           );
@@ -167,7 +187,7 @@ class ElementRenderer extends StatelessWidget {
       return _buildBadgeImage(e.imageUrl);
     } else if (element is IconElement) {
       final e = element as IconElement;
-      if (e.url.isEmpty) return const Text('Empty Icon URL', style: TextStyle(color: Colors.red));
+      if (e.url.isEmpty) return Text('Empty Icon URL', style: GoogleFonts.inter(color: Colors.red));
 
       Widget iconWidget;
       if (e.url.toLowerCase().endsWith('.svg')) {
@@ -190,7 +210,8 @@ class ElementRenderer extends StatelessWidget {
       return Column(
         children: [
           iconWidget,
-          Text(e.name, style: TextStyle(fontSize: 10, color: textColor.withAlpha(150))),
+          const SizedBox(height: 4),
+          Text(e.name, style: GoogleFonts.inter(fontSize: 10, color: textColor.withAlpha(150))),
         ],
       );
     } else if (element is EmbedElement) {
@@ -199,24 +220,24 @@ class ElementRenderer extends StatelessWidget {
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: isDark ? Colors.grey[800] : Colors.grey[200],
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(12),
           border: Border.all(color: isDark ? Colors.grey[700]! : Colors.grey[300]!),
         ),
         child: Column(
           children: [
             Icon(Icons.code, size: 40, color: isDark ? Colors.grey[500] : Colors.grey[600]),
             const SizedBox(height: 8),
-            Text('Embed: ${e.typeName}', style: TextStyle(fontWeight: FontWeight.bold, color: textColor)),
+            Text('Embed: ${e.typeName}', style: GoogleFonts.inter(fontWeight: FontWeight.bold, color: textColor)),
             const SizedBox(height: 4),
-            Text(e.url, style: TextStyle(color: textColor.withAlpha(180), fontSize: 12), maxLines: 1, overflow: TextOverflow.ellipsis),
+            Text(e.url, style: GoogleFonts.inter(color: textColor.withAlpha(180), fontSize: 12), maxLines: 1, overflow: TextOverflow.ellipsis),
             const SizedBox(height: 8),
-            const Text('(Embeds are rendered as HTML in Markdown)', style: TextStyle(fontSize: 10, fontStyle: FontStyle.italic)),
+            Text('(Embeds are rendered as HTML in Markdown)', style: GoogleFonts.inter(fontSize: 10, fontStyle: FontStyle.italic, color: textColor.withAlpha(150))),
           ],
         ),
       );
     } else if (element is GitHubStatsElement) {
       final e = element as GitHubStatsElement;
-      if (e.repoName.isEmpty) return const Text('Enter Repo Name (user/repo)', style: TextStyle(color: Colors.red));
+      if (e.repoName.isEmpty) return Text('Enter Repo Name (user/repo)', style: GoogleFonts.inter(color: Colors.red));
 
       return Wrap(
         spacing: 8,
@@ -234,7 +255,7 @@ class ElementRenderer extends StatelessWidget {
       );
     } else if (element is ContributorsElement) {
       final e = element as ContributorsElement;
-      if (e.repoName.isEmpty) return const Text('Enter Repo Name (user/repo)', style: TextStyle(color: Colors.red));
+      if (e.repoName.isEmpty) return Text('Enter Repo Name (user/repo)', style: GoogleFonts.inter(color: Colors.red));
 
       // In editor, we just show a placeholder or maybe fetch if we want to be fancy.
       // For now, let's show a static representation to avoid too many API calls during editing.
@@ -242,14 +263,14 @@ class ElementRenderer extends StatelessWidget {
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: isDark ? Colors.grey[800] : Colors.grey[200],
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(12),
           border: Border.all(color: isDark ? Colors.grey[700]! : Colors.grey[300]!),
         ),
         child: Column(
           children: [
             Icon(Icons.people, size: 40, color: isDark ? Colors.grey[500] : Colors.grey[600]),
             const SizedBox(height: 8),
-            Text('Contributors: ${e.repoName}', style: TextStyle(fontWeight: FontWeight.bold, color: textColor)),
+            Text('Contributors: ${e.repoName}', style: GoogleFonts.inter(fontWeight: FontWeight.bold, color: textColor)),
             const SizedBox(height: 8),
             Wrap(
               spacing: 8,
@@ -257,11 +278,11 @@ class ElementRenderer extends StatelessWidget {
               children: List.generate(5, (index) => CircleAvatar(
                 radius: 16,
                 backgroundColor: Colors.grey,
-                child: Icon(Icons.person, size: 20, color: Colors.white),
+                child: const Icon(Icons.person, size: 20, color: Colors.white),
               )),
             ),
             const SizedBox(height: 8),
-            const Text('(Actual contributors will be fetched on export)', style: TextStyle(fontSize: 10, fontStyle: FontStyle.italic)),
+            Text('(Actual contributors will be fetched on export)', style: GoogleFonts.inter(fontSize: 10, fontStyle: FontStyle.italic, color: textColor.withAlpha(150))),
           ],
         ),
       );

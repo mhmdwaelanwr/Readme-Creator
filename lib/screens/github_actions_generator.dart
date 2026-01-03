@@ -99,95 +99,89 @@ class _GitHubActionsGeneratorState extends State<GitHubActionsGenerator> {
       body: Row(
         children: [
           // Config
-          Expanded(
-            flex: 1,
+          Container(
+            width: 350,
+            decoration: BoxDecoration(
+              border: Border(right: BorderSide(color: Colors.grey.withAlpha(50))),
+            ),
             child: ListView(
               padding: const EdgeInsets.all(16),
               children: [
-                Text('Triggers', style: GoogleFonts.inter(fontSize: 18, fontWeight: FontWeight.bold)),
+                Text('Triggers', style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 18)),
                 const SizedBox(height: 16),
                 SwitchListTile(
-                  title: const Text('Schedule (Cron)'),
+                  title: Text('Schedule (Cron)', style: GoogleFonts.inter()),
                   value: _scheduleEnabled,
-                  onChanged: (v) => setState(() => _scheduleEnabled = v),
+                  onChanged: (val) => setState(() => _scheduleEnabled = val),
                 ),
                 if (_scheduleEnabled)
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 16.0),
                     child: TextFormField(
                       initialValue: _cronSchedule,
-                      decoration: const InputDecoration(
-                        labelText: 'Cron Expression',
-                        helperText: 'e.g. 0 0 * * * (Daily)',
-                        border: OutlineInputBorder(),
-                      ),
-                      onChanged: (v) => setState(() => _cronSchedule = v),
+                      decoration: const InputDecoration(labelText: 'Cron Expression', border: OutlineInputBorder()),
+                      style: GoogleFonts.firaCode(),
+                      onChanged: (val) => setState(() => _cronSchedule = val),
                     ),
                   ),
                 SwitchListTile(
-                  title: const Text('On Push (main/master)'),
+                  title: Text('Push to main/master', style: GoogleFonts.inter()),
                   value: _pushEnabled,
-                  onChanged: (v) => setState(() => _pushEnabled = v),
+                  onChanged: (val) => setState(() => _pushEnabled = val),
                 ),
                 SwitchListTile(
-                  title: const Text('Workflow Dispatch (Manual)'),
+                  title: Text('Manual Dispatch', style: GoogleFonts.inter()),
                   value: _workflowDispatchEnabled,
-                  onChanged: (v) => setState(() => _workflowDispatchEnabled = v),
+                  onChanged: (val) => setState(() => _workflowDispatchEnabled = val),
                 ),
-                const Divider(height: 32),
-                Text('Steps', style: GoogleFonts.inter(fontSize: 18, fontWeight: FontWeight.bold)),
+                const Divider(),
+                Text('Steps', style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 18)),
                 const SizedBox(height: 16),
                 CheckboxListTile(
-                  title: const Text('Checkout Repository'),
+                  title: Text('Checkout Repo', style: GoogleFonts.inter()),
                   value: _checkout,
-                  onChanged: (v) => setState(() => _checkout = v ?? true),
+                  onChanged: (val) => setState(() => _checkout = val ?? true),
                 ),
                 CheckboxListTile(
-                  title: const Text('Setup Node.js'),
+                  title: Text('Setup Node.js', style: GoogleFonts.inter()),
                   value: _setupNode,
-                  onChanged: (v) => setState(() => _setupNode = v ?? false),
+                  onChanged: (val) => setState(() => _setupNode = val ?? false),
                 ),
                 CheckboxListTile(
-                  title: const Text('Update RSS Feed'),
+                  title: Text('Update RSS Feed', style: GoogleFonts.inter()),
                   value: _updateFeed,
-                  onChanged: (v) => setState(() => _updateFeed = v ?? false),
+                  onChanged: (val) => setState(() => _updateFeed = val ?? false),
                 ),
                 if (_updateFeed)
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 16.0),
                     child: TextFormField(
                       initialValue: _feedUrl,
-                      decoration: const InputDecoration(
-                        labelText: 'RSS Feed URL',
-                        border: OutlineInputBorder(),
-                      ),
-                      onChanged: (v) => setState(() => _feedUrl = v),
+                      decoration: const InputDecoration(labelText: 'RSS Feed URL', border: OutlineInputBorder()),
+                      style: GoogleFonts.inter(),
+                      onChanged: (val) => setState(() => _feedUrl = val),
                     ),
                   ),
                 CheckboxListTile(
-                  title: const Text('Commit & Push Changes'),
+                  title: Text('Commit Changes', style: GoogleFonts.inter()),
                   value: _commitChanges,
-                  onChanged: (v) => setState(() => _commitChanges = v ?? true),
+                  onChanged: (val) => setState(() => _commitChanges = val ?? true),
                 ),
               ],
             ),
           ),
-          const VerticalDivider(width: 1),
           // Preview
           Expanded(
-            flex: 1,
             child: Container(
-              color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
+              color: isDark ? const Color(0xFF1E1E1E) : const Color(0xFFF8F8F8),
+              padding: const EdgeInsets.all(24),
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Text('Preview: .github/workflows/readme.yml', style: GoogleFonts.inter(fontWeight: FontWeight.bold)),
-                  ),
+                  Text('preview.yml', style: GoogleFonts.firaCode(fontWeight: FontWeight.bold, color: Colors.grey)),
+                  const SizedBox(height: 16),
                   Expanded(
                     child: SingleChildScrollView(
-                      padding: const EdgeInsets.all(16),
                       child: HighlightView(
                         _generateYaml(),
                         language: 'yaml',

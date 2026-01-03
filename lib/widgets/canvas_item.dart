@@ -78,6 +78,28 @@ class _CanvasItemState extends State<CanvasItem> {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           IconButton(
+                            icon: const Icon(Icons.arrow_upward, size: 16),
+                            onPressed: () => provider.moveElementUp(widget.element.id),
+                            tooltip: 'Move Up',
+                            padding: const EdgeInsets.all(6),
+                            constraints: const BoxConstraints(),
+                            splashRadius: 16,
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.arrow_downward, size: 16),
+                            onPressed: () => provider.moveElementDown(widget.element.id),
+                            tooltip: 'Move Down',
+                            padding: const EdgeInsets.all(6),
+                            constraints: const BoxConstraints(),
+                            splashRadius: 16,
+                          ),
+                          Container(
+                            height: 16,
+                            width: 1,
+                            color: Colors.grey.withAlpha(50),
+                            margin: const EdgeInsets.symmetric(horizontal: 4),
+                          ),
+                          IconButton(
                             icon: const Icon(Icons.copy, size: 16),
                             onPressed: () => provider.duplicateElement(widget.element.id),
                             tooltip: 'Duplicate',

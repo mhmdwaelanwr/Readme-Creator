@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../models/readme_element.dart';
 import '../providers/project_provider.dart';
 import '../generator/markdown_generator.dart';
 import 'element_settings_form.dart';
@@ -99,105 +98,86 @@ class SettingsPanel extends StatelessWidget {
               children: [
                 Text(
                   'Edit ${element.description}',
-                  style: GoogleFonts.inter(fontWeight: FontWeight.bold, color: colorScheme.primary, fontSize: 16),
+                  style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 16, color: colorScheme.primary),
                 ),
                 Row(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
                     IconButton(
                       icon: const Icon(Icons.arrow_upward),
-                      onPressed: () => _moveElement(provider, element, -1),
                       tooltip: 'Move Up',
-                      iconSize: 20,
-                      padding: EdgeInsets.zero,
-                      constraints: const BoxConstraints(),
-                      style: IconButton.styleFrom(
-                        backgroundColor: colorScheme.surface,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                      ),
+                      onPressed: () => provider.moveElementUp(element.id),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.arrow_downward),
+                      tooltip: 'Move Down',
+                      onPressed: () => provider.moveElementDown(element.id),
                     ),
                     const SizedBox(width: 8),
                     IconButton(
-                      icon: const Icon(Icons.arrow_downward),
-                      onPressed: () => _moveElement(provider, element, 1),
-                      tooltip: 'Move Down',
-                      iconSize: 20,
-                      padding: EdgeInsets.zero,
-                      constraints: const BoxConstraints(),
-                      style: IconButton.styleFrom(
-                        backgroundColor: colorScheme.surface,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                      ),
+                      icon: const Icon(Icons.delete_outline),
+                      color: colorScheme.error,
+                      tooltip: 'Delete Element',
+                      onPressed: () => provider.removeElement(element.id),
                     ),
                   ],
                 ),
               ],
             ),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 16),
           ElementSettingsForm(element: element),
         ],
       ),
     );
   }
 
-  void _moveElement(ProjectProvider provider, ReadmeElement element, int direction) {
-    final index = provider.elements.indexOf(element);
-    if (index == -1) return;
-
-    final newIndex = index + direction;
-    if (newIndex >= 0 && newIndex < provider.elements.length) {
-      if (direction == 1) {
-         // Moving Down
-         // To move item at i to i+1, we need to insert it at i+2 (because removing i shifts everything)
-         // reorderElements(i, i+2) handles the shift logic (if old < new, new -= 1)
-         provider.reorderElements(index, index + 2);
-      } else {
-         // Moving Up
-         // To move item at i to i-1, we insert at i-1.
-         // reorderElements(i, i-1) -> old > new -> no shift logic applied.
-         provider.reorderElements(index, index - 1);
-      }
-    }
-  }
-
   Widget _buildPreviewTab(BuildContext context) {
     final provider = Provider.of<ProjectProvider>(context);
-    final generator = MarkdownGenerator();
-    final markdown = generator.generate(provider.elements);
-    final colorScheme = Theme.of(context).colorScheme;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final element = provider.selectedElement;
 
-    return Stack(
-      children: [
-        Container(
-          width: double.infinity,
-          height: double.infinity,
-          padding: const EdgeInsets.all(16),
-          color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC), // Slate 900 / Slate 50
-          child: SingleChildScrollView(
-            child: SelectableText(
-              markdown,
-              style: GoogleFonts.firaCode(
-                color: colorScheme.onSurface,
-                fontSize: 13,
-                height: 1.5,
+    if (element == null) {
+      return Center(child: Text('Select an element to preview code', style: GoogleFonts.inter(color: Colors.grey)));
+    }
+
+    final generator = MarkdownGenerator();
+    // Generate markdown for just this element
+    final markdown = generator.generate([element]);
+
+    return Container(
+      color: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF1E1E1E) : const Color(0xFFF8F8F8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text('Markdown Source', style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 12, color: Colors.grey)),
+                IconButton(
+                  icon: const Icon(Icons.copy, size: 16),
+                  tooltip: 'Copy to Clipboard',
+                  onPressed: () {
+                    Clipboard.setData(ClipboardData(text: markdown));
+                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Copied!')));
+                  },
+                ),
+              ],
+            ),
+          ),
+          const Divider(height: 1),
+          Expanded(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(16),
+              child: SelectableText(
+                markdown,
+                style: GoogleFonts.firaCode(fontSize: 14),
               ),
             ),
           ),
-        ),
-        Positioned(
-          top: 16,
-          right: 16,
-          child: FloatingActionButton.small(
-            tooltip: 'Copy to Clipboard',
-            onPressed: () {
-              Clipboard.setData(ClipboardData(text: markdown));
-              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Copied to clipboard')));
-            },
-            child: const Icon(Icons.copy),
-          ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }

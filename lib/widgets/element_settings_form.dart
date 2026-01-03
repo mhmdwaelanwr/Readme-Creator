@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:flutter/services.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -519,7 +520,25 @@ class _ElementSettingsFormState extends State<ElementSettingsForm> {
         children: [
           TextFormField(
             controller: _urlController,
-            decoration: const InputDecoration(labelText: 'Image URL'),
+            decoration: InputDecoration(
+              labelText: 'Image URL',
+              suffixIcon: IconButton(
+                icon: const Icon(Icons.content_paste),
+                tooltip: 'Paste & Fix GitHub URL',
+                onPressed: () async {
+                  final data = await Clipboard.getData(Clipboard.kTextPlain);
+                  if (data != null && data.text != null) {
+                    String url = data.text!;
+                    if (url.contains('github.com') && url.contains('/blob/')) {
+                      url = url.replaceFirst('/blob/', '/raw/');
+                    }
+                    _urlController.text = url;
+                    element.url = url;
+                    _notifyUpdate();
+                  }
+                },
+              ),
+            ),
             validator: _validateUrl,
             autovalidateMode: AutovalidateMode.onUserInteraction,
             style: GoogleFonts.inter(),

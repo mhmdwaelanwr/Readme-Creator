@@ -18,6 +18,9 @@ class GitHubService {
       final response = await http.get(url, headers: headers);
       if (response.statusCode == 200) {
         return jsonDecode(response.body);
+      } else if (response.statusCode == 403) {
+        debugPrint('GitHub API Rate Limit Exceeded');
+        return {'error': 'Rate limit exceeded. Please try again later or use a token.'};
       } else {
         debugPrint('GitHub API Error: ${response.statusCode} ${response.body}');
         return null;
@@ -90,6 +93,29 @@ class GitHubService {
         final data = jsonDecode(response.body);
         final List<dynamic> items = data['items'];
         return items.cast<Map<String, dynamic>>();
+      } else {
+        debugPrint('GitHub API Error: ${response.statusCode} ${response.body}');
+        return null;
+      }
+    } catch (e) {
+      debugPrint('GitHub API Exception: $e');
+      return null;
+    }
+  }
+
+  Future<Map<String, dynamic>?> fetchUserDetails(String username, {String? token}) async {
+    final url = Uri.parse('$_baseUrl/users/$username');
+    final headers = {
+      'Accept': 'application/vnd.github.v3+json',
+    };
+    if (token != null && token.isNotEmpty) {
+      headers['Authorization'] = 'token $token';
+    }
+
+    try {
+      final response = await http.get(url, headers: headers);
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
       } else {
         debugPrint('GitHub API Error: ${response.statusCode} ${response.body}');
         return null;

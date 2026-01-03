@@ -101,21 +101,12 @@ class _SocialPreviewScreenState extends State<SocialPreviewScreen> {
     String? outputFile = await FilePicker.platform.saveFile(
       dialogTitle: 'Save Social Preview',
       fileName: 'social-preview.png',
-      type: FileType.image,
     );
 
     if (outputFile != null) {
-      try {
-        final file = File(outputFile);
-        await file.writeAsBytes(bytes);
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Image saved successfully!')));
-        }
-      } catch (e) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error saving image: $e')));
-        }
-      }
+      final file = File(outputFile);
+      await file.writeAsBytes(bytes);
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Saved!')));
     }
   }
 
@@ -123,7 +114,7 @@ class _SocialPreviewScreenState extends State<SocialPreviewScreen> {
   Widget build(BuildContext context) {
     final provider = Provider.of<ProjectProvider>(context);
     final projectName = provider.variables['PROJECT_NAME'] ?? 'Project Name';
-    final projectDesc = provider.variables['PROJECT_DESCRIPTION'] ?? 'A short description of your project.';
+    final projectDesc = 'A short description of your project.'; // We could fetch this from a paragraph if we want
 
     return Scaffold(
       appBar: AppBar(
@@ -147,55 +138,80 @@ class _SocialPreviewScreenState extends State<SocialPreviewScreen> {
             ),
             child: ListView(
               children: [
-                Text('Settings', style: GoogleFonts.inter(fontSize: 18, fontWeight: FontWeight.bold)),
-                const SizedBox(height: 24),
+                Text('Appearance', style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 18)),
+                const SizedBox(height: 16),
                 ListTile(
-                  title: const Text('Background Color'),
+                  title: Text('Background Color', style: GoogleFonts.inter()),
                   trailing: CircleAvatar(backgroundColor: _backgroundColor),
-                  onTap: () => _pickColor(_backgroundColor, (c) => setState(() => _backgroundColor = c)),
-                  contentPadding: EdgeInsets.zero,
+                  onTap: () {
+                    showDialog(
+                      context: context,
+                      builder: (context) => AlertDialog(
+                        title: const Text('Pick Background Color'),
+                        content: SingleChildScrollView(
+                          child: ColorPicker(
+                            pickerColor: _backgroundColor,
+                            onColorChanged: (color) => setState(() => _backgroundColor = color),
+                            labelTypes: const [],
+                          ),
+                        ),
+                        actions: [
+                          TextButton(
+                            child: const Text('Done'),
+                            onPressed: () => Navigator.of(context).pop(),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
                 ),
                 ListTile(
-                  title: const Text('Text Color'),
+                  title: Text('Text Color', style: GoogleFonts.inter()),
                   trailing: CircleAvatar(backgroundColor: _textColor),
-                  onTap: () => _pickColor(_textColor, (c) => setState(() => _textColor = c)),
-                  contentPadding: EdgeInsets.zero,
+                  onTap: () {
+                    showDialog(
+                      context: context,
+                      builder: (context) => AlertDialog(
+                        title: const Text('Pick Text Color'),
+                        content: SingleChildScrollView(
+                          child: ColorPicker(
+                            pickerColor: _textColor,
+                            onColorChanged: (color) => setState(() => _textColor = color),
+                            labelTypes: const [],
+                          ),
+                        ),
+                        actions: [
+                          TextButton(
+                            child: const Text('Done'),
+                            onPressed: () => Navigator.of(context).pop(),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
                 ),
                 const Divider(),
-                Text('Typography', style: GoogleFonts.inter(fontWeight: FontWeight.w600)),
+                Text('Typography', style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 18)),
                 const SizedBox(height: 16),
-                Row(
-                  children: [
-                    const Text('Title Size'),
-                    Expanded(
-                      child: Slider(
-                        value: _titleSize,
-                        min: 24,
-                        max: 120,
-                        onChanged: (v) => setState(() => _titleSize = v),
-                      ),
-                    ),
-                  ],
+                Text('Title Size: ${_titleSize.toInt()}', style: GoogleFonts.inter()),
+                Slider(
+                  value: _titleSize,
+                  min: 24,
+                  max: 120,
+                  onChanged: (val) => setState(() => _titleSize = val),
                 ),
-                Row(
-                  children: [
-                    const Text('Desc Size'),
-                    Expanded(
-                      child: Slider(
-                        value: _descSize,
-                        min: 12,
-                        max: 60,
-                        onChanged: (v) => setState(() => _descSize = v),
-                      ),
-                    ),
-                  ],
+                Text('Description Size: ${_descSize.toInt()}', style: GoogleFonts.inter()),
+                Slider(
+                  value: _descSize,
+                  min: 12,
+                  max: 60,
+                  onChanged: (val) => setState(() => _descSize = val),
                 ),
                 const Divider(),
                 SwitchListTile(
-                  title: const Text('Show Border'),
+                  title: Text('Show Border', style: GoogleFonts.inter()),
                   value: _showBorder,
-                  onChanged: (v) => setState(() => _showBorder = v),
-                  contentPadding: EdgeInsets.zero,
+                  onChanged: (val) => setState(() => _showBorder = val),
                 ),
               ],
             ),
@@ -206,73 +222,57 @@ class _SocialPreviewScreenState extends State<SocialPreviewScreen> {
               color: Colors.grey[200], // Canvas background
               child: Center(
                 child: SingleChildScrollView(
-                  child: RepaintBoundary(
-                    key: _previewKey,
-                    child: Container(
-                      width: 1280,
-                      height: 640,
-                      decoration: BoxDecoration(
-                        color: _backgroundColor,
-                        border: _showBorder ? Border.all(color: Colors.white.withAlpha(50), width: 20) : null,
-                      ),
-                      child: Stack(
-                        children: [
-                          // Decorative elements
-                          Positioned(
-                            top: -100,
-                            right: -100,
-                            child: Container(
-                              width: 400,
-                              height: 400,
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                color: Colors.white.withAlpha(10),
+                  scrollDirection: Axis.horizontal,
+                  child: SingleChildScrollView(
+                    child: RepaintBoundary(
+                      key: _previewKey,
+                      child: Container(
+                        width: 1280,
+                        height: 640,
+                        decoration: BoxDecoration(
+                          color: _backgroundColor,
+                          border: _showBorder ? Border.all(color: Colors.white.withAlpha(50), width: 20) : null,
+                        ),
+                        padding: const EdgeInsets.all(64),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              projectName,
+                              style: GoogleFonts.inter(
+                                fontSize: _titleSize,
+                                fontWeight: FontWeight.w900,
+                                color: _textColor,
+                                height: 1.1,
                               ),
                             ),
-                          ),
-                          Positioned(
-                            bottom: -50,
-                            left: -50,
-                            child: Container(
-                              width: 300,
-                              height: 300,
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                color: Colors.white.withAlpha(10),
+                            const SizedBox(height: 32),
+                            Text(
+                              projectDesc,
+                              style: GoogleFonts.inter(
+                                fontSize: _descSize,
+                                fontWeight: FontWeight.w500,
+                                color: _textColor.withAlpha(200),
                               ),
                             ),
-                          ),
-                          Center(
-                            child: Padding(
-                              padding: const EdgeInsets.all(64.0),
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Text(
-                                    projectName,
-                                    textAlign: TextAlign.center,
-                                    style: GoogleFonts.inter(
-                                      fontSize: _titleSize,
-                                      fontWeight: FontWeight.w800,
-                                      color: _textColor,
-                                      height: 1.1,
-                                    ),
+                            const Spacer(),
+                            Row(
+                              children: [
+                                Icon(Icons.star, color: _textColor, size: 32),
+                                const SizedBox(width: 12),
+                                Text(
+                                  'Star on GitHub',
+                                  style: GoogleFonts.inter(
+                                    fontSize: 24,
+                                    fontWeight: FontWeight.bold,
+                                    color: _textColor,
                                   ),
-                                  const SizedBox(height: 32),
-                                  Text(
-                                    projectDesc,
-                                    textAlign: TextAlign.center,
-                                    style: GoogleFonts.inter(
-                                      fontSize: _descSize,
-                                      fontWeight: FontWeight.w400,
-                                      color: _textColor.withAlpha(200),
-                                    ),
-                                  ),
-                                ],
-                              ),
+                                ),
+                              ],
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                     ),
                   ),
@@ -282,41 +282,6 @@ class _SocialPreviewScreenState extends State<SocialPreviewScreen> {
           ),
         ],
       ),
-    );
-  }
-
-  void _pickColor(Color initialColor, ValueChanged<Color> onColorPicked) {
-    showDialog(
-      context: context,
-      builder: (context) {
-        Color pickedColor = initialColor;
-        return AlertDialog(
-          title: const Text('Pick a color'),
-          content: SingleChildScrollView(
-            child: ColorPicker(
-              pickerColor: initialColor,
-              onColorChanged: (color) {
-                pickedColor = color;
-              },
-              labelTypes: const [],
-              pickerAreaHeightPercent: 0.7,
-            ),
-          ),
-          actions: [
-            TextButton(
-              child: const Text('Cancel'),
-              onPressed: () => Navigator.of(context).pop(),
-            ),
-            TextButton(
-              child: const Text('Select'),
-              onPressed: () {
-                onColorPicked(pickedColor);
-                Navigator.of(context).pop();
-              },
-            ),
-          ],
-        );
-      },
     );
   }
 }
