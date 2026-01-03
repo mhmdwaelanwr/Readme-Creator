@@ -4,10 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 import 'package:provider/provider.dart';
-import 'package:file_picker/file_picker.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'dart:io';
 import '../providers/project_provider.dart';
+import '../utils/downloader.dart';
 
 class SocialPreviewScreen extends StatefulWidget {
   const SocialPreviewScreen({super.key});
@@ -98,16 +97,8 @@ class _SocialPreviewScreenState extends State<SocialPreviewScreen> {
   }
 
   Future<void> _saveImage(Uint8List bytes) async {
-    String? outputFile = await FilePicker.platform.saveFile(
-      dialogTitle: 'Save Social Preview',
-      fileName: 'social-preview.png',
-    );
-
-    if (outputFile != null) {
-      final file = File(outputFile);
-      await file.writeAsBytes(bytes);
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Saved!')));
-    }
+    await downloadImageFile(bytes, 'social-preview.png');
+    if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Image exported!')));
   }
 
   @override

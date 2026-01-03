@@ -96,9 +96,12 @@ class SettingsPanel extends StatelessWidget {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  'Edit ${element.description}',
-                  style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 16, color: colorScheme.primary),
+                Expanded(
+                  child: Text(
+                    'Edit ${element.description}',
+                    style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 16, color: colorScheme.primary),
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ),
                 Row(
                   mainAxisSize: MainAxisSize.min,

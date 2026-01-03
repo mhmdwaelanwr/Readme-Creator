@@ -69,5 +69,22 @@ class Templates {
             ListElement(items: ['Update the README.md with details of changes to the interface.', 'Increase the version numbers in any examples files and the README.md to the new version that this Pull Request would represent.']),
           ],
         ),
+        ProjectTemplate(
+          name: 'Documentation Site',
+          description: 'Structure for a documentation-heavy project.',
+          elements: [
+            HeadingElement(text: '[PROJECT_NAME] Documentation', level: 1),
+            ParagraphElement(text: 'Welcome to the official documentation for [PROJECT_NAME].'),
+            TOCElement(title: 'Table of Contents'),
+            HeadingElement(text: 'Getting Started', level: 2),
+            ParagraphElement(text: 'Introduction to the core concepts...'),
+            HeadingElement(text: 'API Reference', level: 2),
+            ParagraphElement(text: 'Detailed API documentation...'),
+            HeadingElement(text: 'Tutorials', level: 2),
+            ListElement(items: ['Basic Usage', 'Advanced Configuration', 'Integration Guide']),
+            HeadingElement(text: 'FAQ', level: 2),
+            CollapsibleElement(summary: 'How do I reset the configuration?', content: 'You can reset by running `reset_config.sh`.'),
+          ],
+        ),
       ];
 }
