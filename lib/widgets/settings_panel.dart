@@ -45,66 +45,89 @@ class SettingsPanel extends StatelessWidget {
 
     if (element == null) {
       return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.tune, size: 48, color: colorScheme.primary.withAlpha(100)),
-            const SizedBox(height: 16),
-            Text(
-              'Select an element to edit',
-              style: TextStyle(color: colorScheme.onSurface.withAlpha(150)),
-            ),
-          ],
+        child: Padding(
+          padding: const EdgeInsets.all(32.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(24),
+                decoration: BoxDecoration(
+                  color: colorScheme.primaryContainer.withAlpha(50),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(Icons.tune, size: 64, color: colorScheme.primary.withAlpha(150)),
+              ),
+              const SizedBox(height: 24),
+              Text(
+                'No Element Selected',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: colorScheme.onSurface,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Select an element from the canvas to edit its properties, or drag a new component from the left panel.',
+                textAlign: TextAlign.center,
+                style: TextStyle(color: colorScheme.onSurface.withAlpha(150)),
+              ),
+            ],
+          ),
         ),
       );
     }
 
     // Use Key to force rebuild when selection changes
-    return ListView(
-      key: ValueKey(element.id),
-      padding: const EdgeInsets.all(16),
-      children: [
-        Container(
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: colorScheme.primaryContainer.withAlpha(50),
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: colorScheme.primary.withAlpha(50)),
+    return AnimatedSwitcher(
+      duration: const Duration(milliseconds: 300),
+      child: ListView(
+        key: ValueKey(element.id),
+        padding: const EdgeInsets.all(16),
+        children: [
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: colorScheme.primaryContainer.withAlpha(50),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: colorScheme.primary.withAlpha(50)),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Edit ${element.description}',
+                  style: TextStyle(fontWeight: FontWeight.bold, color: colorScheme.primary),
+                ),
+                Row(
+                  children: [
+                    IconButton(
+                      icon: const Icon(Icons.arrow_upward),
+                      onPressed: () => _moveElement(provider, element, -1),
+                      tooltip: 'Move Up',
+                      iconSize: 20,
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                    ),
+                    const SizedBox(width: 8),
+                    IconButton(
+                      icon: const Icon(Icons.arrow_downward),
+                      onPressed: () => _moveElement(provider, element, 1),
+                      tooltip: 'Move Down',
+                      iconSize: 20,
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'Edit ${element.description}',
-                style: TextStyle(fontWeight: FontWeight.bold, color: colorScheme.primary),
-              ),
-              Row(
-                children: [
-                  IconButton(
-                    icon: const Icon(Icons.arrow_upward),
-                    onPressed: () => _moveElement(provider, element, -1),
-                    tooltip: 'Move Up',
-                    iconSize: 20,
-                    padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(),
-                  ),
-                  const SizedBox(width: 8),
-                  IconButton(
-                    icon: const Icon(Icons.arrow_downward),
-                    onPressed: () => _moveElement(provider, element, 1),
-                    tooltip: 'Move Down',
-                    iconSize: 20,
-                    padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 16),
-        ElementSettingsForm(element: element),
-      ],
+          const SizedBox(height: 16),
+          ElementSettingsForm(element: element),
+        ],
+      ),
     );
   }
 
@@ -114,22 +137,16 @@ class SettingsPanel extends StatelessWidget {
 
     final newIndex = index + direction;
     if (newIndex >= 0 && newIndex < provider.elements.length) {
-      // reorderElements expects oldIndex and newIndex logic similar to ReorderableListView
-      // But here we can just swap manually or use reorderElements
-      // reorderElements(old, new) logic: if old < new, new -= 1.
-      // If moving down: index -> index + 1. old < new. newIndex passed should be index + 2?
-      // Let's just swap in the list if we had access, but provider only exposes reorderElements.
-
-      // If moving down (direction 1): old=index, target=index+1.
-      // reorderElements(index, index + 2) -> newIndex -= 1 -> index + 1. Correct.
-
-      // If moving up (direction -1): old=index, target=index-1.
-      // reorderElements(index, index - 1) -> old > new -> no adjustment. Correct.
-
       if (direction == 1) {
+         // Moving Down
+         // To move item at i to i+1, we need to insert it at i+2 (because removing i shifts everything)
+         // reorderElements(i, i+2) handles the shift logic (if old < new, new -= 1)
          provider.reorderElements(index, index + 2);
       } else {
-         provider.reorderElements(index, index - 1 + 1); // index.
+         // Moving Up
+         // To move item at i to i-1, we insert at i-1.
+         // reorderElements(i, i-1) -> old > new -> no shift logic applied.
+         provider.reorderElements(index, index - 1);
       }
     }
   }

@@ -33,7 +33,8 @@ class _CanvasItemState extends State<CanvasItem> {
       onExit: (_) => setState(() => _isHovered = false),
       child: GestureDetector(
         onTap: () => provider.selectElement(widget.element.id),
-        child: Container(
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
           margin: const EdgeInsets.only(bottom: 12),
           decoration: BoxDecoration(
             color: widget.isSelected ? Colors.blue.withAlpha(10) : Colors.transparent,
@@ -55,49 +56,56 @@ class _CanvasItemState extends State<CanvasItem> {
                 Positioned(
                   right: 8,
                   top: 8,
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: isDark ? Colors.grey[800] : Colors.white,
-                      borderRadius: BorderRadius.circular(4),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withAlpha(25),
-                          blurRadius: 4,
-                        ),
-                      ],
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        IconButton(
-                          icon: const Icon(Icons.copy, size: 16),
-                          onPressed: () => provider.duplicateElement(widget.element.id),
-                          tooltip: 'Duplicate',
-                          padding: const EdgeInsets.all(4),
-                          constraints: const BoxConstraints(),
-                        ),
-                        const SizedBox(width: 4),
-                        IconButton(
-                          icon: const Icon(Icons.save_as, size: 16),
-                          onPressed: () => _showSaveSnippetDialog(context, widget.element),
-                          tooltip: 'Save as Snippet',
-                          padding: const EdgeInsets.all(4),
-                          constraints: const BoxConstraints(),
-                        ),
-                        const SizedBox(width: 4),
-                        IconButton(
-                          icon: const Icon(Icons.delete, size: 16),
-                          onPressed: () => provider.removeElement(widget.element.id),
-                          tooltip: 'Delete',
-                          padding: const EdgeInsets.all(4),
-                          constraints: const BoxConstraints(),
-                        ),
-                        const SizedBox(width: 4),
-                        const Padding(
-                          padding: EdgeInsets.all(4.0),
-                          child: Icon(Icons.drag_handle, size: 16, color: Colors.grey),
-                        ),
-                      ],
+                  child: AnimatedOpacity(
+                    opacity: _isHovered || widget.isSelected ? 1.0 : 0.0,
+                    duration: const Duration(milliseconds: 200),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: isDark ? Colors.grey[800] : Colors.white,
+                        borderRadius: BorderRadius.circular(20),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withAlpha(25),
+                            blurRadius: 4,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                        border: Border.all(color: Colors.grey.withAlpha(30)),
+                      ),
+                      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          IconButton(
+                            icon: const Icon(Icons.copy, size: 16),
+                            onPressed: () => provider.duplicateElement(widget.element.id),
+                            tooltip: 'Duplicate',
+                            padding: const EdgeInsets.all(6),
+                            constraints: const BoxConstraints(),
+                            splashRadius: 16,
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.save_as, size: 16),
+                            onPressed: () => _showSaveSnippetDialog(context, widget.element),
+                            tooltip: 'Save as Snippet',
+                            padding: const EdgeInsets.all(6),
+                            constraints: const BoxConstraints(),
+                            splashRadius: 16,
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.delete, size: 16, color: Colors.red),
+                            onPressed: () => provider.removeElement(widget.element.id),
+                            tooltip: 'Delete',
+                            padding: const EdgeInsets.all(6),
+                            constraints: const BoxConstraints(),
+                            splashRadius: 16,
+                          ),
+                          const Padding(
+                            padding: EdgeInsets.symmetric(horizontal: 6.0),
+                            child: Icon(Icons.drag_handle, size: 16, color: Colors.grey),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),

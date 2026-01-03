@@ -1,12 +1,12 @@
 import 'dart:html' as html;
 import 'dart:convert';
 
-void downloadFile(String content, String filename) {
+Future<void> downloadFile(String content, String filename) async {
   final bytes = utf8.encode(content);
   _downloadBytes(bytes, filename);
 }
 
-void downloadZip(List<int> bytes, String filename) {
+Future<void> downloadZip(List<int> bytes, String filename) async {
   _downloadBytes(bytes, filename);
 }
 

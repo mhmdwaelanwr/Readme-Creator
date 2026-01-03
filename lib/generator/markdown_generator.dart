@@ -1,4 +1,5 @@
 import '../models/readme_element.dart';
+import '../utils/social_platforms.dart';
 
 class MarkdownGenerator {
   String generate(List<ReadmeElement> elements, {
@@ -128,7 +129,7 @@ class MarkdownGenerator {
       // Using contrib.rocks or similar service is the easiest way to get an image for markdown without fetching data manually.
 
       if (e.style == 'grid') {
-        return '<a href="https://github.com/${e.repoName}/graphs/contributors">\n  <img src="https://contrib.rocks/image?repo=${e.repoName}" />\n</a>';
+        return '<a href="https://github.com/${e.repoName}/graphs/contributors">\n  <img src="https://contrib.rocks/image?repo=${e.repoName}" alt="Contributors" />\n</a>';
       } else {
         return '[Contributors](https://github.com/${e.repoName}/graphs/contributors)';
       }
@@ -141,6 +142,16 @@ class MarkdownGenerator {
       // However, we can return a placeholder and replace it in the main generate method?
       // Or we can just return a marker.
       return '<!-- TOC -->';
+    } else if (element is SocialsElement) {
+      final buffer = StringBuffer();
+      for (final profile in element.profiles) {
+        final badgeUrl = SocialPlatforms.getBadgeUrl(profile.platform, element.style);
+        final targetUrl = SocialPlatforms.getTargetUrl(profile.platform, profile.username);
+        if (badgeUrl.isNotEmpty && targetUrl.isNotEmpty) {
+          buffer.write('[![${profile.platform}]($badgeUrl)]($targetUrl) ');
+        }
+      }
+      return buffer.toString().trim();
     }
     return '';
   }

@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/readme_element.dart';
@@ -211,15 +212,12 @@ class ProjectProvider with ChangeNotifier {
     }
   }
 
-  void importMarkdown(String markdown) {
+  Future<void> importMarkdown(String markdown) async {
     _recordHistory();
     try {
-      final importer = MarkdownImporter();
-      final newElements = importer.parse(markdown);
+      // Run parsing in a separate isolate to avoid blocking UI
+      final newElements = await compute(_parseMarkdownIsolate, markdown);
 
-      // Option: Replace or Append?
-      // Let's replace for now as "Import" usually implies loading a file.
-      // Or we can ask user. But for simplicity, let's clear and add.
       _elements.clear();
       _elements.addAll(newElements);
 
@@ -324,6 +322,9 @@ class ProjectProvider with ChangeNotifier {
       case ReadmeElementType.toc:
         newElement = TOCElement();
         break;
+      case ReadmeElementType.socials:
+        newElement = SocialsElement();
+        break;
     }
     _elements.add(newElement);
     _selectedElementId = newElement.id;
@@ -412,6 +413,11 @@ class ProjectProvider with ChangeNotifier {
         newElement = MermaidElement(code: element.code);
       } else if (element is TOCElement) {
         newElement = TOCElement(title: element.title);
+      } else if (element is SocialsElement) {
+        newElement = SocialsElement(
+          profiles: element.profiles.map((p) => SocialProfile(platform: p.platform, username: p.username)).toList(),
+          style: element.style,
+        );
       } else {
         return;
       }
@@ -563,4 +569,10 @@ class ProjectProvider with ChangeNotifier {
       debugPrint('Error adding snippet: $e');
     }
   }
+}
+
+// Top-level function for compute
+List<ReadmeElement> _parseMarkdownIsolate(String markdown) {
+  final importer = MarkdownImporter();
+  return importer.parse(markdown);
 }

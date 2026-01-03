@@ -51,4 +51,52 @@ class GitHubService {
       return null;
     }
   }
+
+  Future<String?> fetchFileContent(String owner, String repo, String path, {String? token}) async {
+    final url = Uri.parse('$_baseUrl/repos/$owner/$repo/contents/$path');
+    final headers = {
+      'Accept': 'application/vnd.github.v3.raw', // Request raw content
+    };
+    if (token != null && token.isNotEmpty) {
+      headers['Authorization'] = 'token $token';
+    }
+
+    try {
+      final response = await http.get(url, headers: headers);
+      if (response.statusCode == 200) {
+        return response.body;
+      } else {
+        debugPrint('GitHub API Error: ${response.statusCode} ${response.body}');
+        return null;
+      }
+    } catch (e) {
+      debugPrint('GitHub API Exception: $e');
+      return null;
+    }
+  }
+
+  Future<List<Map<String, dynamic>>?> searchRepos(String query, {String? token}) async {
+    final url = Uri.parse('$_baseUrl/search/repositories?q=$query');
+    final headers = {
+      'Accept': 'application/vnd.github.v3+json',
+    };
+    if (token != null && token.isNotEmpty) {
+      headers['Authorization'] = 'token $token';
+    }
+
+    try {
+      final response = await http.get(url, headers: headers);
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        final List<dynamic> items = data['items'];
+        return items.cast<Map<String, dynamic>>();
+      } else {
+        debugPrint('GitHub API Error: ${response.statusCode} ${response.body}');
+        return null;
+      }
+    } catch (e) {
+      debugPrint('GitHub API Exception: $e');
+      return null;
+    }
+  }
 }

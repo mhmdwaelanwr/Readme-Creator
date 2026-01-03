@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -6,6 +7,9 @@ import '../providers/project_provider.dart';
 import '../utils/dev_icons.dart';
 import '../services/github_service.dart';
 import 'giphy_picker_dialog.dart';
+import '../utils/social_platforms.dart';
+import '../utils/country_codes.dart';
+import '../services/ai_service.dart';
 
 class ElementSettingsForm extends StatefulWidget {
   final ReadmeElement element;
@@ -30,6 +34,7 @@ class _ElementSettingsFormState extends State<ElementSettingsForm> {
   late TextEditingController _typeNameController;
 
   String _currentElementId = '';
+  Timer? _debounceTimer;
 
   @override
   void initState() {
@@ -67,6 +72,7 @@ class _ElementSettingsFormState extends State<ElementSettingsForm> {
 
   @override
   void dispose() {
+    _debounceTimer?.cancel();
     _textController.dispose();
     _urlController.dispose();
     _altTextController.dispose();
@@ -212,26 +218,33 @@ class _ElementSettingsFormState extends State<ElementSettingsForm> {
     Provider.of<ProjectProvider>(context, listen: false).updateElement();
   }
 
+  void _debounceUpdate() {
+    if (_debounceTimer?.isActive ?? false) _debounceTimer!.cancel();
+    _debounceTimer = Timer(const Duration(milliseconds: 500), () {
+      _notifyUpdate();
+    });
+  }
+
   void _onTextChanged() {
     final e = widget.element;
     if (e is HeadingElement && e.text != _textController.text) {
       e.text = _textController.text;
-      _notifyUpdate();
+      _debounceUpdate();
     } else if (e is ParagraphElement && e.text != _textController.text) {
       e.text = _textController.text;
-      _notifyUpdate();
+      _debounceUpdate();
     } else if (e is LinkButtonElement && e.text != _textController.text) {
       e.text = _textController.text;
-      _notifyUpdate();
+      _debounceUpdate();
     } else if (e is GitHubStatsElement && e.repoName != _textController.text) {
       e.repoName = _textController.text;
-      _notifyUpdate();
+      _debounceUpdate();
     } else if (e is ContributorsElement && e.repoName != _textController.text) {
       e.repoName = _textController.text;
-      _notifyUpdate();
+      _debounceUpdate();
     } else if (e is TOCElement && e.title != _textController.text) {
       e.title = _textController.text;
-      _notifyUpdate();
+      _debounceUpdate();
     }
   }
 
@@ -239,16 +252,16 @@ class _ElementSettingsFormState extends State<ElementSettingsForm> {
     final e = widget.element;
     if (e is ImageElement && e.url != _urlController.text) {
       e.url = _urlController.text;
-      _notifyUpdate();
+      _debounceUpdate();
     } else if (e is LinkButtonElement && e.url != _urlController.text) {
       e.url = _urlController.text;
-      _notifyUpdate();
+      _debounceUpdate();
     } else if (e is IconElement && e.url != _urlController.text) {
       e.url = _urlController.text;
-      _notifyUpdate();
+      _debounceUpdate();
     } else if (e is EmbedElement && e.url != _urlController.text) {
       e.url = _urlController.text;
-      _notifyUpdate();
+      _debounceUpdate();
     }
   }
 
@@ -256,7 +269,7 @@ class _ElementSettingsFormState extends State<ElementSettingsForm> {
     final e = widget.element;
     if (e is ImageElement && e.altText != _altTextController.text) {
       e.altText = _altTextController.text;
-      _notifyUpdate();
+      _debounceUpdate();
     }
   }
 
@@ -264,10 +277,10 @@ class _ElementSettingsFormState extends State<ElementSettingsForm> {
     final e = widget.element;
     if (e is CodeBlockElement && e.code != _codeController.text) {
       e.code = _codeController.text;
-      _notifyUpdate();
+      _debounceUpdate();
     } else if (e is MermaidElement && e.code != _codeController.text) {
       e.code = _codeController.text;
-      _notifyUpdate();
+      _debounceUpdate();
     }
   }
 
@@ -275,7 +288,7 @@ class _ElementSettingsFormState extends State<ElementSettingsForm> {
     final e = widget.element;
     if (e is CodeBlockElement && e.language != _languageController.text) {
       e.language = _languageController.text;
-      _notifyUpdate();
+      _debounceUpdate();
     }
   }
 
@@ -283,7 +296,7 @@ class _ElementSettingsFormState extends State<ElementSettingsForm> {
     final e = widget.element;
     if (e is BadgeElement && e.label != _labelController.text) {
       e.label = _labelController.text;
-      _notifyUpdate();
+      _debounceUpdate();
     }
   }
 
@@ -291,7 +304,7 @@ class _ElementSettingsFormState extends State<ElementSettingsForm> {
     final e = widget.element;
     if (e is BadgeElement && e.imageUrl != _imageUrlController.text) {
       e.imageUrl = _imageUrlController.text;
-      _notifyUpdate();
+      _debounceUpdate();
     }
   }
 
@@ -299,7 +312,7 @@ class _ElementSettingsFormState extends State<ElementSettingsForm> {
     final e = widget.element;
     if (e is BadgeElement && e.targetUrl != _targetUrlController.text) {
       e.targetUrl = _targetUrlController.text;
-      _notifyUpdate();
+      _debounceUpdate();
     }
   }
 
@@ -307,7 +320,7 @@ class _ElementSettingsFormState extends State<ElementSettingsForm> {
     final e = widget.element;
     if (e is IconElement && e.name != _nameController.text) {
       e.name = _nameController.text;
-      _notifyUpdate();
+      _debounceUpdate();
     }
   }
 
@@ -315,7 +328,7 @@ class _ElementSettingsFormState extends State<ElementSettingsForm> {
     final e = widget.element;
     if (e is EmbedElement && e.typeName != _typeNameController.text) {
       e.typeName = _typeNameController.text;
-      _notifyUpdate();
+      _debounceUpdate();
     }
   }
 
@@ -325,16 +338,17 @@ class _ElementSettingsFormState extends State<ElementSettingsForm> {
       final val = double.tryParse(_widthController.text);
       if (e.width != val) {
         e.width = val;
-        _notifyUpdate();
+        _debounceUpdate();
       }
     } else if (e is IconElement) {
       final val = double.tryParse(_widthController.text);
       if (val != null && e.size != val) {
         e.size = val;
-        _notifyUpdate();
+        _debounceUpdate();
       }
     }
   }
+
 
   String? _validateUrl(String? value) {
     if (value == null || value.isEmpty) return null;
@@ -347,6 +361,57 @@ class _ElementSettingsFormState extends State<ElementSettingsForm> {
     return null;
   }
 
+  Future<void> _showAIOptions(TextEditingController controller) async {
+    final result = await showModalBottomSheet<String>(
+      context: context,
+      builder: (context) => Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          ListTile(
+            leading: const Icon(Icons.auto_fix_high, color: Colors.purple),
+            title: const Text('AI Improve Text'),
+            onTap: () => Navigator.pop(context, 'improve'),
+          ),
+          ListTile(
+            leading: const Icon(Icons.spellcheck, color: Colors.blue),
+            title: const Text('Fix Grammar'),
+            onTap: () => Navigator.pop(context, 'grammar'),
+          ),
+          ListTile(
+            leading: const Icon(Icons.description, color: Colors.green),
+            title: const Text('Generate Description'),
+            onTap: () => Navigator.pop(context, 'generate'),
+          ),
+        ],
+      ),
+    );
+
+    if (result != null) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('AI is thinking...')));
+
+      String newText = '';
+      if (result == 'improve') {
+        newText = await AIService.improveText(controller.text);
+      } else if (result == 'grammar') {
+        newText = await AIService.fixGrammar(controller.text);
+      } else if (result == 'generate') {
+        newText = await AIService.generateDescription(controller.text.isEmpty ? 'Project' : controller.text);
+      }
+
+      if (mounted && newText.isNotEmpty) {
+        controller.text = newText;
+        // Trigger update
+        if (widget.element is HeadingElement) {
+          (widget.element as HeadingElement).text = newText;
+        } else if (widget.element is ParagraphElement) {
+          (widget.element as ParagraphElement).text = newText;
+        }
+        _notifyUpdate();
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final element = widget.element;
@@ -355,9 +420,20 @@ class _ElementSettingsFormState extends State<ElementSettingsForm> {
     if (element is HeadingElement) {
       return Column(
         children: [
-          TextFormField(
-            controller: _textController,
-            decoration: const InputDecoration(labelText: 'Heading Text'),
+          Row(
+            children: [
+              Expanded(
+                child: TextFormField(
+                  controller: _textController,
+                  decoration: const InputDecoration(labelText: 'Heading Text'),
+                ),
+              ),
+              IconButton(
+                icon: const Icon(Icons.auto_awesome, color: Colors.purple),
+                tooltip: 'AI Assistant',
+                onPressed: () => _showAIOptions(_textController),
+              ),
+            ],
           ),
           const SizedBox(height: 16),
           DropdownButtonFormField<int>(
@@ -396,6 +472,12 @@ class _ElementSettingsFormState extends State<ElementSettingsForm> {
                 icon: const Icon(Icons.code),
                 onPressed: () => _wrapSelection(_textController, '`'),
                 tooltip: 'Inline Code',
+              ),
+              const Spacer(),
+              IconButton(
+                icon: const Icon(Icons.auto_awesome, color: Colors.purple),
+                tooltip: 'AI Assistant',
+                onPressed: () => _showAIOptions(_textController),
               ),
             ],
           ),
@@ -1016,15 +1098,173 @@ class _ElementSettingsFormState extends State<ElementSettingsForm> {
             controller: _textController,
             decoration: const InputDecoration(labelText: 'Title'),
           ),
-          const SizedBox(height: 16),
-          const Text(
-            'This element will automatically generate a Table of Contents based on the headings in your project.',
-            style: TextStyle(color: Colors.grey),
-          ),
+          const SizedBox(height: 8),
+          const Text('This element will automatically generate a table of contents based on headings in your project.', style: TextStyle(color: Colors.grey)),
         ],
       );
+    } else if (element is SocialsElement) {
+      return _buildSocialsForm(element);
     }
-    return const SizedBox.shrink();
+
+    return const Center(child: Text('No settings for this element'));
+  }
+
+  Widget _buildSocialsForm(SocialsElement element) {
+    return Column(
+      children: [
+        InputDecorator(
+          decoration: const InputDecoration(labelText: 'Badge Style', border: OutlineInputBorder()),
+          child: DropdownButtonHideUnderline(
+            child: DropdownButton<String>(
+              value: element.style,
+              isDense: true,
+              items: const [
+                DropdownMenuItem(value: 'for-the-badge', child: Text('For The Badge')),
+                DropdownMenuItem(value: 'flat', child: Text('Flat')),
+                DropdownMenuItem(value: 'flat-square', child: Text('Flat Square')),
+                DropdownMenuItem(value: 'plastic', child: Text('Plastic')),
+                DropdownMenuItem(value: 'social', child: Text('Social')),
+              ],
+              onChanged: (value) {
+                if (value != null) {
+                  setState(() {
+                    element.style = value;
+                  });
+                  _notifyUpdate();
+                }
+              },
+            ),
+          ),
+        ),
+        const SizedBox(height: 16),
+        const Text('Profiles', style: TextStyle(fontWeight: FontWeight.bold)),
+        const SizedBox(height: 8),
+        ...element.profiles.asMap().entries.map((entry) {
+          final index = entry.key;
+          final profile = entry.value;
+          return Card(
+            margin: const EdgeInsets.only(bottom: 8),
+            child: Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      children: [
+                        InputDecorator(
+                          decoration: const InputDecoration(labelText: 'Platform', isDense: true, border: OutlineInputBorder()),
+                          child: DropdownButtonHideUnderline(
+                            child: DropdownButton<String>(
+                              value: SocialPlatforms.platforms.containsKey(profile.platform) ? profile.platform : null,
+                              isDense: true,
+                              items: SocialPlatforms.platforms.keys.map((key) {
+                                final platform = SocialPlatforms.platforms[key];
+                                return DropdownMenuItem(
+                                  value: key,
+                                  child: Row(
+                                    children: [
+                                      if (platform != null) ...[
+                                        Icon(platform.icon, size: 16, color: Color(int.parse('0xFF${platform.color}'))),
+                                        const SizedBox(width: 8),
+                                      ],
+                                      Text(key),
+                                    ],
+                                  ),
+                                );
+                              }).toList(),
+                              onChanged: (value) {
+                                if (value != null) {
+                                  setState(() {
+                                    element.profiles[index] = SocialProfile(platform: value, username: profile.username);
+                                  });
+                                  _notifyUpdate();
+                                }
+                              },
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        if (profile.platform == 'Phone')
+                          Row(
+                            children: [
+                              SizedBox(
+                                width: 110,
+                                child: DropdownButtonFormField<String>(
+                                  isExpanded: true,
+                                  decoration: const InputDecoration(
+                                    labelText: 'Code',
+                                    isDense: true,
+                                    contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                                  ),
+                                  items: [
+                                    const DropdownMenuItem(value: '', child: Text('Manual', overflow: TextOverflow.ellipsis)),
+                                    ...CountryCodes.list.map((c) => DropdownMenuItem(
+                                      value: '+${c.code}',
+                                      child: Text('${c.emoji} +${c.code}', overflow: TextOverflow.ellipsis),
+                                    )),
+                                  ],
+                                  onChanged: (value) {
+                                    if (value != null && value.isNotEmpty) {
+                                      String current = profile.username;
+                                      if (!current.startsWith('+')) {
+                                        element.profiles[index] = SocialProfile(platform: profile.platform, username: '$value$current');
+                                        _notifyUpdate();
+                                      }
+                                    }
+                                  },
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: TextFormField(
+                                  initialValue: profile.username,
+                                  decoration: const InputDecoration(labelText: 'Phone Number', isDense: true),
+                                  onChanged: (value) {
+                                    element.profiles[index] = SocialProfile(platform: profile.platform, username: value);
+                                    _notifyUpdate();
+                                  },
+                                ),
+                              ),
+                            ],
+                          )
+                        else
+                          TextFormField(
+                            initialValue: profile.username,
+                            decoration: const InputDecoration(labelText: 'Username / Handle', isDense: true),
+                            onChanged: (value) {
+                              element.profiles[index] = SocialProfile(platform: profile.platform, username: value);
+                              _notifyUpdate();
+                            },
+                          ),
+                      ],
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.delete, color: Colors.red),
+                    onPressed: () {
+                      setState(() {
+                        element.profiles.removeAt(index);
+                      });
+                      _notifyUpdate();
+                    },
+                  ),
+                ],
+              ),
+            ),
+          );
+        }).toList(),
+        ElevatedButton.icon(
+          icon: const Icon(Icons.add),
+          label: const Text('Add Profile'),
+          onPressed: () {
+            setState(() {
+              element.profiles.add(SocialProfile(platform: 'GitHub', username: ''));
+            });
+            _notifyUpdate();
+          },
+        ),
+      ],
+    );
   }
 }
 

@@ -1,5 +1,6 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../models/readme_element.dart';
 import '../models/snippet.dart';
@@ -21,90 +22,147 @@ class EditorCanvas extends StatelessWidget {
       maxWidth = 400;
     }
 
-    return DragTarget<Object>(
-      onWillAcceptWithDetails: (details) => details.data is ReadmeElementType || details.data is Snippet,
-      onAcceptWithDetails: (details) {
-        if (details.data is ReadmeElementType) {
-          provider.addElement(details.data as ReadmeElementType);
-        } else if (details.data is Snippet) {
-          provider.addSnippet(details.data as Snippet);
-        }
+    return CallbackShortcuts(
+      bindings: {
+        const SingleActivator(LogicalKeyboardKey.keyZ, control: true): () => provider.undo(),
+        const SingleActivator(LogicalKeyboardKey.keyY, control: true): () => provider.redo(),
+        const SingleActivator(LogicalKeyboardKey.delete): () {
+          if (provider.selectedElementId != null) {
+            provider.removeElement(provider.selectedElementId!);
+          }
+        },
       },
-      builder: (context, candidateData, rejectedData) {
-        final colorScheme = Theme.of(context).colorScheme;
-        return Container(
-          color: candidateData.isNotEmpty
-              ? colorScheme.primary.withAlpha(30)
-              : (isDark ? const Color(0xFF0F172A) : const Color(0xFFF1F5F9)), // Slate 900 / Slate 100
-          child: Stack(
-            children: [
-              if (provider.showGrid)
-                Positioned.fill(
-                  child: CustomPaint(
-                    painter: GridPainter(isDark: isDark),
-                  ),
-                ),
-              Center(
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 300),
-                  constraints: BoxConstraints(maxWidth: maxWidth),
-                  child: GestureDetector(
-                    onTap: () => provider.selectElement(''), // Deselect
-                    child: Container(
-                      margin: const EdgeInsets.symmetric(vertical: 32, horizontal: 24),
-                      decoration: BoxDecoration(
-                        color: isDark ? const Color(0xFF1E293B) : Colors.white, // Slate 800 / White
-                        borderRadius: BorderRadius.circular(12),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withAlpha(isDark ? 100 : 20),
-                            blurRadius: 20,
-                            offset: const Offset(0, 8),
-                          ),
-                        ],
-                        border: Border.all(
-                          color: isDark ? Colors.white.withAlpha(10) : Colors.grey.withAlpha(20),
-                        ),
+      child: Focus(
+        autofocus: true,
+        child: DragTarget<Object>(
+          onWillAcceptWithDetails: (details) => details.data is ReadmeElementType || details.data is Snippet,
+          onAcceptWithDetails: (details) {
+            if (details.data is ReadmeElementType) {
+              provider.addElement(details.data as ReadmeElementType);
+            } else if (details.data is Snippet) {
+              provider.addSnippet(details.data as Snippet);
+            }
+          },
+          builder: (context, candidateData, rejectedData) {
+            final colorScheme = Theme.of(context).colorScheme;
+            return Container(
+              color: candidateData.isNotEmpty
+                  ? colorScheme.primary.withAlpha(30)
+                  : (isDark ? const Color(0xFF0F172A) : const Color(0xFFF1F5F9)), // Slate 900 / Slate 100
+              child: Stack(
+                children: [
+                  if (provider.showGrid)
+                    Positioned.fill(
+                      child: CustomPaint(
+                        painter: GridPainter(isDark: isDark),
                       ),
-                      clipBehavior: Clip.hardEdge,
-                      child: Stack(
-                        children: [
-                          if (provider.showGrid)
-                            Positioned.fill(
-                              child: CustomPaint(
-                                painter: GridPainter(isDark: isDark),
-                              ),
-                            ),
-                          provider.elements.isEmpty
-                              ? _buildEmptyState(context)
-                              : ReorderableListView.builder(
-                                  padding: const EdgeInsets.all(32),
-                                  itemCount: provider.elements.length,
-                                  onReorder: provider.reorderElements,
-                                  proxyDecorator: (child, index, animation) => _proxyDecorator(child, index, animation, isDark),
-                                  itemBuilder: (context, index) {
-                                    final element = provider.elements[index];
-                                    final isSelected = element.id == provider.selectedElementId;
+                    ),
 
-                                    return KeyedSubtree(
-                                      key: ValueKey(element.id),
-                                      child: CanvasItem(
-                                        element: element,
-                                        isSelected: isSelected,
-                                      ),
-                                    );
-                                  },
+                  Center(
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 300),
+                      constraints: BoxConstraints(maxWidth: maxWidth),
+                      child: GestureDetector(
+                        onTap: () => provider.selectElement(''), // Deselect
+                        child: Container(
+                          margin: const EdgeInsets.symmetric(vertical: 32, horizontal: 24),
+                          decoration: BoxDecoration(
+                            color: isDark ? const Color(0xFF1E293B) : Colors.white, // Slate 800 / White
+                            borderRadius: BorderRadius.circular(12),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withAlpha(isDark ? 100 : 20),
+                                blurRadius: 20,
+                                offset: const Offset(0, 8),
+                              ),
+                            ],
+                            border: Border.all(
+                              color: isDark ? Colors.white.withAlpha(10) : Colors.grey.withAlpha(20),
+                            ),
+                          ),
+                          clipBehavior: Clip.hardEdge,
+                          child: Stack(
+                            children: [
+                              if (provider.showGrid)
+                                Positioned.fill(
+                                  child: CustomPaint(
+                                    painter: GridPainter(isDark: isDark),
+                                  ),
                                 ),
-                        ],
+                              provider.elements.isEmpty
+                                  ? _buildEmptyState(context)
+                                  : ReorderableListView.builder(
+                                      padding: const EdgeInsets.all(32),
+                                      itemCount: provider.elements.length,
+                                      onReorder: provider.reorderElements,
+                                      proxyDecorator: (child, index, animation) => _proxyDecorator(child, index, animation, isDark),
+                                      itemBuilder: (context, index) {
+                                        final element = provider.elements[index];
+                                        final isSelected = element.id == provider.selectedElementId;
+
+                                        return KeyedSubtree(
+                                          key: ValueKey(element.id),
+                                          child: CanvasItem(
+                                            element: element,
+                                            isSelected: isSelected,
+                                          ),
+                                        );
+                                      },
+                                    ),
+                            ],
+                          ),
+                        ),
                       ),
                     ),
                   ),
-                ),
+
+                  // Toolbar
+                  Positioned(
+                    top: 16,
+                    left: 0,
+                    right: 0,
+                    child: Center(
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: isDark ? Colors.black87 : Colors.white,
+                          borderRadius: BorderRadius.circular(20),
+                          boxShadow: [
+                            BoxShadow(color: Colors.black.withAlpha(30), blurRadius: 8, offset: const Offset(0, 2)),
+                          ],
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            IconButton(
+                              icon: const Icon(Icons.undo, size: 20),
+                              tooltip: 'Undo (Ctrl+Z)',
+                              onPressed: provider.undo, // We need to expose canUndo to disable
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.redo, size: 20),
+                              tooltip: 'Redo (Ctrl+Y)',
+                              onPressed: provider.redo,
+                            ),
+                            const SizedBox(width: 8, height: 20, child: VerticalDivider()),
+                            IconButton(
+                              icon: const Icon(Icons.delete_outline, size: 20, color: Colors.red),
+                              tooltip: 'Delete Selected (Del)',
+                              onPressed: provider.selectedElementId != null
+                                  ? () => provider.removeElement(provider.selectedElementId!)
+                                  : null,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ),
-            ],
-          ),
-        );
-      },
+            );
+          },
+        ),
+      ),
     );
   }
 

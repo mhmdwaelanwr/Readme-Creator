@@ -62,6 +62,7 @@ class _ComponentsPanelState extends State<ComponentsPanel> {
       ComponentItem(ReadmeElementType.icon, 'Icon/Logo', Icons.emoji_emotions),
       ComponentItem(ReadmeElementType.linkButton, 'Link Button', Icons.link),
       ComponentItem(ReadmeElementType.badge, 'Badge', Icons.shield),
+      ComponentItem(ReadmeElementType.socials, 'Social Links', Icons.share),
       ComponentItem(ReadmeElementType.embed, 'Embed', Icons.code_off),
       ComponentItem(ReadmeElementType.githubStats, 'GitHub Stats', Icons.bar_chart),
       ComponentItem(ReadmeElementType.contributors, 'Contributors', Icons.people),
@@ -93,9 +94,22 @@ class _ComponentsPanelState extends State<ComponentsPanel> {
               padding: const EdgeInsets.all(12.0),
               child: TextField(
                 controller: _searchController,
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   hintText: 'Search components...',
-                  prefixIcon: Icon(Icons.search),
+                  prefixIcon: const Icon(Icons.search),
+                  suffixIcon: _searchQuery.isNotEmpty
+                      ? IconButton(
+                          icon: const Icon(Icons.clear, size: 18),
+                          onPressed: () => _searchController.clear(),
+                        )
+                      : null,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: BorderSide.none,
+                  ),
+                  filled: true,
+                  fillColor: Theme.of(context).colorScheme.surfaceContainerHighest.withAlpha(100),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 ),
               ),
             ),
@@ -301,6 +315,8 @@ class _ComponentsPanelState extends State<ComponentsPanel> {
         return 'Mermaid: Adds Mermaid.js diagrams';
       case ReadmeElementType.toc:
         return 'TOC: Auto-generated Table of Contents';
+      case ReadmeElementType.socials:
+        return 'Social Links: Adds social media badges';
     }
   }
 }

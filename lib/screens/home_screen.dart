@@ -19,9 +19,9 @@ import '../utils/downloader.dart';
 import '../utils/onboarding_helper.dart';
 import 'projects_library_screen.dart';
 import '../generator/markdown_generator.dart';
-import '../utils/health_checker.dart';
 import 'social_preview_screen.dart';
 import 'github_actions_generator.dart';
+import '../services/health_check_service.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -35,7 +35,9 @@ class _HomeScreenState extends State<HomeScreen> {
   final GlobalKey _canvasKey = GlobalKey();
   final GlobalKey _settingsKey = GlobalKey();
   final GlobalKey _exportKey = GlobalKey();
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   bool _showPreview = false;
+  bool _isFocusMode = false;
 
   @override
   void initState() {
@@ -53,316 +55,445 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDesktop = MediaQuery.of(context).size.width > 800;
+
     return Scaffold(
+      key: _scaffoldKey,
       appBar: AppBar(
         title: const Text('Advanced Readme Creator'),
-        actions: [
-          Consumer<ProjectProvider>(
-            builder: (context, provider, child) {
-              return Row(
-                children: [
-                  // Device Mode Toggles
-                  IconButton(
-                    icon: const Icon(Icons.desktop_mac),
-                    color: provider.deviceMode == DeviceMode.desktop ? Colors.blue : null,
-                    tooltip: 'Desktop View',
-                    onPressed: () => provider.setDeviceMode(DeviceMode.desktop),
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.tablet_mac),
-                    color: provider.deviceMode == DeviceMode.tablet ? Colors.blue : null,
-                    tooltip: 'Tablet View',
-                    onPressed: () => provider.setDeviceMode(DeviceMode.tablet),
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.phone_iphone),
-                    color: provider.deviceMode == DeviceMode.mobile ? Colors.blue : null,
-                    tooltip: 'Mobile View',
-                    onPressed: () => provider.setDeviceMode(DeviceMode.mobile),
-                  ),
-                  const VerticalDivider(),
-                  PopupMenuButton<ProjectTemplate>(
-                    tooltip: 'Templates',
-                    icon: const Icon(Icons.file_copy),
-                    onSelected: (template) {
-                      showDialog(
-                        context: context,
-                        builder: (context) => AlertDialog(
-                          title: Text('Load ${template.name}?'),
-                          content: const Text('This will replace your current workspace.'),
-                          actions: [
-                            TextButton(
-                              onPressed: () => Navigator.pop(context),
-                              child: const Text('Cancel'),
-                            ),
-                            TextButton(
-                              onPressed: () {
-                                provider.loadTemplate(template);
-                                Navigator.pop(context);
-                              },
-                              child: const Text('Load'),
-                            ),
-                          ],
-                        ),
-                      );
-                    },
-                    itemBuilder: (context) => Templates.all.map((t) {
-                      return PopupMenuItem(
-                        value: t,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(t.name, style: const TextStyle(fontWeight: FontWeight.bold)),
-                            Text(t.description, style: const TextStyle(fontSize: 12, color: Colors.grey)),
-                          ],
-                        ),
-                      );
-                    }).toList(),
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.settings),
-                    tooltip: 'Project Settings',
-                    onPressed: () => _showProjectSettingsDialog(context, provider),
-                  ),
-                  IconButton(
-                    icon: Icon(provider.themeMode == ThemeMode.dark ? Icons.light_mode : Icons.dark_mode),
-                    tooltip: 'Toggle Theme',
-                    onPressed: () => provider.toggleTheme(),
-                  ),
-                  IconButton(
-                    icon: Icon(provider.showGrid ? Icons.grid_on : Icons.grid_off),
-                    tooltip: 'Toggle Grid',
-                    onPressed: () => provider.toggleGrid(),
-                  ),
-                  const VerticalDivider(),
-                  IconButton(
-                    icon: const Icon(Icons.library_books),
-                    tooltip: 'My Projects Library',
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (context) => const ProjectsLibraryScreen()),
-                      );
-                    },
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.health_and_safety),
-                    tooltip: 'Health Check',
-                    onPressed: () => _showHealthCheckDialog(context, provider),
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.print),
-                    tooltip: 'Print / Export PDF',
-                    onPressed: () => _printReadme(context, provider),
-                  ),
-                ],
-              );
-            },
-          ),
-          IconButton(
-            key: _exportKey,
-            icon: const Icon(Icons.download),
-            tooltip: 'Export Project',
-            onPressed: () {
-              final provider = Provider.of<ProjectProvider>(context, listen: false);
-              ProjectExporter.export(
-                elements: provider.elements,
-                variables: provider.variables,
-                licenseType: provider.licenseType,
-                includeContributing: provider.includeContributing,
-                listBullet: provider.listBullet,
-                sectionSpacing: provider.sectionSpacing,
-                exportHtml: provider.exportHtml,
-              );
-            },
-          ),
-          PopupMenuButton<String>(
-            icon: const Icon(Icons.more_vert),
-            tooltip: 'More Options',
-            itemBuilder: (context) => [
-              const PopupMenuItem(value: 'save_library', child: Text('Save to Library')),
-              const PopupMenuItem(value: 'snapshots', child: Text('Local Snapshots')),
-              const PopupMenuItem(value: 'clear_workspace', child: Text('Clear Workspace', style: TextStyle(color: Colors.red))),
-              const PopupMenuItem(value: 'import_markdown', child: Text('Import Markdown')),
-              const PopupMenuItem(value: 'social_preview', child: Text('Social Preview Designer')),
-              const PopupMenuItem(value: 'github_actions', child: Text('GitHub Actions Generator')),
-              const PopupMenuItem(value: 'export_json', child: Text('Export Project (JSON)')),
-              const PopupMenuItem(value: 'import_json', child: Text('Import Project (JSON)')),
-              const PopupMenuItem(value: 'help', child: Text('Show Tour')),
-            ],
-            onSelected: (value) async {
-              final provider = Provider.of<ProjectProvider>(context, listen: false);
-              if (value == 'save_library') {
-                _showSaveToLibraryDialog(context, provider);
-              } else if (value == 'snapshots') {
-                _showSnapshotsDialog(context, provider);
-              } else if (value == 'clear_workspace') {
-                showDialog(
-                  context: context,
-                  builder: (context) => AlertDialog(
-                    title: const Text('Clear Workspace?'),
-                    content: const Text('This will remove all elements. This action cannot be undone (unless you have a snapshot).'),
-                    actions: [
-                      TextButton(
-                        onPressed: () => Navigator.pop(context),
-                        child: const Text('Cancel'),
-                      ),
-                      TextButton(
-                        onPressed: () {
-                          provider.clearElements();
-                          Navigator.pop(context);
-                        },
-                        style: TextButton.styleFrom(foregroundColor: Colors.red),
-                        child: const Text('Clear'),
-                      ),
-                    ],
-                  ),
-                );
-              } else if (value == 'import_markdown') {
-                _showImportMarkdownDialog(context, provider);
-              } else if (value == 'social_preview') {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const SocialPreviewScreen()),
-                );
-              } else if (value == 'github_actions') {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const GitHubActionsGenerator()),
-                );
-              } else if (value == 'export_json') {
-                final json = provider.exportToJson();
-                downloadJsonFile(json, 'readme_project.json');
-              } else if (value == 'import_json') {
-                try {
-                  FilePickerResult? result = await FilePicker.platform.pickFiles(
-                    type: FileType.custom,
-                    allowedExtensions: ['json'],
-                  );
-
-                  if (result != null) {
-                    String? content;
-                    if (result.files.first.bytes != null) {
-                      content = utf8.decode(result.files.first.bytes!);
-                    }
-                    if (content != null) {
-                      provider.importFromJson(content);
-                      if (context.mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Project imported successfully')));
-                      }
-                    }
-                  }
-                } catch (e) {
-                  if (context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error importing: $e')));
-                  }
-                }
-              } else if (value == 'help') {
-                OnboardingHelper.restartOnboarding(
-                  context: context,
-                  componentsKey: _componentsKey,
-                  canvasKey: _canvasKey,
-                  settingsKey: _settingsKey,
-                  exportKey: _exportKey,
-                );
-              }
-            },
-          ),
-        ],
+        actions: isDesktop ? _buildDesktopActions(context) : _buildMobileActions(context),
       ),
-      body: CallbackShortcuts(
-        bindings: {
-          const SingleActivator(LogicalKeyboardKey.keyZ, control: true): () => Provider.of<ProjectProvider>(context, listen: false).undo(),
-          const SingleActivator(LogicalKeyboardKey.keyY, control: true): () => Provider.of<ProjectProvider>(context, listen: false).redo(),
-          const SingleActivator(LogicalKeyboardKey.keyZ, control: true, shift: true): () => Provider.of<ProjectProvider>(context, listen: false).redo(),
-          const SingleActivator(LogicalKeyboardKey.keyS, control: true): () {
-             ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Project saved')));
-          },
-        },
-        child: Column(
-          children: [
-            Expanded(
-              child: Row(
-                children: [
-                  Expanded(
-                    flex: 2,
-                    child: Container(
-                      key: _componentsKey,
-                      child: const ComponentsPanel(),
-                    ),
-                  ),
-                  const VerticalDivider(width: 1),
-                  Expanded(
-                    flex: 5,
-                    child: Container(
-                      key: _canvasKey,
-                      child: const EditorCanvas(),
-                    ),
-                  ),
-                  if (_showPreview) ...[
-                    const VerticalDivider(width: 1),
-                    Expanded(
-                      flex: 4,
-                      child: Container(
-                        color: Theme.of(context).brightness == Brightness.dark ? Colors.grey[900] : Colors.grey[50],
-                        child: Consumer<ProjectProvider>(
-                          builder: (context, provider, _) {
-                            final generator = MarkdownGenerator();
-                            final markdown = generator.generate(provider.elements);
-                            return SingleChildScrollView(
-                              padding: const EdgeInsets.all(16),
-                              child: SelectableText(
-                                markdown,
-                                style: const TextStyle(fontFamily: 'monospace'),
-                              ),
-                            );
-                          },
-                        ),
-                      ),
-                    ),
-                  ],
-                  const VerticalDivider(width: 1),
-                  Expanded(
-                    flex: 3,
-                    child: Container(
-                      key: _settingsKey,
-                      child: const SettingsPanel(),
-                    ),
-                  ),
-                ],
+      drawer: isDesktop ? null : const Drawer(child: ComponentsPanel()),
+      endDrawer: isDesktop ? null : const Drawer(child: SettingsPanel()),
+      body: isDesktop ? _buildDesktopBody(context) : _buildMobileBody(context),
+    );
+  }
+
+  List<Widget> _buildDesktopActions(BuildContext context) {
+    return [
+      Consumer<ProjectProvider>(
+        builder: (context, provider, child) {
+          return Row(
+            children: [
+              // Device Mode Toggles
+              IconButton(
+                icon: const Icon(Icons.desktop_mac),
+                color: provider.deviceMode == DeviceMode.desktop ? Colors.blue : null,
+                tooltip: 'Desktop View',
+                onPressed: () => provider.setDeviceMode(DeviceMode.desktop),
               ),
-            ),
-            // Status Bar
-            Container(
-              height: 24,
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              color: Theme.of(context).brightness == Brightness.dark ? Colors.grey[900] : Colors.grey[200],
-              child: Consumer<ProjectProvider>(
-                builder: (context, provider, _) {
-                  final elementCount = provider.elements.length;
-                  final wordCount = provider.elements.fold<int>(0, (sum, e) {
-                    if (e is HeadingElement) {
-                      return sum + (e as HeadingElement).text.split(' ').length;
-                    }
-                    if (e is ParagraphElement) {
-                      return sum + (e as ParagraphElement).text.split(' ').length;
-                    }
-                    return sum;
+              IconButton(
+                icon: const Icon(Icons.tablet_mac),
+                color: provider.deviceMode == DeviceMode.tablet ? Colors.blue : null,
+                tooltip: 'Tablet View',
+                onPressed: () => provider.setDeviceMode(DeviceMode.tablet),
+              ),
+              IconButton(
+                icon: const Icon(Icons.phone_iphone),
+                color: provider.deviceMode == DeviceMode.mobile ? Colors.blue : null,
+                tooltip: 'Mobile View',
+                onPressed: () => provider.setDeviceMode(DeviceMode.mobile),
+              ),
+              const VerticalDivider(),
+              PopupMenuButton<ProjectTemplate>(
+                tooltip: 'Templates',
+                icon: const Icon(Icons.file_copy),
+                onSelected: (template) {
+                  showDialog(
+                    context: context,
+                    builder: (context) => AlertDialog(
+                      title: Text('Load ${template.name}?'),
+                      content: const Text('This will replace your current workspace.'),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(context),
+                          child: const Text('Cancel'),
+                        ),
+                        TextButton(
+                          onPressed: () {
+                            provider.loadTemplate(template);
+                            Navigator.pop(context);
+                          },
+                          child: const Text('Load'),
+                        ),
+                      ],
+                    ),
+                  );
+                },
+                itemBuilder: (context) => Templates.all.map((t) {
+                  return PopupMenuItem(
+                    value: t,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(t.name, style: const TextStyle(fontWeight: FontWeight.bold)),
+                        Text(t.description, style: const TextStyle(fontSize: 12, color: Colors.grey)),
+                      ],
+                    ),
+                  );
+                }).toList(),
+              ),
+              IconButton(
+                icon: const Icon(Icons.settings),
+                tooltip: 'Project Settings',
+                onPressed: () => _showProjectSettingsDialog(context, provider),
+              ),
+              IconButton(
+                icon: Icon(provider.themeMode == ThemeMode.dark ? Icons.light_mode : Icons.dark_mode),
+                tooltip: 'Toggle Theme',
+                onPressed: () => provider.toggleTheme(),
+              ),
+              IconButton(
+                icon: Icon(provider.showGrid ? Icons.grid_on : Icons.grid_off),
+                tooltip: 'Toggle Grid',
+                onPressed: () => provider.toggleGrid(),
+              ),
+              IconButton(
+                icon: Icon(_isFocusMode ? Icons.fullscreen_exit : Icons.fullscreen),
+                tooltip: _isFocusMode ? 'Exit Focus Mode' : 'Focus Mode',
+                onPressed: () {
+                  setState(() {
+                    _isFocusMode = !_isFocusMode;
                   });
-                  return Row(
-                    children: [
-                      Text('$elementCount Elements', style: const TextStyle(fontSize: 12)),
-                      const SizedBox(width: 16),
-                      Text('$wordCount Words', style: const TextStyle(fontSize: 12)),
-                      const Spacer(),
-                      Text('Auto-saved', style: const TextStyle(fontSize: 12, color: Colors.grey)),
-                    ],
+                },
+              ),
+              const VerticalDivider(),
+              IconButton(
+                icon: const Icon(Icons.library_books),
+                tooltip: 'My Projects Library',
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const ProjectsLibraryScreen()),
                   );
                 },
               ),
-            ),
-          ],
+              IconButton(
+                icon: const Icon(Icons.health_and_safety),
+                tooltip: 'Health Check',
+                onPressed: () {
+                  final issues = HealthCheckService.analyze(provider.elements);
+                  _showHealthCheckDialog(context, issues, provider);
+                },
+              ),
+              IconButton(
+                icon: const Icon(Icons.print),
+                tooltip: 'Print / Export PDF',
+                onPressed: () => _printReadme(context, provider),
+              ),
+            ],
+          );
+        },
+      ),
+      IconButton(
+        key: _exportKey,
+        icon: const Icon(Icons.download),
+        tooltip: 'Export Project',
+        onPressed: () {
+          final provider = Provider.of<ProjectProvider>(context, listen: false);
+          ProjectExporter.export(
+            elements: provider.elements,
+            variables: provider.variables,
+            licenseType: provider.licenseType,
+            includeContributing: provider.includeContributing,
+            listBullet: provider.listBullet,
+            sectionSpacing: provider.sectionSpacing,
+            exportHtml: provider.exportHtml,
+          );
+        },
+      ),
+      _buildMoreOptionsButton(context),
+    ];
+  }
+
+  List<Widget> _buildMobileActions(BuildContext context) {
+    return [
+      IconButton(
+        icon: const Icon(Icons.settings),
+        tooltip: 'Settings',
+        onPressed: () => _scaffoldKey.currentState?.openEndDrawer(),
+      ),
+      _buildMoreOptionsButton(context),
+    ];
+  }
+
+  Widget _buildMoreOptionsButton(BuildContext context) {
+    return PopupMenuButton<String>(
+      icon: const Icon(Icons.more_vert),
+      tooltip: 'More Options',
+      itemBuilder: (context) => [
+        const PopupMenuItem(
+          value: 'save_library',
+          child: Row(children: [Icon(Icons.save_alt, color: Colors.grey), SizedBox(width: 8), Text('Save to Library')]),
         ),
+        const PopupMenuItem(
+          value: 'snapshots',
+          child: Row(children: [Icon(Icons.history, color: Colors.grey), SizedBox(width: 8), Text('Local Snapshots')]),
+        ),
+        const PopupMenuItem(
+          value: 'clear_workspace',
+          child: Row(children: [Icon(Icons.delete_forever, color: Colors.red), SizedBox(width: 8), Text('Clear Workspace', style: TextStyle(color: Colors.red))]),
+        ),
+        const PopupMenuItem(
+          value: 'import_markdown',
+          child: Row(children: [Icon(Icons.file_upload, color: Colors.grey), SizedBox(width: 8), Text('Import Markdown')]),
+        ),
+        const PopupMenuItem(
+          value: 'social_preview',
+          child: Row(children: [Icon(Icons.image, color: Colors.grey), SizedBox(width: 8), Text('Social Preview Designer')]),
+        ),
+        const PopupMenuItem(
+          value: 'github_actions',
+          child: Row(children: [Icon(Icons.build, color: Colors.grey), SizedBox(width: 8), Text('GitHub Actions Generator')]),
+        ),
+        const PopupMenuItem(
+          value: 'export_json',
+          child: Row(children: [Icon(Icons.javascript, color: Colors.grey), SizedBox(width: 8), Text('Export Project (JSON)')]),
+        ),
+        const PopupMenuItem(
+          value: 'import_json',
+          child: Row(children: [Icon(Icons.data_object, color: Colors.grey), SizedBox(width: 8), Text('Import Project (JSON)')]),
+        ),
+        const PopupMenuItem(
+          value: 'help',
+          child: Row(children: [Icon(Icons.help_outline, color: Colors.grey), SizedBox(width: 8), Text('Show Tour')]),
+        ),
+      ],
+      onSelected: (value) async {
+        final provider = Provider.of<ProjectProvider>(context, listen: false);
+        if (value == 'save_library') {
+          _showSaveToLibraryDialog(context, provider);
+        } else if (value == 'snapshots') {
+          _showSnapshotsDialog(context, provider);
+        } else if (value == 'clear_workspace') {
+          showDialog(
+            context: context,
+            builder: (context) => AlertDialog(
+              title: const Text('Clear Workspace?'),
+              content: const Text('This will remove all elements. This action cannot be undone (unless you have a snapshot).'),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('Cancel'),
+                ),
+                TextButton(
+                  onPressed: () {
+                    provider.clearElements();
+                    Navigator.pop(context);
+                  },
+                  style: TextButton.styleFrom(foregroundColor: Colors.red),
+                  child: const Text('Clear'),
+                ),
+              ],
+            ),
+          );
+        } else if (value == 'import_markdown') {
+          _showImportMarkdownDialog(context, provider);
+        } else if (value == 'social_preview') {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const SocialPreviewScreen()),
+          );
+        } else if (value == 'github_actions') {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const GitHubActionsGenerator()),
+          );
+        } else if (value == 'export_json') {
+          final json = provider.exportToJson();
+          downloadJsonFile(json, 'readme_project.json');
+        } else if (value == 'import_json') {
+          try {
+            FilePickerResult? result = await FilePicker.platform.pickFiles(
+              type: FileType.custom,
+              allowedExtensions: ['json'],
+            );
+
+            if (result != null) {
+              String? content;
+              if (result.files.first.bytes != null) {
+                content = utf8.decode(result.files.first.bytes!);
+              }
+              if (content != null) {
+                provider.importFromJson(content);
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Project imported successfully')));
+                }
+              }
+            }
+          } catch (e) {
+            if (context.mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error importing: $e')));
+            }
+          }
+        } else if (value == 'help') {
+          OnboardingHelper.restartOnboarding(
+            context: context,
+            componentsKey: _componentsKey,
+            canvasKey: _canvasKey,
+            settingsKey: _settingsKey,
+            exportKey: _exportKey,
+          );
+        }
+      },
+    );
+  }
+
+  Widget _buildDesktopBody(BuildContext context) {
+    return Column(
+      children: [
+        Expanded(
+          child: Row(
+            children: [
+              if (!_isFocusMode)
+                Expanded(
+                  flex: 2,
+                  child: Container(
+                    key: _componentsKey,
+                    child: const ComponentsPanel(),
+                  ),
+                ),
+              if (!_isFocusMode) const VerticalDivider(width: 1),
+              Expanded(
+                flex: 5,
+                child: Container(
+                  key: _canvasKey,
+                  child: const EditorCanvas(),
+                ),
+              ),
+              if (_showPreview) ...[
+                const VerticalDivider(width: 1),
+                Expanded(
+                  flex: 4,
+                  child: Container(
+                    color: Theme.of(context).brightness == Brightness.dark ? Colors.grey[900] : Colors.grey[50],
+                    child: Consumer<ProjectProvider>(
+                      builder: (context, provider, _) {
+                        final generator = MarkdownGenerator();
+                        final markdown = generator.generate(provider.elements);
+                        return SingleChildScrollView(
+                          padding: const EdgeInsets.all(16),
+                          child: SelectableText(
+                            markdown,
+                            style: const TextStyle(fontFamily: 'monospace'),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ),
+              ],
+              if (!_isFocusMode) const VerticalDivider(width: 1),
+              if (!_isFocusMode)
+                Expanded(
+                  flex: 3,
+                  child: Container(
+                    key: _settingsKey,
+                    child: const SettingsPanel(),
+                  ),
+                ),
+            ],
+          ),
+        ),
+        _buildStatusBar(context),
+      ],
+    );
+  }
+
+  Widget _buildMobileBody(BuildContext context) {
+    return Column(
+      children: [
+        Expanded(
+          child: Container(
+            key: _canvasKey,
+            child: const EditorCanvas(),
+          ),
+        ),
+        _buildStatusBar(context),
+      ],
+    );
+  }
+
+  Widget _buildStatusBar(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Container(
+      height: 28,
+      padding: const EdgeInsets.symmetric(horizontal: 12),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF1E293B) : const Color(0xFFE2E8F0), // Slate 800 / Slate 200
+        border: Border(top: BorderSide(color: isDark ? Colors.black12 : Colors.white54)),
+      ),
+      child: Consumer<ProjectProvider>(
+        builder: (context, provider, _) {
+          final elementCount = provider.elements.length;
+          final wordCount = provider.elements.fold<int>(0, (sum, e) {
+            if (e is HeadingElement) {
+              return sum + (e as HeadingElement).text.split(' ').length;
+            }
+            if (e is ParagraphElement) {
+              return sum + (e as ParagraphElement).text.split(' ').length;
+            }
+            return sum;
+          });
+
+          final issues = HealthCheckService.analyze(provider.elements);
+          final errorCount = issues.where((i) => i.severity == IssueSeverity.error).length;
+          final warningCount = issues.where((i) => i.severity == IssueSeverity.warning).length;
+
+          return Row(
+            children: [
+              Icon(Icons.widgets_outlined, size: 14, color: isDark ? Colors.white70 : Colors.black54),
+              const SizedBox(width: 4),
+              Text('$elementCount Elements', style: TextStyle(fontSize: 11, color: isDark ? Colors.white70 : Colors.black87)),
+              const SizedBox(width: 16),
+              Icon(Icons.text_fields, size: 14, color: isDark ? Colors.white70 : Colors.black54),
+              const SizedBox(width: 4),
+              Text('$wordCount Words', style: TextStyle(fontSize: 11, color: isDark ? Colors.white70 : Colors.black87)),
+              const SizedBox(width: 16),
+              if (errorCount > 0 || warningCount > 0)
+                InkWell(
+                  onTap: () => _showHealthCheckDialog(context, issues, provider),
+                  child: Row(
+                    children: [
+                      if (errorCount > 0) ...[
+                        const Icon(Icons.error, size: 14, color: Colors.redAccent),
+                        const SizedBox(width: 4),
+                        Text('$errorCount Errors', style: const TextStyle(fontSize: 11, color: Colors.redAccent, fontWeight: FontWeight.bold)),
+                        const SizedBox(width: 8),
+                      ],
+                      if (warningCount > 0) ...[
+                        const Icon(Icons.warning, size: 14, color: Colors.orangeAccent),
+                        const SizedBox(width: 4),
+                        Text('$warningCount Warnings', style: const TextStyle(fontSize: 11, color: Colors.orangeAccent, fontWeight: FontWeight.bold)),
+                      ],
+                    ],
+                  ),
+                )
+              else
+                Row(
+                  children: [
+                    const Icon(Icons.check_circle, size: 14, color: Colors.green),
+                    const SizedBox(width: 4),
+                    Text('Healthy', style: TextStyle(fontSize: 11, color: Colors.green[700], fontWeight: FontWeight.bold)),
+                  ],
+                ),
+              const Spacer(),
+              if (_isFocusMode)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: Colors.blue.withAlpha(30),
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: const Text('FOCUS MODE', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.blue)),
+                ),
+              const SizedBox(width: 12),
+              Icon(Icons.cloud_done, size: 14, color: isDark ? Colors.white54 : Colors.black45),
+              const SizedBox(width: 4),
+              Text('Auto-saved', style: TextStyle(fontSize: 11, color: isDark ? Colors.white54 : Colors.black45)),
+            ],
+          );
+        },
       ),
     );
   }
@@ -772,56 +903,39 @@ $htmlContent
     );
   }
 
-  void _showHealthCheckDialog(BuildContext context, ProjectProvider provider) {
-    final issues = HealthChecker.check(provider.elements);
-
+  void _showHealthCheckDialog(BuildContext context, List<HealthIssue> issues, ProjectProvider provider) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Project Health Check'),
+        title: const Text('Health Check'),
         content: SizedBox(
           width: 400,
           height: 300,
-          child: issues.isEmpty
-              ? const Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.check_circle, color: Colors.green, size: 64),
-                      SizedBox(height: 16),
-                      Text('No issues found!', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                    ],
-                  ),
-                )
-              : ListView.builder(
-                  itemCount: issues.length,
-                  itemBuilder: (context, index) {
-                    final issue = issues[index];
-                    return ListTile(
-                      leading: Icon(
-                        issue.type == HealthIssueType.error ? Icons.error : Icons.warning,
-                        color: issue.type == HealthIssueType.error ? Colors.red : Colors.orange,
-                      ),
-                      title: Text(issue.message),
-                      trailing: issue.elementId != null
-                          ? IconButton(
-                              icon: const Icon(Icons.arrow_forward),
-                              tooltip: 'Go to Element',
-                              onPressed: () {
-                                provider.selectElement(issue.elementId!);
-                                Navigator.pop(context);
-                              },
-                            )
-                          : null,
-                    );
-                  },
+          child: ListView.builder(
+            itemCount: issues.length,
+            itemBuilder: (context, index) {
+              final issue = issues[index];
+              return ListTile(
+                leading: Icon(
+                  issue.severity == IssueSeverity.error ? Icons.error : (issue.severity == IssueSeverity.warning ? Icons.warning : Icons.info),
+                  color: issue.severity == IssueSeverity.error ? Colors.red : (issue.severity == IssueSeverity.warning ? Colors.orange : Colors.blue),
                 ),
+                title: Text(issue.message, style: const TextStyle(fontSize: 14)),
+                trailing: issue.elementId != null
+                    ? IconButton(
+                        icon: const Icon(Icons.arrow_forward),
+                        onPressed: () {
+                          provider.selectElement(issue.elementId!);
+                          Navigator.pop(context);
+                        },
+                      )
+                    : null,
+              );
+            },
+          ),
         ),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Close'),
-          ),
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Close')),
         ],
       ),
     );
@@ -889,3 +1003,4 @@ $htmlContent
     );
   }
 }
+

@@ -16,6 +16,7 @@ enum ReadmeElementType {
   contributors,
   mermaid,
   toc,
+  socials,
 }
 
 abstract class ReadmeElement {
@@ -59,7 +60,56 @@ abstract class ReadmeElement {
         return MermaidElement.fromJson(json);
       case ReadmeElementType.toc:
         return TOCElement.fromJson(json);
+      case ReadmeElementType.socials:
+        return SocialsElement.fromJson(json);
     }
+  }
+}
+
+class SocialProfile {
+  final String platform;
+  final String username;
+
+  SocialProfile({required this.platform, required this.username});
+
+  Map<String, dynamic> toJson() => {
+    'platform': platform,
+    'username': username,
+  };
+
+  factory SocialProfile.fromJson(Map<String, dynamic> json) {
+    return SocialProfile(
+      platform: json['platform'],
+      username: json['username'],
+    );
+  }
+}
+
+class SocialsElement extends ReadmeElement {
+  List<SocialProfile> profiles;
+  String style; // 'for-the-badge', 'flat', 'flat-square', 'plastic', 'social'
+
+  SocialsElement({List<SocialProfile>? profiles, this.style = 'for-the-badge', super.id})
+      : profiles = profiles ?? [],
+        super(type: ReadmeElementType.socials);
+
+  @override
+  String get description => 'Social Links';
+
+  @override
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'type': type.toString(),
+    'profiles': profiles.map((e) => e.toJson()).toList(),
+    'style': style,
+  };
+
+  factory SocialsElement.fromJson(Map<String, dynamic> json) {
+    return SocialsElement(
+      profiles: (json['profiles'] as List).map((e) => SocialProfile.fromJson(e)).toList(),
+      style: json['style'] ?? 'for-the-badge',
+      id: json['id'],
+    );
   }
 }
 
