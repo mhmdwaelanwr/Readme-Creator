@@ -56,6 +56,8 @@ dependencies:
   google_generative_ai: ^0.4.7
   url_launcher: ^6.3.2
   path: ^1.9.1
+  flutter_launcher_icons: ^0.14.4
+  flutter_native_splash: ^2.4.7
 
 dev_dependencies:
   flutter_test:
