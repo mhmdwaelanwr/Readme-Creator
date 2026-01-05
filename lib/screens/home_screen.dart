@@ -274,6 +274,14 @@ class _HomeScreenState extends State<HomeScreen> {
           value: 'help',
           child: Row(children: [Icon(Icons.help_outline, color: Colors.grey), SizedBox(width: 8), Text('Show Tour')]),
         ),
+        const PopupMenuItem(
+          value: 'shortcuts',
+          child: Row(children: [Icon(Icons.keyboard, color: Colors.grey), SizedBox(width: 8), Text('Keyboard Shortcuts')]),
+        ),
+        const PopupMenuItem(
+          value: 'about',
+          child: Row(children: [Icon(Icons.info_outline, color: Colors.grey), SizedBox(width: 8), Text('About')]),
+        ),
       ],
       onSelected: (value) async {
         final provider = Provider.of<ProjectProvider>(context, listen: false);
@@ -350,6 +358,10 @@ class _HomeScreenState extends State<HomeScreen> {
             settingsKey: _settingsKey,
             exportKey: _exportKey,
           );
+        } else if (value == 'shortcuts') {
+          _showKeyboardShortcutsDialog(context);
+        } else if (value == 'about') {
+          _showAboutDialog(context);
         }
       },
     );
@@ -1124,5 +1136,108 @@ $htmlContent
       },
     );
   }
-}
 
+  void _showKeyboardShortcutsDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Keyboard Shortcuts', style: GoogleFonts.inter(fontWeight: FontWeight.bold)),
+        content: SingleChildScrollView(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Common Shortcuts:', style: GoogleFonts.inter(fontWeight: FontWeight.bold)),
+              const SizedBox(height: 8),
+              _buildShortcutRow(context, 'New Project', 'Ctrl + N', '⌘ + N'),
+              _buildShortcutRow(context, 'Open Project', 'Ctrl + O', '⌘ + O'),
+              _buildShortcutRow(context, 'Save Project', 'Ctrl + S', '⌘ + S'),
+              _buildShortcutRow(context, 'Export Project', 'Ctrl + E', '⌘ + E'),
+              _buildShortcutRow(context, 'Print', 'Ctrl + P', '⌘ + P'),
+              _buildShortcutRow(context, 'Undo', 'Ctrl + Z', '⌘ + Z'),
+              _buildShortcutRow(context, 'Redo', 'Ctrl + Y', '⌘ + Y'),
+              _buildShortcutRow(context, 'Focus Mode', 'F11', 'F11'),
+              _buildShortcutRow(context, 'Show Preview', 'Ctrl + Shift + H', '⌘ + Shift + H'),
+              _buildShortcutRow(context, 'Toggle Grid', 'Ctrl + G', '⌘ + G'),
+              _buildShortcutRow(context, 'Toggle Theme', 'Ctrl + T', '⌘ + T'),
+              _buildShortcutRow(context, 'Open Settings', 'Ctrl + ,', '⌘ + ,'),
+              _buildShortcutRow(context, 'Help', 'F1', 'F1'),
+              const SizedBox(height: 16),
+              Text('Element Shortcuts:', style: GoogleFonts.inter(fontWeight: FontWeight.bold)),
+              const SizedBox(height: 8),
+              _buildShortcutRow(context, 'Add Heading', 'Ctrl + Alt + 1', '⌘ + Option + 1'),
+              _buildShortcutRow(context, 'Add Subheading', 'Ctrl + Alt + 2', '⌘ + Option + 2'),
+              _buildShortcutRow(context, 'Add Paragraph', 'Ctrl + Alt + 3', '⌘ + Option + 3'),
+              _buildShortcutRow(context, 'Add Image', 'Ctrl + Alt + I', '⌘ + Option + I'),
+              _buildShortcutRow(context, 'Add Table', 'Ctrl + Alt + T', '⌘ + Option + T'),
+              _buildShortcutRow(context, 'Add List', 'Ctrl + Alt + L', '⌘ + Option + L'),
+              _buildShortcutRow(context, 'Add Quote', 'Ctrl + Alt + Q', '⌘ + Option + Q'),
+              _buildShortcutRow(context, 'Add Link', 'Ctrl + Alt + K', '⌘ + Option + K'),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Close'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildShortcutRow(BuildContext context, String action, String windowsShortcut, String macShortcut) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Expanded(child: Text(action, style: GoogleFonts.inter())),
+          const SizedBox(width: 16),
+          Text(windowsShortcut, style: GoogleFonts.inter()),
+          const SizedBox(width: 8),
+          Text(macShortcut, style: GoogleFonts.inter()),
+        ],
+      ),
+    );
+  }
+
+  void _showAboutDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('About Advanced Readme Creator', style: GoogleFonts.inter(fontWeight: FontWeight.bold)),
+        content: SizedBox(
+          width: 400,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'Advanced Readme Creator is a powerful tool for generating professional README files for your projects.',
+                style: GoogleFonts.inter(),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'Version 1.0.0',
+                style: GoogleFonts.inter(fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                '© 2023 Advanced Readme Creator. All rights reserved.',
+                style: GoogleFonts.inter(color: Colors.grey),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Close'),
+          ),
+        ],
+      ),
+    );
+  }
+}
