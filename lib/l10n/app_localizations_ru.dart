@@ -54,7 +54,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get aboutApp => 'О приложении';
 
   @override
-  String get changeLanguage => 'Change Language';
+  String get changeLanguage => 'Сменить язык';
 
   @override
   String get settings => 'Настройки';
@@ -309,5 +309,8 @@ class AppLocalizationsRu extends AppLocalizations {
   String get fetchFailed => 'Failed to fetch';
 
   @override
-  String get settingsSaved => 'Settings saved!';
+  String get settingsSaved => 'Настройки сохранены!';
+
+  @override
+  String get systemDefault => 'Системный по умолчанию';
 }

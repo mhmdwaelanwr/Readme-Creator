@@ -54,7 +54,7 @@ class AppLocalizationsHi extends AppLocalizations {
   String get aboutApp => 'ऐप के बारे में';
 
   @override
-  String get changeLanguage => 'Change Language';
+  String get changeLanguage => 'भाषा बदलें';
 
   @override
   String get settings => 'सेटिंग्स';
@@ -309,5 +309,8 @@ class AppLocalizationsHi extends AppLocalizations {
   String get fetchFailed => 'Failed to fetch';
 
   @override
-  String get settingsSaved => 'Settings saved!';
+  String get settingsSaved => 'सेटिंग्स सहेजी गईं!';
+
+  @override
+  String get systemDefault => 'सिस्टम डिफ़ॉल्ट';
 }

@@ -309,4 +309,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get settingsSaved => 'تم حفظ الإعدادات!';
+
+  @override
+  String get systemDefault => 'النظام الافتراضي';
 }

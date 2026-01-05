@@ -634,222 +634,231 @@ class _HomeScreenState extends State<HomeScreen> {
 
   void _showProjectSettingsDialog(BuildContext context, ProjectProvider provider) async {
     final debouncer = Debouncer(milliseconds: 500);
-    await showDialog(
+
+    await showDialog<void>(
       context: context,
-      builder: (context) => AlertDialog(
-        title: Text(AppLocalizations.of(context)!.projectSettings, style: GoogleFonts.inter(fontWeight: FontWeight.bold)),
-        content: SizedBox(
-          width: 500,
-          child: DefaultTabController(
-            length: 5,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TabBar(
-                  labelColor: Colors.blue,
-                  isScrollable: true,
-                  tabs: [
-                    Tab(text: AppLocalizations.of(context)!.variables),
-                    Tab(text: AppLocalizations.of(context)!.license),
-                    Tab(text: AppLocalizations.of(context)!.contributing),
-                    Tab(text: AppLocalizations.of(context)!.colors),
-                    Tab(text: AppLocalizations.of(context)!.formatting),
-                  ],
-                ),
-                SizedBox(
-                  height: 300,
-                  child: TabBarView(
-                    children: [
-                      // Variables Tab
-                      SingleChildScrollView(
-                        padding: const EdgeInsets.all(16),
-                        child: Column(
-                          children: provider.variables.entries.map((entry) {
-                            return Padding(
-                              padding: const EdgeInsets.only(bottom: 16.0),
-                              child: TextFormField(
-                                initialValue: entry.value,
-                                decoration: InputDecoration(
-                                  labelText: entry.key,
-                                  border: const OutlineInputBorder(),
-                                ),
-                                style: GoogleFonts.inter(),
-                                onChanged: (value) {
-                                  debouncer.run(() {
-                                    provider.updateVariable(entry.key, value);
-                                  });
-                                },
-                              ),
-                            );
-                          }).toList(),
-                        ),
-                      ),
-                      // License Tab
-                      Padding(
-                        padding: const EdgeInsets.all(16),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text('Select License for your project:', style: GoogleFonts.inter()),
-                            const SizedBox(height: 16),
-                            DropdownButtonFormField<String>(
-                              initialValue: provider.licenseType,
-                              decoration: const InputDecoration(border: OutlineInputBorder()),
-                              items: [
-                                DropdownMenuItem(value: 'None', child: Text('None', style: GoogleFonts.inter())),
-                                DropdownMenuItem(value: 'MIT', child: Text('MIT License', style: GoogleFonts.inter())),
-                                DropdownMenuItem(value: 'Apache 2.0', child: Text('Apache License 2.0', style: GoogleFonts.inter())),
-                                DropdownMenuItem(value: 'GPLv3', child: Text('GNU GPLv3', style: GoogleFonts.inter())),
-                                DropdownMenuItem(value: 'BSD 3-Clause', child: Text('BSD 3-Clause License', style: GoogleFonts.inter())),
-                              ],
-                              onChanged: (value) {
-                                if (value != null) provider.setLicenseType(value);
-                              },
-                            ),
-                            const SizedBox(height: 16),
-                            Text('A LICENSE file will be generated and included in the export.', style: GoogleFonts.inter(color: Colors.grey)),
-                          ],
-                        ),
-                      ),
-                      // Contributing Tab
-                      Padding(
-                        padding: const EdgeInsets.all(16),
-                        child: Column(
-                          children: [
-                            SwitchListTile(
-                              title: Text('Include CONTRIBUTING.md', style: GoogleFonts.inter()),
-                              subtitle: Text('Adds a standard contributing guide to the export.', style: GoogleFonts.inter()),
-                              value: provider.includeContributing,
-                              onChanged: (value) => provider.setIncludeContributing(value),
-                            ),
-                          ],
-                        ),
-                      ),
-                      // Colors Tab
-                      Padding(
-                        padding: const EdgeInsets.all(16),
-                        child: Column(
-                          children: [
-                            ListTile(
-                              title: Text(AppLocalizations.of(context)!.primaryColor, style: GoogleFonts.inter()),
-                              subtitle: Text('#${provider.primaryColor.toARGB32().toRadixString(16).toUpperCase().substring(2)}', style: GoogleFonts.inter()),
-                              trailing: CircleAvatar(backgroundColor: provider.primaryColor),
-                              onTap: () {
-                                showDialog(
-                                  context: context,
-                                  builder: (context) => AlertDialog(
-                                    title: Text('Pick Primary Color', style: GoogleFonts.inter(fontWeight: FontWeight.bold)),
-                                    content: SingleChildScrollView(
-                                      child: ColorPicker(
-                                        pickerColor: provider.primaryColor,
-                                        onColorChanged: (color) => provider.setPrimaryColor(color),
-                                        labelTypes: const [],
-                                      ),
-                                    ),
-                                    actions: [
-                                      TextButton(
-                                        child: const Text('Done'),
-                                        onPressed: () => Navigator.of(context).pop(),
-                                      ),
-                                    ],
-                                  ),
-                                );
-                              },
-                            ),
-                            ListTile(
-                              title: Text(AppLocalizations.of(context)!.secondaryColor, style: GoogleFonts.inter()),
-                              subtitle: Text('#${provider.secondaryColor.toARGB32().toRadixString(16).toUpperCase().substring(2)}', style: GoogleFonts.inter()),
-                              trailing: CircleAvatar(backgroundColor: provider.secondaryColor),
-                              onTap: () {
-                                showDialog(
-                                  context: context,
-                                  builder: (context) => AlertDialog(
-                                    title: Text('Pick Secondary Color', style: GoogleFonts.inter(fontWeight: FontWeight.bold)),
-                                    content: SingleChildScrollView(
-                                      child: ColorPicker(
-                                        pickerColor: provider.secondaryColor,
-                                        onColorChanged: (color) => provider.setSecondaryColor(color),
-                                        labelTypes: const [],
-                                      ),
-                                    ),
-                                    actions: [
-                                      TextButton(
-                                        child: const Text('Done'),
-                                        onPressed: () => Navigator.of(context).pop(),
-                                      ),
-                                    ],
-                                  ),
-                                );
-                              },
-                            ),
-                          ],
-                        ),
-                      ),
-                      // Formatting Tab
-                      Padding(
-                        padding: const EdgeInsets.all(16),
-                        child: Column(
-                          children: [
-                            SwitchListTile(
-                              title: Text(AppLocalizations.of(context)!.exportHtml, style: GoogleFonts.inter()),
-                              subtitle: Text('Include a formatted HTML file in the export.', style: GoogleFonts.inter()),
-                              value: provider.exportHtml,
-                              onChanged: (value) => provider.setExportHtml(value),
-                            ),
-                            const Divider(),
-                            InputDecorator(
-                              decoration: InputDecoration(labelText: AppLocalizations.of(context)!.listBulletStyle, border: const OutlineInputBorder()),
-                              child: DropdownButtonHideUnderline(
-                                child: DropdownButton<String>(
-                                  value: provider.listBullet,
-                                  isDense: true,
-                                  items: [
-                                    DropdownMenuItem(value: '*', child: Text('* (Asterisk)', style: GoogleFonts.inter())),
-                                    DropdownMenuItem(value: '-', child: Text('- (Dash)', style: GoogleFonts.inter())),
-                                    DropdownMenuItem(value: '+', child: Text('+ (Plus)', style: GoogleFonts.inter())),
-                                  ],
-                                  onChanged: (value) {
-                                    if (value != null) provider.setListBullet(value);
-                                  },
-                                ),
-                              ),
-                            ),
-                            const SizedBox(height: 16),
-                            InputDecorator(
-                              decoration: InputDecoration(labelText: AppLocalizations.of(context)!.sectionSpacing, border: const OutlineInputBorder()),
-                              child: DropdownButtonHideUnderline(
-                                child: DropdownButton<int>(
-                                  value: provider.sectionSpacing,
-                                  isDense: true,
-                                  items: [
-                                    DropdownMenuItem(value: 0, child: Text('0 (Compact)', style: GoogleFonts.inter())),
-                                    DropdownMenuItem(value: 1, child: Text('1 (Standard)', style: GoogleFonts.inter())),
-                                    DropdownMenuItem(value: 2, child: Text('2 (Spacious)', style: GoogleFonts.inter())),
-                                  ],
-                                  onChanged: (value) {
-                                    if (value != null) provider.setSectionSpacing(value);
-                                  },
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
+      builder: (context) {
+        // Use a block-style builder to avoid arrow/brace balance issues
+        return AlertDialog(
+          title: Text(AppLocalizations.of(context)!.projectSettings, style: GoogleFonts.inter(fontWeight: FontWeight.bold)),
+          content: SizedBox(
+            width: 500,
+            child: DefaultTabController(
+              length: 5,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TabBar(
+                    labelColor: Colors.blue,
+                    isScrollable: true,
+                    tabs: [
+                      Tab(text: AppLocalizations.of(context)!.variables),
+                      Tab(text: AppLocalizations.of(context)!.license),
+                      Tab(text: AppLocalizations.of(context)!.contributing),
+                      Tab(text: AppLocalizations.of(context)!.colors),
+                      Tab(text: AppLocalizations.of(context)!.formatting),
                     ],
                   ),
-                ),
-              ],
+                  SizedBox(
+                    height: 300,
+                    child: TabBarView(
+                      children: [
+                        // Variables Tab
+                        SingleChildScrollView(
+                          padding: const EdgeInsets.all(16),
+                          child: Column(
+                            children: provider.variables.entries.map((entry) {
+                              return Padding(
+                                padding: const EdgeInsets.only(bottom: 16.0),
+                                child: TextFormField(
+                                  initialValue: entry.value,
+                                  decoration: InputDecoration(
+                                    labelText: entry.key,
+                                    border: const OutlineInputBorder(),
+                                  ),
+                                  style: GoogleFonts.inter(),
+                                  onChanged: (value) {
+                                    debouncer.run(() {
+                                      provider.updateVariable(entry.key, value);
+                                    });
+                                  },
+                                ),
+                              );
+                            }).toList(),
+                          ),
+                        ),
+
+                        // License Tab
+                        Padding(
+                          padding: const EdgeInsets.all(16),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text('Select License for your project:', style: GoogleFonts.inter()),
+                              const SizedBox(height: 16),
+                              DropdownButtonFormField<String>(
+                                initialValue: provider.licenseType,
+                                decoration: const InputDecoration(border: OutlineInputBorder()),
+                                items: [
+                                  DropdownMenuItem(value: 'None', child: Text('None', style: GoogleFonts.inter())),
+                                  DropdownMenuItem(value: 'MIT', child: Text('MIT License', style: GoogleFonts.inter())),
+                                  DropdownMenuItem(value: 'Apache 2.0', child: Text('Apache License 2.0', style: GoogleFonts.inter())),
+                                  DropdownMenuItem(value: 'GPLv3', child: Text('GNU GPLv3', style: GoogleFonts.inter())),
+                                  DropdownMenuItem(value: 'BSD 3-Clause', child: Text('BSD 3-Clause License', style: GoogleFonts.inter())),
+                                ],
+                                onChanged: (value) {
+                                  if (value != null) provider.setLicenseType(value);
+                                },
+                              ),
+                              const SizedBox(height: 16),
+                              Text('A LICENSE file will be generated and included in the export.', style: GoogleFonts.inter(color: Colors.grey)),
+                            ],
+                          ),
+                        ),
+
+                        // Contributing Tab
+                        Padding(
+                          padding: const EdgeInsets.all(16),
+                          child: Column(
+                            children: [
+                              SwitchListTile(
+                                title: Text('Include CONTRIBUTING.md', style: GoogleFonts.inter()),
+                                subtitle: Text('Adds a standard contributing guide to the export.', style: GoogleFonts.inter()),
+                                value: provider.includeContributing,
+                                onChanged: (value) => provider.setIncludeContributing(value),
+                              ),
+                            ],
+                          ),
+                        ),
+
+                        // Colors Tab
+                        Padding(
+                          padding: const EdgeInsets.all(16),
+                          child: Column(
+                            children: [
+                              ListTile(
+                                title: Text(AppLocalizations.of(context)!.primaryColor, style: GoogleFonts.inter()),
+                                subtitle: Text('#${provider.primaryColor.toARGB32().toRadixString(16).toUpperCase().substring(2)}', style: GoogleFonts.inter()),
+                                trailing: CircleAvatar(backgroundColor: provider.primaryColor),
+                                onTap: () {
+                                  showDialog(
+                                    context: context,
+                                    builder: (context) => AlertDialog(
+                                      title: Text('Pick Primary Color', style: GoogleFonts.inter(fontWeight: FontWeight.bold)),
+                                      content: SingleChildScrollView(
+                                        child: ColorPicker(
+                                          pickerColor: provider.primaryColor,
+                                          onColorChanged: (color) => provider.setPrimaryColor(color),
+                                          labelTypes: const [],
+                                        ),
+                                      ),
+                                      actions: [
+                                        TextButton(
+                                          child: const Text('Done'),
+                                          onPressed: () => Navigator.of(context).pop(),
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                },
+                              ),
+                              ListTile(
+                                title: Text(AppLocalizations.of(context)!.secondaryColor, style: GoogleFonts.inter()),
+                                subtitle: Text('#${provider.secondaryColor.toARGB32().toRadixString(16).toUpperCase().substring(2)}', style: GoogleFonts.inter()),
+                                trailing: CircleAvatar(backgroundColor: provider.secondaryColor),
+                                onTap: () {
+                                  showDialog(
+                                    context: context,
+                                    builder: (context) => AlertDialog(
+                                      title: Text('Pick Secondary Color', style: GoogleFonts.inter(fontWeight: FontWeight.bold)),
+                                      content: SingleChildScrollView(
+                                        child: ColorPicker(
+                                          pickerColor: provider.secondaryColor,
+                                          onColorChanged: (color) => provider.setSecondaryColor(color),
+                                          labelTypes: const [],
+                                        ),
+                                      ),
+                                      actions: [
+                                        TextButton(
+                                          child: const Text('Done'),
+                                          onPressed: () => Navigator.of(context).pop(),
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                },
+                              ),
+                            ],
+                          ),
+                        ),
+
+                        // Formatting Tab
+                        Padding(
+                          padding: const EdgeInsets.all(16),
+                          child: Column(
+                            children: [
+                              SwitchListTile(
+                                title: Text(AppLocalizations.of(context)!.exportHtml, style: GoogleFonts.inter()),
+                                subtitle: Text('Include a formatted HTML file in the export.', style: GoogleFonts.inter()),
+                                value: provider.exportHtml,
+                                onChanged: (value) => provider.setExportHtml(value),
+                              ),
+                              const Divider(),
+                              InputDecorator(
+                                decoration: InputDecoration(labelText: AppLocalizations.of(context)!.listBulletStyle, border: const OutlineInputBorder()),
+                                child: DropdownButtonHideUnderline(
+                                  child: DropdownButton<String>(
+                                    value: provider.listBullet,
+                                    isDense: true,
+                                    items: [
+                                      DropdownMenuItem(value: '*', child: Text('* (Asterisk)', style: GoogleFonts.inter())),
+                                      DropdownMenuItem(value: '-', child: Text('- (Dash)', style: GoogleFonts.inter())),
+                                      DropdownMenuItem(value: '+', child: Text('+ (Plus)', style: GoogleFonts.inter())),
+                                    ],
+                                    onChanged: (value) {
+                                      if (value != null) provider.setListBullet(value);
+                                    },
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 16),
+                              InputDecorator(
+                                decoration: InputDecoration(labelText: AppLocalizations.of(context)!.sectionSpacing, border: const OutlineInputBorder()),
+                                child: DropdownButtonHideUnderline(
+                                  child: DropdownButton<int>(
+                                    value: provider.sectionSpacing,
+                                    isDense: true,
+                                    items: [
+                                      DropdownMenuItem(value: 0, child: Text('0 (Compact)', style: GoogleFonts.inter())),
+                                      DropdownMenuItem(value: 1, child: Text('1 (Standard)', style: GoogleFonts.inter())),
+                                      DropdownMenuItem(value: 2, child: Text('2 (Spacious)', style: GoogleFonts.inter())),
+                                    ],
+                                    onChanged: (value) {
+                                      if (value != null) provider.setSectionSpacing(value);
+                                    },
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text(AppLocalizations.of(context)!.close),
-          ),
-        ],
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text(AppLocalizations.of(context)!.close),
+            ),
+          ],
+        );
       },
     );
+
     debouncer.dispose();
   }
 

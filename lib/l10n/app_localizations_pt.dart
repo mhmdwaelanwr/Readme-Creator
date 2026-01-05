@@ -54,7 +54,7 @@ class AppLocalizationsPt extends AppLocalizations {
   String get aboutApp => 'Sobre o Aplicativo';
 
   @override
-  String get changeLanguage => 'Change Language';
+  String get changeLanguage => 'Alterar Idioma';
 
   @override
   String get settings => 'Configurações';
@@ -309,5 +309,8 @@ class AppLocalizationsPt extends AppLocalizations {
   String get fetchFailed => 'Failed to fetch';
 
   @override
-  String get settingsSaved => 'Settings saved!';
+  String get settingsSaved => 'Configurações salvas!';
+
+  @override
+  String get systemDefault => 'Padrão do Sistema';
 }

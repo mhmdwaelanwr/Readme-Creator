@@ -707,6 +707,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Settings saved!'**
   String get settingsSaved;
+
+  /// No description provided for @systemDefault.
+  ///
+  /// In en, this message translates to:
+  /// **'System Default'**
+  String get systemDefault;
 }
 
 class _AppLocalizationsDelegate

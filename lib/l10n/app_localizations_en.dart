@@ -310,4 +310,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get settingsSaved => 'Settings saved!';
+
+  @override
+  String get systemDefault => 'System Default';
 }

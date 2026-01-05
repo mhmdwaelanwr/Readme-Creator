@@ -54,7 +54,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get aboutApp => '关于应用';
 
   @override
-  String get changeLanguage => 'Change Language';
+  String get changeLanguage => '更改语言';
 
   @override
   String get settings => '设置';
@@ -308,5 +308,8 @@ class AppLocalizationsZh extends AppLocalizations {
   String get fetchFailed => 'Failed to fetch';
 
   @override
-  String get settingsSaved => 'Settings saved!';
+  String get settingsSaved => '设置已保存！';
+
+  @override
+  String get systemDefault => '系统默认';
 }
