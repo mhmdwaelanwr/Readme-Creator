@@ -132,7 +132,7 @@ We want Readme Creator to be accessible to everyone. If you'd like to add a new 
 
 ## ❓ Questions?
 
-If you have any questions, feel free to reach out via [Discord](https://discord.gg/mhmdwaelanwr) or open a discussion on GitHub.
+If you have any questions, feel free to reach out via [![Discord](https://img.shields.io/badge/Discord-5865F2?style=plastic&logo=discord&logoColor=white)](https://discord.gg/https://discord.gg/eNpUVUzp) or open a discussion on GitHub.
 
 ---
 
