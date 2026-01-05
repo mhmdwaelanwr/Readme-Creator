@@ -72,7 +72,7 @@ void main() {
         rows: [['R1C1', 'R1C2'], ['R2C1', 'R2C2']],
         alignments: [ColumnAlignment.left, ColumnAlignment.right],
       );
-      final expected = '| H1 | H2 |\n| :--- | ---: |\n| R1C1 | R1C2 |\n| R2C1 | R2C2 |';
+      const expected = '| H1 | H2 |\n| :--- | ---: |\n| R1C1 | R1C2 |\n| R2C1 | R2C2 |';
       expect(generator.generate([element]).trim(), expected);
     });
 
