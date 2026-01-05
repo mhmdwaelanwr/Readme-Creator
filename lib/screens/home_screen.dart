@@ -659,7 +659,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     tabs: [
                       Tab(text: AppLocalizations.of(context)!.variables),
                       Tab(text: AppLocalizations.of(context)!.license),
-p''                      const Tab(text: 'Community'),
+                      const Tab(text: 'Community'),
                       Tab(text: AppLocalizations.of(context)!.colors),
                       Tab(text: AppLocalizations.of(context)!.formatting),
                     ],
