@@ -108,6 +108,21 @@ class _ComponentsPanelState extends State<ComponentsPanel> {
         name: 'Spotify Status',
         elementJson: '{"type":"dynamicWidget","widgetType":"spotify","identifier":"user_id","theme":"default","id":"temp_spotify"}',
       ),
+      Snippet(
+        id: 'template_youtube',
+        name: 'YouTube Video',
+        elementJson: '{"type":"dynamicWidget","widgetType":"youtube","identifier":"VIDEO_ID","theme":"default","id":"temp_youtube"}',
+      ),
+      Snippet(
+        id: 'template_github_stats',
+        name: 'GitHub Stats',
+        elementJson: '{"type":"githubStats","repoName":"username/repo","showStars":true,"showForks":true,"showIssues":true,"showLicense":true,"id":"temp_gh_stats"}',
+      ),
+      Snippet(
+        id: 'template_contributors',
+        name: 'Contributors',
+        elementJson: '{"type":"contributors","repoName":"username/repo","style":"grid","id":"temp_contributors"}',
+      ),
     ];
 
     return DefaultTabController(
@@ -395,7 +410,14 @@ class _ComponentsPanelState extends State<ComponentsPanel> {
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
               child: Row(
                 children: [
-                  Icon(_getIconForSnippet(snippet), color: AppColors.secondary, size: 20),
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: AppColors.secondary.withAlpha(20),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Icon(_getIconForSnippet(snippet), color: AppColors.secondary, size: 20),
+                  ),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text(

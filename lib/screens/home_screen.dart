@@ -1974,8 +1974,8 @@ $htmlContent
                 ToastHelper.show(context, 'Templates downloaded');
               },
             ),
-            ],
-          ),
+          ],
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
