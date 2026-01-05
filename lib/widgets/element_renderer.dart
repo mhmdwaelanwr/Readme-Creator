@@ -409,7 +409,13 @@ class ElementRenderer extends StatelessWidget {
                   children: [
                     const Icon(Icons.link, size: 14, color: Colors.blue),
                     const SizedBox(width: 4),
-                    Text(h.text, style: const TextStyle(color: Colors.blue, decoration: TextDecoration.underline)),
+                    Expanded(
+                      child: Text(
+                        h.text,
+                        style: const TextStyle(color: Colors.blue, decoration: TextDecoration.underline),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
                   ],
                 ),
               );

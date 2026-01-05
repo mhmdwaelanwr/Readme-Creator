@@ -1,4 +1,6 @@
 import 'dart:convert';
+import 'package:flutter/services.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
@@ -37,6 +39,7 @@ class _HomeScreenState extends State<HomeScreen> {
   final GlobalKey _settingsKey = GlobalKey();
   final GlobalKey _exportKey = GlobalKey();
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+  final FocusNode _focusNode = FocusNode();
   bool _showPreview = false;
   bool _isFocusMode = false;
 
@@ -44,6 +47,7 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      _focusNode.requestFocus();
       OnboardingHelper.showOnboarding(
         context: context,
         componentsKey: _componentsKey,
@@ -55,24 +59,92 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   @override
+  void dispose() {
+    _focusNode.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final isDesktop = MediaQuery.of(context).size.width > 800;
+    final provider = Provider.of<ProjectProvider>(context, listen: false);
 
-    return Scaffold(
-      key: _scaffoldKey,
-      appBar: AppBar(
-        title: Row(
-          children: [
-            Icon(Icons.description, color: Theme.of(context).colorScheme.primary),
-            const SizedBox(width: 12),
-            const Text('Advanced Readme Creator'),
-          ],
+    return CallbackShortcuts(
+      bindings: {
+        // File Operations
+        const SingleActivator(LogicalKeyboardKey.keyS, control: true): () => _showSaveToLibraryDialog(context, provider),
+        const SingleActivator(LogicalKeyboardKey.keyE, control: true): () {
+           ProjectExporter.export(
+            elements: provider.elements,
+            variables: provider.variables,
+            licenseType: provider.licenseType,
+            includeContributing: provider.includeContributing,
+            listBullet: provider.listBullet,
+            sectionSpacing: provider.sectionSpacing,
+            exportHtml: provider.exportHtml,
+          );
+        },
+        const SingleActivator(LogicalKeyboardKey.keyP, control: true): () => _printReadme(context, provider),
+
+        // Edit Operations
+        const SingleActivator(LogicalKeyboardKey.keyZ, control: true): () => provider.undo(),
+        const SingleActivator(LogicalKeyboardKey.keyY, control: true): () => provider.redo(),
+
+        // View Operations
+        const SingleActivator(LogicalKeyboardKey.f11): () => setState(() => _isFocusMode = !_isFocusMode),
+        const SingleActivator(LogicalKeyboardKey.keyH, control: true, shift: true): () => setState(() => _showPreview = !_showPreview),
+        const SingleActivator(LogicalKeyboardKey.keyG, control: true): () => provider.toggleGrid(),
+        const SingleActivator(LogicalKeyboardKey.keyT, control: true): () => provider.toggleTheme(),
+        const SingleActivator(LogicalKeyboardKey.comma, control: true): () => _showProjectSettingsDialog(context, provider),
+
+        // Help
+        const SingleActivator(LogicalKeyboardKey.f1): () => OnboardingHelper.restartOnboarding(
+            context: context,
+            componentsKey: _componentsKey,
+            canvasKey: _canvasKey,
+            settingsKey: _settingsKey,
+            exportKey: _exportKey,
+          ),
+
+        // Element Shortcuts (Add)
+        const SingleActivator(LogicalKeyboardKey.digit1, control: true, alt: true): () => provider.addElement(ReadmeElementType.heading),
+        const SingleActivator(LogicalKeyboardKey.digit2, control: true, alt: true): () {
+           provider.addElement(ReadmeElementType.heading);
+           // We can't easily set level here without refactoring addElement to take props or accessing the last element.
+           // For now, just adding heading is fine, user can change level.
+        },
+        const SingleActivator(LogicalKeyboardKey.digit3, control: true, alt: true): () => provider.addElement(ReadmeElementType.paragraph),
+        const SingleActivator(LogicalKeyboardKey.keyI, control: true, alt: true): () => provider.addElement(ReadmeElementType.image),
+        const SingleActivator(LogicalKeyboardKey.keyT, control: true, alt: true): () => provider.addElement(ReadmeElementType.table),
+        const SingleActivator(LogicalKeyboardKey.keyL, control: true, alt: true): () => provider.addElement(ReadmeElementType.list),
+        const SingleActivator(LogicalKeyboardKey.keyQ, control: true, alt: true): () => provider.addElement(ReadmeElementType.blockquote),
+        const SingleActivator(LogicalKeyboardKey.keyK, control: true, alt: true): () => provider.addElement(ReadmeElementType.linkButton),
+      },
+      child: Focus(
+        focusNode: _focusNode,
+        autofocus: true,
+        onKeyEvent: (node, event) {
+          // Ensure keys bubble up if not handled, but CallbackShortcuts should handle them first.
+          // This is just to ensure the Focus node is active.
+          return KeyEventResult.ignored;
+        },
+        child: Scaffold(
+          key: _scaffoldKey,
+          appBar: AppBar(
+            title: Row(
+              children: [
+                Icon(Icons.description, color: Theme.of(context).colorScheme.primary),
+                const SizedBox(width: 12),
+                const Text('Advanced Readme Creator'),
+              ],
+            ),
+            actions: isDesktop ? _buildDesktopActions(context) : _buildMobileActions(context),
+          ),
+          drawer: isDesktop ? null : const Drawer(child: ComponentsPanel()),
+          endDrawer: isDesktop ? null : const Drawer(child: SettingsPanel()),
+          body: isDesktop ? _buildDesktopBody(context) : _buildMobileBody(context),
         ),
-        actions: isDesktop ? _buildDesktopActions(context) : _buildMobileActions(context),
       ),
-      drawer: isDesktop ? null : const Drawer(child: ComponentsPanel()),
-      endDrawer: isDesktop ? null : const Drawer(child: SettingsPanel()),
-      body: isDesktop ? _buildDesktopBody(context) : _buildMobileBody(context),
     );
   }
 
@@ -271,6 +343,10 @@ class _HomeScreenState extends State<HomeScreen> {
           child: Row(children: [Icon(Icons.data_object, color: Colors.grey), SizedBox(width: 8), Text('Import Project (JSON)')]),
         ),
         const PopupMenuItem(
+          value: 'ai_settings',
+          child: Row(children: [Icon(Icons.psychology, color: Colors.grey), SizedBox(width: 8), Text('AI Settings')]),
+        ),
+        const PopupMenuItem(
           value: 'help',
           child: Row(children: [Icon(Icons.help_outline, color: Colors.grey), SizedBox(width: 8), Text('Show Tour')]),
         ),
@@ -350,6 +426,8 @@ class _HomeScreenState extends State<HomeScreen> {
               ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error importing: $e')));
             }
           }
+        } else if (value == 'ai_settings') {
+          _showAISettingsDialog(context, provider);
         } else if (value == 'help') {
           OnboardingHelper.restartOnboarding(
             context: context,
@@ -1218,6 +1296,21 @@ $htmlContent
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 16),
+              InkWell(
+                onTap: () => launchUrl(Uri.parse('https://github.com/mhmdwaelanwr/Readme-Creator')),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(Icons.code, size: 20, color: Colors.blue),
+                    const SizedBox(width: 8),
+                    Text(
+                      'View on GitHub',
+                      style: GoogleFonts.inter(color: Colors.blue, decoration: TextDecoration.underline),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
               Text(
                 'Version 1.0.0',
                 style: GoogleFonts.inter(fontWeight: FontWeight.bold),
@@ -1240,4 +1333,73 @@ $htmlContent
       ),
     );
   }
+
+  void _showAISettingsDialog(BuildContext context, ProjectProvider provider) {
+    final apiKeyController = TextEditingController(text: provider.geminiApiKey);
+    bool isObscured = true;
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              title: Text('AI Settings', style: GoogleFonts.inter(fontWeight: FontWeight.bold)),
+              content: SizedBox(
+                width: 400,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Enter your Gemini API Key to enable real AI features.', style: GoogleFonts.inter()),
+                    const SizedBox(height: 16),
+                    TextField(
+                      controller: apiKeyController,
+                      obscureText: isObscured,
+                      decoration: InputDecoration(
+                        labelText: 'Gemini API Key',
+                        border: const OutlineInputBorder(),
+                        suffixIcon: IconButton(
+                          icon: Icon(isObscured ? Icons.visibility : Icons.visibility_off),
+                          onPressed: () => setState(() => isObscured = !isObscured),
+                        ),
+                      ),
+                      style: GoogleFonts.inter(),
+                    ),
+                    const SizedBox(height: 8),
+                    InkWell(
+                      onTap: () {
+                        launchUrl(Uri.parse('https://aistudio.google.com/app/apikey'));
+                      },
+                      child: Text(
+                        'Get your API key from Google AI Studio',
+                        style: GoogleFonts.inter(color: Colors.blue, decoration: TextDecoration.underline),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('Cancel'),
+                ),
+                ElevatedButton(
+                  onPressed: () {
+                    provider.setGeminiApiKey(apiKeyController.text.trim());
+                    Navigator.pop(context);
+                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('API Key saved!')));
+                  },
+                  child: const Text('Save'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
 }
+
+
+

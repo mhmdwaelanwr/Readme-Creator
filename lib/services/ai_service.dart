@@ -1,10 +1,25 @@
 import 'dart:math';
+import 'package:google_generative_ai/google_generative_ai.dart';
+import 'package:flutter/foundation.dart';
 
 class AIService {
   // Mock AI Service
   // In a real app, this would call OpenAI or Gemini API
 
-  static Future<String> improveText(String text) async {
+  static Future<String> improveText(String text, {String? apiKey}) async {
+    if (apiKey != null && apiKey.isNotEmpty) {
+      try {
+        final model = GenerativeModel(model: 'gemini-1.5-flash', apiKey: apiKey);
+        final content = [Content.text('Improve the following text for a README file, making it more professional and concise:\n\n$text')];
+        final response = await model.generateContent(content);
+        return response.text ?? text;
+      } catch (e) {
+        debugPrint('Gemini API Error: $e');
+        return '$text (Error: Could not connect to AI)';
+      }
+    }
+
+    // Mock fallback
     await Future.delayed(const Duration(seconds: 1)); // Simulate network
 
     if (text.isEmpty) return 'Generated content based on context...';
@@ -29,7 +44,19 @@ class AIService {
     }).join(' ')} (AI Enhanced)';
   }
 
-  static Future<String> generateDescription(String topic) async {
+  static Future<String> generateDescription(String topic, {String? apiKey}) async {
+    if (apiKey != null && apiKey.isNotEmpty) {
+      try {
+        final model = GenerativeModel(model: 'gemini-1.5-flash', apiKey: apiKey);
+        final content = [Content.text('Generate a short, engaging project description for a project about: $topic')];
+        final response = await model.generateContent(content);
+        return response.text ?? 'Could not generate description.';
+      } catch (e) {
+        debugPrint('Gemini API Error: $e');
+        return 'Error generating description.';
+      }
+    }
+
     await Future.delayed(const Duration(seconds: 1));
     final templates = [
       'This project is a comprehensive solution for $topic. It includes robust features, scalable architecture, and follows best practices for modern development.',
@@ -40,7 +67,19 @@ class AIService {
     return templates[Random().nextInt(templates.length)];
   }
 
-  static Future<String> fixGrammar(String text) async {
+  static Future<String> fixGrammar(String text, {String? apiKey}) async {
+    if (apiKey != null && apiKey.isNotEmpty) {
+      try {
+        final model = GenerativeModel(model: 'gemini-1.5-flash', apiKey: apiKey);
+        final content = [Content.text('Fix grammar and spelling in the following text:\n\n$text')];
+        final response = await model.generateContent(content);
+        return response.text ?? text;
+      } catch (e) {
+        debugPrint('Gemini API Error: $e');
+        return text;
+      }
+    }
+
     await Future.delayed(const Duration(seconds: 1));
     // Mock grammar fix
     String fixed = text.trim();

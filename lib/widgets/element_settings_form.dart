@@ -413,15 +413,22 @@ class _ElementSettingsFormState extends State<ElementSettingsForm> {
 
     if (result != null) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('AI is thinking...')));
+      final provider = Provider.of<ProjectProvider>(context, listen: false);
+      final apiKey = provider.geminiApiKey;
+
+      if (apiKey == null || apiKey.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Using Mock AI. Set API Key in Settings for real AI.')));
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('AI is thinking...')));
+      }
 
       String newText = '';
       if (result == 'improve') {
-        newText = await AIService.improveText(controller.text);
+        newText = await AIService.improveText(controller.text, apiKey: apiKey);
       } else if (result == 'grammar') {
-        newText = await AIService.fixGrammar(controller.text);
+        newText = await AIService.fixGrammar(controller.text, apiKey: apiKey);
       } else if (result == 'generate') {
-        newText = await AIService.generateDescription(controller.text.isEmpty ? 'Project' : controller.text);
+        newText = await AIService.generateDescription(controller.text.isEmpty ? 'Project' : controller.text, apiKey: apiKey);
       }
 
       if (mounted && newText.isNotEmpty) {

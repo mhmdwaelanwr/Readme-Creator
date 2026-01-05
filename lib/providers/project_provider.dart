@@ -28,6 +28,7 @@ class ProjectProvider with ChangeNotifier {
   int _sectionSpacing = 1;
   DeviceMode _deviceMode = DeviceMode.desktop;
   bool _exportHtml = false;
+  String? _geminiApiKey;
 
   final List<String> _undoStack = [];
   final List<String> _redoStack = [];
@@ -46,6 +47,7 @@ class ProjectProvider with ChangeNotifier {
   int get sectionSpacing => _sectionSpacing;
   DeviceMode get deviceMode => _deviceMode;
   bool get exportHtml => _exportHtml;
+  String? get geminiApiKey => _geminiApiKey;
 
   ProjectProvider() {
     _loadState();
@@ -94,6 +96,7 @@ class ProjectProvider with ChangeNotifier {
     _listBullet = prefs.getString('listBullet') ?? '*';
     _sectionSpacing = prefs.getInt('sectionSpacing') ?? 1;
     _exportHtml = prefs.getBool('exportHtml') ?? false;
+    _geminiApiKey = prefs.getString('geminiApiKey');
 
     notifyListeners();
   }
@@ -137,6 +140,11 @@ class ProjectProvider with ChangeNotifier {
     await prefs.setString('listBullet', _listBullet);
     await prefs.setInt('sectionSpacing', _sectionSpacing);
     await prefs.setBool('exportHtml', _exportHtml);
+    if (_geminiApiKey != null) {
+      await prefs.setString('geminiApiKey', _geminiApiKey!);
+    } else {
+      await prefs.remove('geminiApiKey');
+    }
   }
 
   String exportToJson() {
@@ -591,6 +599,12 @@ class ProjectProvider with ChangeNotifier {
 
   void setExportHtml(bool value) {
     _exportHtml = value;
+    _saveState();
+    notifyListeners();
+  }
+
+  void setGeminiApiKey(String? key) {
+    _geminiApiKey = key;
     _saveState();
     notifyListeners();
   }
