@@ -24,6 +24,8 @@ class ElementRenderer extends StatelessWidget {
     if (element is HeadingElement) {
       final e = element as HeadingElement;
       TextStyle style;
+      Widget content;
+
       switch (e.level) {
         case 1:
           style = GoogleFonts.inter(
@@ -31,6 +33,13 @@ class ElementRenderer extends StatelessWidget {
             fontWeight: FontWeight.w800,
             color: textColor,
             height: 1.2,
+          );
+          content = Container(
+            padding: const EdgeInsets.only(bottom: 8),
+            decoration: BoxDecoration(
+              border: Border(bottom: BorderSide(color: Colors.grey.withAlpha(50), width: 1)),
+            ),
+            child: Text(e.text, style: style),
           );
           break;
         case 2:
@@ -40,6 +49,13 @@ class ElementRenderer extends StatelessWidget {
             color: textColor,
             height: 1.3,
           );
+          content = Container(
+            padding: const EdgeInsets.only(bottom: 6),
+            decoration: BoxDecoration(
+              border: Border(bottom: BorderSide(color: Colors.grey.withAlpha(50), width: 1)),
+            ),
+            child: Text(e.text, style: style),
+          );
           break;
         case 3:
           style = GoogleFonts.inter(
@@ -48,6 +64,7 @@ class ElementRenderer extends StatelessWidget {
             color: textColor,
             height: 1.4,
           );
+          content = Text(e.text, style: style);
           break;
         default:
           style = GoogleFonts.inter(
@@ -55,8 +72,9 @@ class ElementRenderer extends StatelessWidget {
             fontWeight: FontWeight.w600,
             color: textColor,
           );
+          content = Text(e.text, style: style);
       }
-      return Text(e.text, style: style);
+      return content;
     } else if (element is ParagraphElement) {
       final e = element as ParagraphElement;
       return _buildRichText(e.text, textColor);
@@ -132,21 +150,60 @@ class ElementRenderer extends StatelessWidget {
         width: double.infinity,
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: isDark ? Colors.grey[800]! : Colors.grey[200]!),
-          color: isDark ? const Color(0xFF282A36) : const Color(0xFFF6F8FA),
-        ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(8),
-          child: HighlightView(
-            e.code,
-            language: e.language.isEmpty ? 'plaintext' : e.language,
-            theme: isDark ? draculaTheme : githubTheme,
-            padding: const EdgeInsets.all(12),
-            textStyle: const TextStyle(
-              fontFamily: 'monospace',
-              fontSize: 14,
+          border: Border.all(color: isDark ? Colors.grey[800]! : Colors.grey[300]!),
+          color: isDark ? const Color(0xFF1E1E1E) : const Color(0xFFF6F8FA),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withAlpha(isDark ? 50 : 10),
+              blurRadius: 4,
+              offset: const Offset(0, 2),
             ),
-          ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // Window Header
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: BoxDecoration(
+                color: isDark ? Colors.white.withAlpha(10) : Colors.black.withAlpha(5),
+                border: Border(bottom: BorderSide(color: isDark ? Colors.white.withAlpha(10) : Colors.black.withAlpha(5))),
+              ),
+              child: Row(
+                children: [
+                  const CircleAvatar(radius: 5, backgroundColor: Color(0xFFFF5F56)),
+                  const SizedBox(width: 6),
+                  const CircleAvatar(radius: 5, backgroundColor: Color(0xFFFFBD2E)),
+                  const SizedBox(width: 6),
+                  const CircleAvatar(radius: 5, backgroundColor: Color(0xFF27C93F)),
+                  const Spacer(),
+                  if (e.language.isNotEmpty)
+                    Text(
+                      e.language.toUpperCase(),
+                      style: GoogleFonts.firaCode(
+                        fontSize: 10,
+                        color: isDark ? Colors.white54 : Colors.black54,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                ],
+              ),
+            ),
+            ClipRRect(
+              borderRadius: const BorderRadius.vertical(bottom: Radius.circular(8)),
+              child: HighlightView(
+                e.code,
+                language: e.language.isEmpty ? 'plaintext' : e.language,
+                theme: isDark ? draculaTheme : githubTheme,
+                padding: const EdgeInsets.all(16),
+                textStyle: GoogleFonts.firaCode(
+                  fontSize: 14,
+                  height: 1.5,
+                ),
+              ),
+            ),
+          ],
         ),
       );
     } else if (element is ListElement) {

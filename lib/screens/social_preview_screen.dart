@@ -7,6 +7,7 @@ import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../providers/project_provider.dart';
 import '../utils/downloader.dart';
+import '../utils/toast_helper.dart';
 import '../core/constants/app_colors.dart';
 
 class SocialPreviewScreen extends StatefulWidget {
@@ -99,111 +100,65 @@ class _SocialPreviewScreenState extends State<SocialPreviewScreen> {
 
   Future<void> _saveImage(Uint8List bytes) async {
     await downloadImageFile(bytes, 'social-preview.png');
-    if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Image exported!')));
+    if (mounted) ToastHelper.show(context, 'Image exported!');
   }
 
   @override
   Widget build(BuildContext context) {
     final provider = Provider.of<ProjectProvider>(context);
     final projectName = provider.variables['PROJECT_NAME'] ?? 'Project Name';
-    const projectDesc = 'A short description of your project.'; // We could fetch this from a paragraph if we want
+    const projectDesc = 'A short description of your project.';
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
       appBar: AppBar(
         title: Text('Social Preview Designer', style: GoogleFonts.inter(fontWeight: FontWeight.w600)),
         actions: [
-          IconButton(
+          FilledButton.icon(
             icon: const Icon(Icons.download),
-            tooltip: 'Export Image',
+            label: const Text('Export Image'),
             onPressed: _exportImage,
+            style: FilledButton.styleFrom(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            ),
           ),
+          const SizedBox(width: 16),
         ],
       ),
       body: Row(
         children: [
           // Settings Panel
           Container(
-            width: 300,
-            padding: const EdgeInsets.all(16),
+            width: 320,
             decoration: BoxDecoration(
-              border: Border(right: BorderSide(color: Colors.grey.withAlpha(50))),
+              color: isDark ? AppColors.editorBackgroundDark : Colors.white,
+              border: Border(right: BorderSide(color: isDark ? Colors.white.withAlpha(20) : Colors.grey.withAlpha(50))),
             ),
             child: ListView(
+              padding: const EdgeInsets.all(24),
               children: [
-                Text('Appearance', style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 18)),
+                Text('APPEARANCE', style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 12, color: Colors.grey, letterSpacing: 1.2)),
                 const SizedBox(height: 16),
-                ListTile(
-                  title: Text('Background Color', style: GoogleFonts.inter()),
-                  trailing: CircleAvatar(backgroundColor: _backgroundColor),
-                  onTap: () {
-                    showDialog(
-                      context: context,
-                      builder: (context) => AlertDialog(
-                        title: const Text('Pick Background Color'),
-                        content: SingleChildScrollView(
-                          child: ColorPicker(
-                            pickerColor: _backgroundColor,
-                            onColorChanged: (color) => setState(() => _backgroundColor = color),
-                            labelTypes: const [],
-                          ),
-                        ),
-                        actions: [
-                          TextButton(
-                            child: const Text('Done'),
-                            onPressed: () => Navigator.of(context).pop(),
-                          ),
-                        ],
-                      ),
-                    );
-                  },
-                ),
-                ListTile(
-                  title: Text('Text Color', style: GoogleFonts.inter()),
-                  trailing: CircleAvatar(backgroundColor: _textColor),
-                  onTap: () {
-                    showDialog(
-                      context: context,
-                      builder: (context) => AlertDialog(
-                        title: const Text('Pick Text Color'),
-                        content: SingleChildScrollView(
-                          child: ColorPicker(
-                            pickerColor: _textColor,
-                            onColorChanged: (color) => setState(() => _textColor = color),
-                            labelTypes: const [],
-                          ),
-                        ),
-                        actions: [
-                          TextButton(
-                            child: const Text('Done'),
-                            onPressed: () => Navigator.of(context).pop(),
-                          ),
-                        ],
-                      ),
-                    );
-                  },
-                ),
-                const Divider(),
-                Text('Typography', style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 18)),
+                _buildColorPickerTile('Background', _backgroundColor, (c) => setState(() => _backgroundColor = c)),
+                const SizedBox(height: 12),
+                _buildColorPickerTile('Text Color', _textColor, (c) => setState(() => _textColor = c)),
+
+                const SizedBox(height: 32),
+                Text('TYPOGRAPHY', style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 12, color: Colors.grey, letterSpacing: 1.2)),
                 const SizedBox(height: 16),
-                Text('Title Size: ${_titleSize.toInt()}', style: GoogleFonts.inter()),
-                Slider(
-                  value: _titleSize,
-                  min: 24,
-                  max: 120,
-                  onChanged: (val) => setState(() => _titleSize = val),
-                ),
-                Text('Description Size: ${_descSize.toInt()}', style: GoogleFonts.inter()),
-                Slider(
-                  value: _descSize,
-                  min: 12,
-                  max: 60,
-                  onChanged: (val) => setState(() => _descSize = val),
-                ),
-                const Divider(),
+                _buildSlider('Title Size', _titleSize, 24, 120, (v) => setState(() => _titleSize = v)),
+                const SizedBox(height: 16),
+                _buildSlider('Description Size', _descSize, 12, 60, (v) => setState(() => _descSize = v)),
+
+                const SizedBox(height: 32),
+                Text('LAYOUT', style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 12, color: Colors.grey, letterSpacing: 1.2)),
+                const SizedBox(height: 16),
                 SwitchListTile(
-                  title: Text('Show Border', style: GoogleFonts.inter()),
+                  title: Text('Show Border', style: GoogleFonts.inter(fontWeight: FontWeight.w500)),
                   value: _showBorder,
                   onChanged: (val) => setState(() => _showBorder = val),
+                  contentPadding: EdgeInsets.zero,
+                  activeTrackColor: AppColors.primary,
                 ),
               ],
             ),
@@ -211,60 +166,81 @@ class _SocialPreviewScreenState extends State<SocialPreviewScreen> {
           // Preview Area
           Expanded(
             child: Container(
-              color: Colors.grey[200], // Canvas background
+              color: isDark ? Colors.black : Colors.grey[100],
               child: Center(
                 child: SingleChildScrollView(
                   scrollDirection: Axis.horizontal,
                   child: SingleChildScrollView(
-                    child: RepaintBoundary(
-                      key: _previewKey,
-                      child: Container(
-                        width: 1280,
-                        height: 640,
-                        decoration: BoxDecoration(
-                          color: _backgroundColor,
-                          border: _showBorder ? Border.all(color: Colors.white.withAlpha(50), width: 20) : null,
-                        ),
-                        padding: const EdgeInsets.all(64),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              projectName,
-                              style: GoogleFonts.inter(
-                                fontSize: _titleSize,
-                                fontWeight: FontWeight.w900,
-                                color: _textColor,
-                                height: 1.1,
-                              ),
-                            ),
-                            const SizedBox(height: 32),
-                            Text(
-                              projectDesc,
-                              style: GoogleFonts.inter(
-                                fontSize: _descSize,
-                                fontWeight: FontWeight.w500,
-                                color: _textColor.withAlpha(200),
-                              ),
-                            ),
-                            const Spacer(),
-                            Row(
-                              children: [
-                                Icon(Icons.star, color: _textColor, size: 32),
-                                const SizedBox(width: 12),
-                                Text(
-                                  'Star on GitHub',
-                                  style: GoogleFonts.inter(
-                                    fontSize: 24,
-                                    fontWeight: FontWeight.bold,
-                                    color: _textColor,
-                                  ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(40.0),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text('1280 x 640 px', style: GoogleFonts.inter(color: Colors.grey, fontSize: 12, fontWeight: FontWeight.w500)),
+                          const SizedBox(height: 8),
+                          Container(
+                            decoration: BoxDecoration(
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withAlpha(50),
+                                  blurRadius: 30,
+                                  offset: const Offset(0, 10),
                                 ),
                               ],
                             ),
-                          ],
-                        ),
+                            child: RepaintBoundary(
+                              key: _previewKey,
+                              child: Container(
+                                width: 1280,
+                                height: 640,
+                                decoration: BoxDecoration(
+                                  color: _backgroundColor,
+                                  border: _showBorder ? Border.all(color: Colors.white.withAlpha(50), width: 20) : null,
+                                ),
+                                padding: const EdgeInsets.all(80),
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      projectName,
+                                      style: GoogleFonts.inter(
+                                        fontSize: _titleSize,
+                                        fontWeight: FontWeight.w900,
+                                        color: _textColor,
+                                        height: 1.1,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 32),
+                                    Text(
+                                      projectDesc,
+                                      style: GoogleFonts.inter(
+                                        fontSize: _descSize,
+                                        fontWeight: FontWeight.w500,
+                                        color: _textColor.withAlpha(200),
+                                      ),
+                                    ),
+                                    const Spacer(),
+                                    Row(
+                                      children: [
+                                        Icon(Icons.star, color: _textColor, size: 32),
+                                        const SizedBox(width: 12),
+                                        Text(
+                                          'Star on GitHub',
+                                          style: GoogleFonts.inter(
+                                            fontSize: 24,
+                                            fontWeight: FontWeight.bold,
+                                            color: _textColor,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ),
@@ -276,5 +252,86 @@ class _SocialPreviewScreenState extends State<SocialPreviewScreen> {
       ),
     );
   }
-}
 
+  Widget _buildColorPickerTile(String label, Color currentColor, Function(Color) onColorChanged) {
+    return InkWell(
+      onTap: () {
+        showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: Text('Pick $label', style: GoogleFonts.inter(fontWeight: FontWeight.bold)),
+            content: SingleChildScrollView(
+              child: ColorPicker(
+                pickerColor: currentColor,
+                onColorChanged: onColorChanged,
+                labelTypes: const [],
+                enableAlpha: false,
+                displayThumbColor: true,
+                paletteType: PaletteType.hueWheel,
+              ),
+            ),
+            actions: [
+              TextButton(
+                child: const Text('Done'),
+                onPressed: () => Navigator.of(context).pop(),
+              ),
+            ],
+          ),
+        );
+      },
+      borderRadius: BorderRadius.circular(8),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+        decoration: BoxDecoration(
+          border: Border.all(color: Colors.grey.withAlpha(50)),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 24,
+              height: 24,
+              decoration: BoxDecoration(
+                color: currentColor,
+                shape: BoxShape.circle,
+                border: Border.all(color: Colors.grey.withAlpha(50)),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Text(label, style: GoogleFonts.inter(fontWeight: FontWeight.w500)),
+            const Spacer(),
+            const Icon(Icons.chevron_right, size: 16, color: Colors.grey),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSlider(String label, double value, double min, double max, Function(double) onChanged) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(label, style: GoogleFonts.inter(fontWeight: FontWeight.w500)),
+            Text('${value.toInt()}px', style: GoogleFonts.inter(color: Colors.grey, fontSize: 12)),
+          ],
+        ),
+        SliderTheme(
+          data: SliderTheme.of(context).copyWith(
+            activeTrackColor: AppColors.primary,
+            thumbColor: AppColors.primary,
+            overlayColor: AppColors.primary.withAlpha(30),
+          ),
+          child: Slider(
+            value: value,
+            min: min,
+            max: max,
+            onChanged: onChanged,
+          ),
+        ),
+      ],
+    );
+  }
+}
