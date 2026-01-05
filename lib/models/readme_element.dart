@@ -402,9 +402,19 @@ class TableElement extends ReadmeElement {
     return TableElement(
       headers: List<String>.from(json['headers']),
       rows: (json['rows'] as List).map((row) => List<String>.from(row)).toList(),
-      alignments: (json['alignments'] as List)
-          .map((e) => ColumnAlignment.values.firstWhere((a) => a.toString() == e))
-          .toList(),
+      alignments: (json['alignments'] as List).map((e) {
+        if (e is int) {
+          if (e >= 0 && e < ColumnAlignment.values.length) {
+            return ColumnAlignment.values[e];
+          }
+          return ColumnAlignment.left;
+        }
+        final str = e.toString();
+        return ColumnAlignment.values.firstWhere(
+          (a) => a.toString() == str || a.name == str,
+          orElse: () => ColumnAlignment.left,
+        );
+      }).toList(),
       id: json['id'],
     );
   }
@@ -632,7 +642,7 @@ class DynamicWidgetElement extends ReadmeElement {
   factory DynamicWidgetElement.fromJson(Map<String, dynamic> json) {
     return DynamicWidgetElement(
       widgetType: DynamicWidgetType.values.firstWhere(
-          (e) => e.toString() == json['widgetType'],
+          (e) => e.toString() == json['widgetType'] || e.name == json['widgetType'],
           orElse: () => DynamicWidgetType.spotify),
       identifier: json['identifier'] ?? '',
       theme: json['theme'] ?? 'default',
