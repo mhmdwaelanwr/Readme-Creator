@@ -142,7 +142,13 @@ class _HomeScreenState extends State<HomeScreen> {
               children: [
                 Icon(Icons.description, color: Theme.of(context).colorScheme.primary),
                 const SizedBox(width: 12),
-                Text(AppLocalizations.of(context)!.appTitle),
+                Flexible(
+                  child: Text(
+                    AppLocalizations.of(context)!.appTitle,
+                    overflow: TextOverflow.ellipsis,
+                    maxLines: 1,
+                  ),
+                ),
               ],
             ),
             actions: isDesktop ? _buildDesktopActions(context) : _buildMobileActions(context),
@@ -231,6 +237,7 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
               IconButton(
                 icon: Icon(provider.showGrid ? Icons.grid_on : Icons.grid_off),
+                color: provider.showGrid ? Colors.blue : null,
                 tooltip: 'Toggle Grid',
                 onPressed: () => provider.toggleGrid(),
               ),
@@ -914,9 +921,12 @@ class _HomeScreenState extends State<HomeScreen> {
                                           ),
                                           TextButton(
                                             onPressed: () {
-                                              provider.restoreSnapshot(index);
+                                              // Close confirm and list first, then perform restore to avoid build-scope rebuild issues
                                               Navigator.pop(context); // Close confirm
                                               Navigator.pop(context); // Close list
+                                              WidgetsBinding.instance.addPostFrameCallback((_) {
+                                                provider.restoreSnapshot(index);
+                                              });
                                             },
                                             child: Text(AppLocalizations.of(context)!.restore),
                                           ),
@@ -929,9 +939,11 @@ class _HomeScreenState extends State<HomeScreen> {
                                   icon: const Icon(Icons.delete, color: Colors.red),
                                   tooltip: AppLocalizations.of(context)!.delete,
                                   onPressed: () {
-                                    provider.deleteSnapshot(index);
                                     Navigator.pop(context);
-                                    _showSnapshotsDialog(context, provider);
+                                    WidgetsBinding.instance.addPostFrameCallback((_) {
+                                      provider.deleteSnapshot(index);
+                                      _showSnapshotsDialog(context, provider);
+                                    });
                                   },
                                 ),
                               ],
@@ -1245,9 +1257,12 @@ $htmlContent
                 ElevatedButton(
                   onPressed: () {
                     if (textController.text.isNotEmpty) {
-                      provider.importMarkdown(textController.text);
+                      final markdownText = textController.text;
                       Navigator.pop(context);
-                      ToastHelper.show(context, AppLocalizations.of(context)!.projectImported); // Reusing projectImported or similar
+                      WidgetsBinding.instance.addPostFrameCallback((_) {
+                        provider.importMarkdown(markdownText);
+                        ToastHelper.show(context, AppLocalizations.of(context)!.projectImported);
+                      });
                     }
                   },
                   child: Text(AppLocalizations.of(context)!.import),
@@ -1350,11 +1365,24 @@ $htmlContent
       children: [
         Text(AppLocalizations.of(context)!.aboutDescription),
         const SizedBox(height: 16),
-        const Text('Built with Flutter & Gemini AI.'),
-        const SizedBox(height: 16),
-        InkWell(
-          child: const Text('View on GitHub', style: TextStyle(color: Colors.blue, decoration: TextDecoration.underline)),
-          onTap: () => launchUrl(Uri.parse('https://github.com/mhmdwaelanwr/Readme-Creator.git')),
+        const SizedBox(height: 12),
+        ListTile(
+          contentPadding: EdgeInsets.zero,
+          leading: const Icon(Icons.developer_mode),
+          title: const Text('Development By Mohamed Anwar'),
+          onTap: () {
+            Navigator.pop(context);
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              showDialog(context: context, builder: (c) => const DeveloperInfoDialog());
+            });
+          },
+        ),
+        const SizedBox(height: 8),
+        ElevatedButton.icon(
+          onPressed: () => launchUrl(Uri.parse('https://github.com/mhmdwaelanwr/Readme-Creator.git')),
+          icon: const Icon(Icons.code),
+          label: const Text('View on GitHub'),
+          style: ElevatedButton.styleFrom(foregroundColor: Colors.white),
         ),
       ],
     );
@@ -1446,10 +1474,14 @@ $htmlContent
                 ),
                 ElevatedButton(
                   onPressed: () {
-                    provider.setGeminiApiKey(apiKeyController.text.trim());
-                    provider.setGitHubToken(githubTokenController.text.trim());
+                    final key = apiKeyController.text.trim();
+                    final token = githubTokenController.text.trim();
                     Navigator.pop(context);
-                    ToastHelper.show(context, AppLocalizations.of(context)!.settingsSaved);
+                    WidgetsBinding.instance.addPostFrameCallback((_) {
+                      provider.setGeminiApiKey(key);
+                      provider.setGitHubToken(token);
+                      ToastHelper.show(context, AppLocalizations.of(context)!.settingsSaved);
+                    });
                   },
                   child: Text(AppLocalizations.of(context)!.save),
                 ),
@@ -1464,7 +1496,7 @@ $htmlContent
   void _showGenerateFromCodebaseDialog(BuildContext context, ProjectProvider provider) {
     final repoUrlController = TextEditingController();
 
-    showDialog(
+    showDialog<void>(
       context: context,
       builder: (context) {
         bool isLoading = false;
@@ -1472,15 +1504,93 @@ $htmlContent
 
         return StatefulBuilder(
           builder: (context, setState) {
+            Future<void> _handleLocalFolder() async {
+              final result = await FilePicker.platform.getDirectoryPath();
+              if (result == null) return;
+
+              setState(() {
+                isLoading = true;
+                statusMessage = AppLocalizations.of(context)!.scanLocalFolder;
+              });
+
+              try {
+                final codeContext = await CodebaseScannerService.scanDirectory(result);
+                if (codeContext.isEmpty) throw Exception('No suitable source code found.');
+
+                setState(() => statusMessage = AppLocalizations.of(context)!.analyzingAI);
+                final apiKey = provider.geminiApiKey;
+                final markdown = await AIService.generateReadmeFromCodebase(codeContext, apiKey: apiKey);
+
+                if (markdown.startsWith('# Error')) throw Exception(markdown);
+
+                if (context.mounted) {
+                  Navigator.pop(context);
+                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                    provider.importMarkdown(markdown);
+                    ToastHelper.show(context, AppLocalizations.of(context)!.readmeGenerated);
+                  });
+                }
+              } catch (e) {
+                if (context.mounted) {
+                  setState(() {
+                    isLoading = false;
+                    statusMessage = '${AppLocalizations.of(context)!.error}: $e';
+                  });
+                  ToastHelper.show(context, '${AppLocalizations.of(context)!.error}: $e', isError: true);
+                }
+              }
+            }
+
+            Future<void> _handleGithubRepo() async {
+              final url = repoUrlController.text.trim();
+              if (url.isEmpty) return;
+
+              setState(() {
+                isLoading = true;
+                statusMessage = AppLocalizations.of(context)!.fetchingRepo;
+              });
+
+              try {
+                final scanner = GitHubScannerService();
+                final token = provider.githubToken;
+                final codeContext = await scanner.scanRepo(url, token: token);
+
+                if (codeContext.isEmpty) throw Exception('No suitable source code found or repo is empty.');
+
+                setState(() => statusMessage = AppLocalizations.of(context)!.analyzingAI);
+                final apiKey = provider.geminiApiKey;
+                final markdown = await AIService.generateReadmeFromCodebase(codeContext, apiKey: apiKey);
+
+                if (markdown.startsWith('# Error')) throw Exception(markdown);
+
+                if (context.mounted) {
+                  Navigator.pop(context);
+                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                    provider.importMarkdown(markdown);
+                    ToastHelper.show(context, AppLocalizations.of(context)!.readmeGenerated);
+                  });
+                }
+              } catch (e) {
+                if (context.mounted) {
+                  setState(() {
+                    isLoading = false;
+                    statusMessage = '${AppLocalizations.of(context)!.error}: $e';
+                  });
+                  ToastHelper.show(context, '${AppLocalizations.of(context)!.error}: $e', isError: true);
+                }
+              }
+            }
+
             return AlertDialog(
               title: Text(AppLocalizations.of(context)!.generateFromCodebase, style: GoogleFonts.inter(fontWeight: FontWeight.bold)),
               content: SizedBox(
-                width: 500,
-                height: 300,
+                width: 520,
+                height: 360,
                 child: DefaultTabController(
                   length: 2,
                   child: Column(
                     children: [
+                      const SizedBox(height: 6),
                       TabBar(
                         labelColor: Colors.blue,
                         tabs: [
@@ -1488,136 +1598,66 @@ $htmlContent
                           Tab(text: AppLocalizations.of(context)!.githubRepo),
                         ],
                       ),
-                      const SizedBox(height: 16),
+                      const SizedBox(height: 12),
                       Expanded(
                         child: isLoading
-                        ? Center(
-                            child: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                const CircularProgressIndicator(),
-                                const SizedBox(height: 16),
-                                Text(statusMessage, style: GoogleFonts.inter(fontStyle: FontStyle.italic), textAlign: TextAlign.center),
-                              ],
-                            ),
-                          )
-                        : TabBarView(
-                          children: [
-                            // Local Folder Tab
-                            Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Text(
-                                  AppLocalizations.of(context)!.scanLocalFolder,
-                                  style: GoogleFonts.inter(),
-                                  textAlign: TextAlign.center,
+                            ? Center(
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    const CircularProgressIndicator(),
+                                    const SizedBox(height: 12),
+                                    Text(statusMessage, style: GoogleFonts.inter(fontStyle: FontStyle.italic), textAlign: TextAlign.center),
+                                  ],
                                 ),
-                                const SizedBox(height: 24),
-                                ElevatedButton.icon(
-                                  icon: const Icon(Icons.folder_open),
-                                  label: Text(AppLocalizations.of(context)!.pickProjectFolder),
-                                  onPressed: () async {
-                                    final result = await FilePicker.platform.getDirectoryPath();
-                                    if (result != null) {
-                                      setState(() {
-                                        isLoading = true;
-                                        statusMessage = AppLocalizations.of(context)!.scanLocalFolder; // Reusing string or should use specific status string
-                                      });
-
-                                      try {
-                                        final codeContext = await CodebaseScannerService.scanDirectory(result);
-                                        if (codeContext.isEmpty) throw Exception('No suitable source code found.');
-
-                                        setState(() => statusMessage = AppLocalizations.of(context)!.analyzingAI);
-                                        final apiKey = provider.geminiApiKey;
-                                        final markdown = await AIService.generateReadmeFromCodebase(codeContext, apiKey: apiKey);
-
-                                        if (markdown.startsWith('# Error')) throw Exception(markdown);
-
-                                        if (context.mounted) {
-                                          provider.importMarkdown(markdown);
-                                          Navigator.pop(context);
-                                          ToastHelper.show(context, AppLocalizations.of(context)!.readmeGenerated);
-                                        }
-                                      } catch (e) {
-                                        if (context.mounted) {
-                                          setState(() {
-                                            isLoading = false;
-                                            statusMessage = '${AppLocalizations.of(context)!.error}: $e';
-                                          });
-                                          ToastHelper.show(context, '${AppLocalizations.of(context)!.error}: $e', isError: true);
-                                        }
-                                      }
-                                    }
-                                  },
-                                ),
-                              ],
-                            ),
-                            // GitHub Repo Tab
-                            Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Text(
-                                  AppLocalizations.of(context)!.scanGithubRepo,
-                                  style: GoogleFonts.inter(),
-                                  textAlign: TextAlign.center,
-                                ),
-                                const SizedBox(height: 16),
-                                TextField(
-                                  controller: repoUrlController,
-                                  decoration: InputDecoration(
-                                    labelText: AppLocalizations.of(context)!.repoUrl,
-                                    hintText: 'https://github.com/username/repo',
-                                    border: const OutlineInputBorder(),
-                                    prefixIcon: const Icon(Icons.link),
+                              )
+                            : TabBarView(
+                                children: [
+                                  // Local folder tab
+                                  Center(
+                                    child: Column(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Text(AppLocalizations.of(context)!.scanLocalFolder, textAlign: TextAlign.center, style: GoogleFonts.inter()),
+                                        const SizedBox(height: 12),
+                                        ElevatedButton.icon(
+                                          icon: const Icon(Icons.folder_open),
+                                          label: Text(AppLocalizations.of(context)!.pickProjectFolder),
+                                          onPressed: _handleLocalFolder,
+                                        ),
+                                      ],
+                                    ),
                                   ),
-                                  style: GoogleFonts.inter(),
-                                ),
-                                const SizedBox(height: 16),
-                                ElevatedButton.icon(
-                                  icon: const Icon(Icons.cloud_download),
-                                  label: Text(AppLocalizations.of(context)!.scanAndGenerate),
-                                  onPressed: () async {
-                                    if (repoUrlController.text.isEmpty) return;
 
-                                    setState(() {
-                                      isLoading = true;
-                                      statusMessage = AppLocalizations.of(context)!.fetchingRepo;
-                                    });
-
-                                    try {
-                                      final scanner = GitHubScannerService();
-                                      final token = provider.githubToken;
-                                      final codeContext = await scanner.scanRepo(repoUrlController.text, token: token);
-
-                                      if (codeContext.isEmpty) throw Exception('No suitable source code found or repo is empty.');
-
-                                      setState(() => statusMessage = AppLocalizations.of(context)!.analyzingAI);
-                                      final apiKey = provider.geminiApiKey;
-                                      final markdown = await AIService.generateReadmeFromCodebase(codeContext, apiKey: apiKey);
-
-                                      if (markdown.startsWith('# Error')) throw Exception(markdown);
-
-                                      if (context.mounted) {
-                                        provider.importMarkdown(markdown);
-                                        Navigator.pop(context);
-                                        ToastHelper.show(context, AppLocalizations.of(context)!.readmeGenerated);
-                                      }
-                                    } catch (e) {
-                                      if (context.mounted) {
-                                        setState(() {
-                                          isLoading = false;
-                                          statusMessage = '${AppLocalizations.of(context)!.error}: $e';
-                                        });
-                                        ToastHelper.show(context, '${AppLocalizations.of(context)!.error}: $e', isError: true);
-                                      }
-                                    }
-                                  },
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
+                                  // GitHub repo tab
+                                  Padding(
+                                    padding: const EdgeInsets.all(8.0),
+                                    child: Column(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      children: [
+                                        Text(AppLocalizations.of(context)!.scanGithubRepo, style: GoogleFonts.inter(), textAlign: TextAlign.center),
+                                        const SizedBox(height: 12),
+                                        TextField(
+                                          controller: repoUrlController,
+                                          decoration: InputDecoration(
+                                            labelText: AppLocalizations.of(context)!.repoUrl,
+                                            hintText: 'https://github.com/username/repo',
+                                            border: const OutlineInputBorder(),
+                                            prefixIcon: const Icon(Icons.link),
+                                          ),
+                                          style: GoogleFonts.inter(),
+                                        ),
+                                        const SizedBox(height: 12),
+                                        ElevatedButton.icon(
+                                          icon: const Icon(Icons.cloud_download),
+                                          label: Text(AppLocalizations.of(context)!.scanAndGenerate),
+                                          onPressed: _handleGithubRepo,
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
                       ),
                     ],
                   ),
@@ -1639,79 +1679,52 @@ $htmlContent
 
   void _showLanguageDialog(BuildContext context, ProjectProvider provider) {
     final languages = [
-      {'code': 'en', 'name': 'English', 'nativeName': 'English'},
-      {'code': 'ar', 'name': 'Arabic', 'nativeName': 'العربية'},
-      {'code': 'de', 'name': 'German', 'nativeName': 'Deutsch'},
-      {'code': 'es', 'name': 'Spanish', 'nativeName': 'Español'},
-      {'code': 'fr', 'name': 'French', 'nativeName': 'Français'},
-      {'code': 'hi', 'name': 'Hindi', 'nativeName': 'हिन्दी'},
-      {'code': 'ja', 'name': 'Japanese', 'nativeName': '日本語'},
-      {'code': 'pt', 'name': 'Portuguese', 'nativeName': 'Português'},
-      {'code': 'ru', 'name': 'Russian', 'nativeName': 'Русский'},
-      {'code': 'zh', 'name': 'Chinese', 'nativeName': '中文'},
+      {'code': 'en', 'name': 'English', 'native': 'English'},
+      {'code': 'ar', 'name': 'Arabic', 'native': 'العربية'},
+      {'code': 'de', 'name': 'German', 'native': 'Deutsch'},
+      {'code': 'es', 'name': 'Spanish', 'native': 'Español'},
+      {'code': 'fr', 'name': 'French', 'native': 'Français'},
+      {'code': 'hi', 'name': 'Hindi', 'native': 'हिन्दी'},
+      {'code': 'ja', 'name': 'Japanese', 'native': '日本語'},
+      {'code': 'pt', 'name': 'Portuguese', 'native': 'Português'},
+      {'code': 'ru', 'name': 'Russian', 'native': 'Русский'},
+      {'code': 'zh', 'name': 'Chinese', 'native': '中文'},
     ];
 
-    showDialog(
+    showDialog<void>(
       context: context,
-      builder: (context) => AlertDialog(
-        title: Text(AppLocalizations.of(context)!.changeLanguage, style: GoogleFonts.inter(fontWeight: FontWeight.bold)),
-        content: SizedBox(
-          width: 300,
-          height: 400,
-          child: ListView(
-            shrinkWrap: true,
-            children: [
-              ListTile(
-                title: Text(AppLocalizations.of(context)!.systemDefault),
-                leading: Radio<String?>(
-                  value: null,
-                  groupValue: provider.locale?.languageCode,
-                  onChanged: (value) {
-                    // Close dialog first, then update provider to avoid rebuilds during modal scope
+      builder: (context) {
+        return AlertDialog(
+          title: Text(AppLocalizations.of(context)!.changeLanguage, style: GoogleFonts.inter(fontWeight: FontWeight.bold)),
+          content: SizedBox(
+            width: 360,
+            height: 420,
+            child: ListView(
+              children: [
+                ListTile(
+                  title: Text(AppLocalizations.of(context)!.systemDefault),
+                  onTap: () {
                     Navigator.pop(context);
                     WidgetsBinding.instance.addPostFrameCallback((_) => provider.setLocale(null));
                   },
                 ),
-                onTap: () {
-                  Navigator.pop(context);
-                  WidgetsBinding.instance.addPostFrameCallback((_) => provider.setLocale(null));
-                },
-              ),
-              const Divider(),
-              ...languages.map((lang) {
-                return ListTile(
+                const Divider(),
+                ...languages.map((lang) => ListTile(
                   title: Text(lang['name']!),
-                  subtitle: Text(lang['nativeName']!),
-                  leading: Radio<String?>(
-                    value: lang['code'],
-                    groupValue: provider.locale?.languageCode,
-                    onChanged: (value) {
-                      // Pop first to avoid triggering widget rebuild inside dialog's build scope
-                      Navigator.pop(context);
-                      WidgetsBinding.instance.addPostFrameCallback((_) => provider.setLocale(Locale(value!)));
-                    },
-                  ),
+                  subtitle: Text(lang['native']!),
                   onTap: () {
                     Navigator.pop(context);
                     WidgetsBinding.instance.addPostFrameCallback((_) => provider.setLocale(Locale(lang['code']!)));
                   },
-                );
-              }).toList(),
-            ],
+                )),
+              ],
+            ),
           ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text(AppLocalizations.of(context)!.close),
-          ),
-        ],
-      ),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(context), child: Text(AppLocalizations.of(context)!.close)),
+          ],
+        );
+      },
     );
   }
 }
-
-
-
-
-

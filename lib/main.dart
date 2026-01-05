@@ -1,3 +1,7 @@
+// Readme Creator
+// Development by: Mohamed Anwar (mhmdwaelanwr)
+// Developer handles / usernames: Mohamed Anwar, anwar, mhmdwaelanwr
+
 import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -45,7 +49,7 @@ class MyApp extends StatelessWidget {
     return Consumer<ProjectProvider>(
       builder: (context, provider, child) {
         return MaterialApp(
-          title: 'Advanced Readme Creator',
+          title: 'Readme Creator',
           localizationsDelegates: const [
             AppLocalizations.delegate,
             GlobalMaterialLocalizations.delegate,

@@ -9,7 +9,7 @@ class AppLocalizationsEn extends AppLocalizations {
   AppLocalizationsEn([String locale = 'en']) : super(locale);
 
   @override
-  String get appTitle => 'Advanced Readme Creator';
+  String get appTitle => 'Readme Creator';
 
   @override
   String get saveToLibrary => 'Save to Library';
@@ -196,6 +196,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get rightsReserved => 'All rights reserved.';
 
   @override
+  String get systemDefault => 'System Default';
+
+  @override
+  String get settingsSaved => 'Settings saved!';
+
+  @override
   String get commonShortcuts => 'Common Shortcuts';
 
   @override
@@ -263,7 +269,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get aboutDescription =>
-      'Advanced Readme Creator is a powerful tool for generating professional README files for your projects.';
+      'Readme Creator is a powerful tool for generating professional README files for your projects. All features work across desktop, mobile and web.';
 
   @override
   String get enterGeminiKey =>
@@ -307,10 +313,4 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get fetchFailed => 'Failed to fetch';
-
-  @override
-  String get settingsSaved => 'Settings saved!';
-
-  @override
-  String get systemDefault => 'System Default';
 }

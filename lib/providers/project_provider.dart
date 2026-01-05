@@ -53,6 +53,22 @@ class ProjectProvider with ChangeNotifier {
   String? get githubToken => _githubToken;
   Locale? get locale => _locale;
 
+  // Helper to call notifyListeners safely after the current frame.
+  void _safeNotify() {
+    try {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        try {
+          notifyListeners();
+        } catch (_) {}
+      });
+    } catch (_) {
+      // Fallback to direct notify if WidgetsBinding is not available for some reason
+      try {
+        notifyListeners();
+      } catch (_) {}
+    }
+  }
+
   ProjectProvider() {
     _loadPreferences();
   }
@@ -106,18 +122,18 @@ class ProjectProvider with ChangeNotifier {
     if (localeCode != null) {
       _locale = Locale(localeCode);
     }
-    notifyListeners();
+    _safeNotify();
   }
 
   void setLocale(Locale? locale) async {
     _locale = locale;
-    notifyListeners();
     final prefs = await SharedPreferences.getInstance();
     if (locale != null) {
       await prefs.setString('locale', locale.languageCode);
     } else {
       await prefs.remove('locale');
     }
+    _safeNotify();
   }
 
   Future<void> _saveState() async {
@@ -237,7 +253,7 @@ class ProjectProvider with ChangeNotifier {
 
       _selectedElementId = null;
       _saveState();
-      notifyListeners();
+      _safeNotify();
     } catch (e) {
       debugPrint('Error importing JSON: $e');
       rethrow;
@@ -255,7 +271,7 @@ class ProjectProvider with ChangeNotifier {
 
       _selectedElementId = null;
       _saveState();
-      notifyListeners();
+      _safeNotify();
     } catch (e) {
       debugPrint('Error importing Markdown: $e');
       rethrow;
@@ -264,15 +280,12 @@ class ProjectProvider with ChangeNotifier {
 
   void toggleTheme() {
     if (_themeMode == ThemeMode.system) {
-      // If system is dark, go light. If system is light, go dark.
-      // We need context to know system brightness, but here we are in provider.
-      // Let's just default to Dark if System, then Light.
       _themeMode = ThemeMode.dark;
     } else {
       _themeMode = _themeMode == ThemeMode.light ? ThemeMode.dark : ThemeMode.light;
     }
     _saveState();
-    notifyListeners();
+    _safeNotify();
   }
 
   ReadmeElement? get selectedElement {
@@ -361,7 +374,7 @@ class ProjectProvider with ChangeNotifier {
     _elements.insert(index, newElement);
     _selectedElementId = newElement.id;
     _saveState();
-    notifyListeners();
+    _safeNotify();
   }
 
   void insertSnippet(int index, Snippet snippet) {
@@ -376,7 +389,7 @@ class ProjectProvider with ChangeNotifier {
       _elements.insert(index, newElement);
       _selectedElementId = newElement.id;
       _saveState();
-      notifyListeners();
+      _safeNotify();
     } catch (e) {
       debugPrint('Error adding snippet: $e');
     }
@@ -389,12 +402,12 @@ class ProjectProvider with ChangeNotifier {
       _selectedElementId = null;
     }
     _saveState();
-    notifyListeners();
+    _safeNotify();
   }
 
   void selectElement(String id) {
     _selectedElementId = id;
-    notifyListeners();
+    _safeNotify();
   }
 
   void reorderElements(int oldIndex, int newIndex) {
@@ -405,7 +418,7 @@ class ProjectProvider with ChangeNotifier {
     final ReadmeElement item = _elements.removeAt(oldIndex);
     _elements.insert(newIndex, item);
     _saveState();
-    notifyListeners();
+    _safeNotify();
   }
 
   void moveElementUp(String id) {
@@ -421,7 +434,7 @@ class ProjectProvider with ChangeNotifier {
       final item = _elements.removeAt(index);
       _elements.insert(index - 1, item);
       _saveState();
-      notifyListeners();
+      _safeNotify();
     }
   }
 
@@ -432,7 +445,7 @@ class ProjectProvider with ChangeNotifier {
       final item = _elements.removeAt(index);
       _elements.insert(index + 1, item);
       _saveState();
-      notifyListeners();
+      _safeNotify();
     }
   }
 
@@ -509,7 +522,7 @@ class ProjectProvider with ChangeNotifier {
       _elements.insert(index + 1, newElement);
       _selectedElementId = newElement.id;
       _saveState();
-      notifyListeners();
+      _safeNotify();
     }
   }
 
@@ -518,52 +531,52 @@ class ProjectProvider with ChangeNotifier {
     _elements.clear();
     _selectedElementId = null;
     _saveState();
-    notifyListeners();
+    _safeNotify();
   }
 
   void updateElement() {
     _saveState();
-    notifyListeners();
+    _safeNotify();
   }
 
   void updateVariable(String key, String value) {
     _recordHistory();
     _variables[key] = value;
     _saveState();
-    notifyListeners();
+    _safeNotify();
   }
 
   void setLicenseType(String type) {
     _recordHistory();
     _licenseType = type;
     _saveState();
-    notifyListeners();
+    _safeNotify();
   }
 
   void setIncludeContributing(bool include) {
     _recordHistory();
     _includeContributing = include;
     _saveState();
-    notifyListeners();
+    _safeNotify();
   }
 
   void setPrimaryColor(Color color) {
     _recordHistory();
     _primaryColor = color;
     _saveState();
-    notifyListeners();
+    _safeNotify();
   }
 
   void setSecondaryColor(Color color) {
     _recordHistory();
     _secondaryColor = color;
     _saveState();
-    notifyListeners();
+    _safeNotify();
   }
 
   void toggleGrid() {
     _showGrid = !_showGrid;
-    notifyListeners();
+    _safeNotify();
   }
 
   void saveSnapshot() {
@@ -573,7 +586,7 @@ class ProjectProvider with ChangeNotifier {
       _snapshots.removeLast();
     }
     _saveState();
-    notifyListeners();
+    _safeNotify();
   }
 
   void restoreSnapshot(int index) {
@@ -586,25 +599,25 @@ class ProjectProvider with ChangeNotifier {
     if (index >= 0 && index < _snapshots.length) {
       _snapshots.removeAt(index);
       _saveState();
-      notifyListeners();
+      _safeNotify();
     }
   }
 
   void setListBullet(String bullet) {
     _listBullet = bullet;
     _saveState();
-    notifyListeners();
+    _safeNotify();
   }
 
   void setSectionSpacing(int spacing) {
     _sectionSpacing = spacing;
     _saveState();
-    notifyListeners();
+    _safeNotify();
   }
 
   void setDeviceMode(DeviceMode mode) {
     _deviceMode = mode;
-    notifyListeners();
+    _safeNotify();
   }
 
   void loadTemplate(ProjectTemplate template) {
@@ -618,41 +631,30 @@ class ProjectProvider with ChangeNotifier {
 
     _selectedElementId = null;
     _saveState();
-    notifyListeners();
+    _safeNotify();
   }
 
   void setExportHtml(bool value) {
     _exportHtml = value;
     _saveState();
-    notifyListeners();
+    _safeNotify();
   }
 
   void setGeminiApiKey(String key) async {
     _geminiApiKey = key;
     _saveState();
-    notifyListeners();
+    _safeNotify();
   }
 
   void setGitHubToken(String token) {
     _githubToken = token;
     _saveState();
-    notifyListeners();
+    _safeNotify();
   }
 
   void addSnippet(Snippet snippet) {
     _recordHistory();
     try {
-      // We should probably generate a new ID for the added element to avoid conflicts if added multiple times
-      // But ReadmeElement.fromJson uses the ID from JSON.
-      // We need to clone it with a new ID.
-      // Since we don't have a cloneWithId method, we can just let it be and rely on the fact that we might want to duplicate it?
-      // No, IDs must be unique for selection.
-      // Let's re-serialize and deserialize but change ID? Or just manually change ID after loading.
-      // But ReadmeElement fields are final? No, they are not final in the subclasses usually?
-      // Let's check ReadmeElement.
-      // ReadmeElement id is final.
-      // So we need to create a copy.
-      // A hacky way: decode, remove 'id', then fromJson. ReadmeElement constructor generates new ID if null.
       final Map<String, dynamic> json = jsonDecode(snippet.elementJson);
       json.remove('id');
       final newElement = ReadmeElement.fromJson(json);
@@ -660,7 +662,7 @@ class ProjectProvider with ChangeNotifier {
       _elements.add(newElement);
       _selectedElementId = newElement.id;
       _saveState();
-      notifyListeners();
+      _safeNotify();
     } catch (e) {
       debugPrint('Error adding snippet: $e');
     }

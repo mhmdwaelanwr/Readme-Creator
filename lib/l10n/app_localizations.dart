@@ -117,7 +117,7 @@ abstract class AppLocalizations {
   /// No description provided for @appTitle.
   ///
   /// In en, this message translates to:
-  /// **'Advanced Readme Creator'**
+  /// **'Readme Creator'**
   String get appTitle;
 
   /// No description provided for @saveToLibrary.
@@ -486,6 +486,18 @@ abstract class AppLocalizations {
   /// **'All rights reserved.'**
   String get rightsReserved;
 
+  /// No description provided for @systemDefault.
+  ///
+  /// In en, this message translates to:
+  /// **'System Default'**
+  String get systemDefault;
+
+  /// No description provided for @settingsSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'Settings saved!'**
+  String get settingsSaved;
+
   /// No description provided for @commonShortcuts.
   ///
   /// In en, this message translates to:
@@ -621,7 +633,7 @@ abstract class AppLocalizations {
   /// No description provided for @aboutDescription.
   ///
   /// In en, this message translates to:
-  /// **'Advanced Readme Creator is a powerful tool for generating professional README files for your projects.'**
+  /// **'Readme Creator is a powerful tool for generating professional README files for your projects. All features work across desktop, mobile and web.'**
   String get aboutDescription;
 
   /// No description provided for @enterGeminiKey.
@@ -701,18 +713,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Failed to fetch'**
   String get fetchFailed;
-
-  /// No description provided for @settingsSaved.
-  ///
-  /// In en, this message translates to:
-  /// **'Settings saved!'**
-  String get settingsSaved;
-
-  /// No description provided for @systemDefault.
-  ///
-  /// In en, this message translates to:
-  /// **'System Default'**
-  String get systemDefault;
 }
 
 class _AppLocalizationsDelegate

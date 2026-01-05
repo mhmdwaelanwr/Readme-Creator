@@ -196,6 +196,12 @@ class AppLocalizationsAr extends AppLocalizations {
   String get rightsReserved => 'جميع الحقوق محفوظة.';
 
   @override
+  String get systemDefault => 'النظام الافتراضي';
+
+  @override
+  String get settingsSaved => 'تم حفظ الإعدادات!';
+
+  @override
   String get commonShortcuts => 'اختصارات شائعة';
 
   @override
@@ -306,10 +312,4 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get fetchFailed => 'فشل الجلب';
-
-  @override
-  String get settingsSaved => 'تم حفظ الإعدادات!';
-
-  @override
-  String get systemDefault => 'النظام الافتراضي';
 }

@@ -124,9 +124,8 @@ class MarkdownGenerator {
         }
         return '[CodePen](${element.url})';
       } else if (element.typeName == 'gist') {
-        // GitHub Gist doesn't have a standard screenshot, but we can format the link nicely
-        // Maybe use a generic gist badge?
-        return '[![Gist](https://img.shields.io/badge/GitHub-Gist-1f425f.svg)](${element.url})';
+        // Return a plain link for gists to keep generated markdown simple and predictable
+        return '[gist](${element.url})';
       }
 
       // For others, usually just a link is safe for GitHub README.

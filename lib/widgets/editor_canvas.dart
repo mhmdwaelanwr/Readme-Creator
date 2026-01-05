@@ -311,22 +311,23 @@ class GridPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = (isDark ? Colors.white : Colors.black).withAlpha(30)
-      ..strokeWidth = 1.5
-      ..strokeCap = StrokeCap.round;
+    final color = isDark ? Colors.white.withAlpha(30) : Colors.black.withAlpha(25);
+    final paintWeak = Paint()..color = color..strokeWidth = 1.0;
+    final paintStrong = Paint()..color = (isDark ? Colors.white : Colors.black).withAlpha(45)..strokeWidth = 1.5;
 
     const double gridSize = 20.0;
-
+    // Draw vertical lines
     for (double x = 0; x < size.width; x += gridSize) {
-      for (double y = 0; y < size.height; y += gridSize) {
-        canvas.drawPoints(PointMode.points, [Offset(x, y)], paint);
-      }
+      canvas.drawLine(Offset(x, 0), Offset(x, size.height), (x % (gridSize * 5) == 0) ? paintStrong : paintWeak);
+    }
+    // Draw horizontal lines
+    for (double y = 0; y < size.height; y += gridSize) {
+      canvas.drawLine(Offset(0, y), Offset(size.width, y), (y % (gridSize * 5) == 0) ? paintStrong : paintWeak);
     }
   }
 
   @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+  bool shouldRepaint(covariant GridPainter oldDelegate) => oldDelegate.isDark != isDark;
 }
 
 class DropZone extends StatefulWidget {
