@@ -659,7 +659,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     tabs: [
                       Tab(text: AppLocalizations.of(context)!.variables),
                       Tab(text: AppLocalizations.of(context)!.license),
-                      Tab(text: AppLocalizations.of(context)!.contributing),
+p''                      const Tab(text: 'Community'),
                       Tab(text: AppLocalizations.of(context)!.colors),
                       Tab(text: AppLocalizations.of(context)!.formatting),
                     ],
@@ -721,18 +721,48 @@ class _HomeScreenState extends State<HomeScreen> {
                           ),
                         ),
 
-                        // Contributing Tab
+                        // Community Tab
                         Padding(
                           padding: const EdgeInsets.all(16),
-                          child: Column(
-                            children: [
-                              SwitchListTile(
-                                title: Text('Include CONTRIBUTING.md', style: GoogleFonts.inter()),
-                                subtitle: Text('Adds a standard contributing guide to the export.', style: GoogleFonts.inter()),
-                                value: provider.includeContributing,
-                                onChanged: (value) => provider.setIncludeContributing(value),
-                              ),
-                            ],
+                          child: SingleChildScrollView(
+                            child: Column(
+                              children: [
+                                SwitchListTile(
+                                  title: Text('Include CONTRIBUTING.md', style: GoogleFonts.inter(fontWeight: FontWeight.bold)),
+                                  subtitle: Text('Adds a standard contributing guide.', style: GoogleFonts.inter(fontSize: 12)),
+                                  value: provider.includeContributing,
+                                  onChanged: (value) => provider.setIncludeContributing(value),
+                                ),
+                                const Divider(),
+                                SwitchListTile(
+                                  title: Text('Include SECURITY.md', style: GoogleFonts.inter(fontWeight: FontWeight.bold)),
+                                  subtitle: Text('Adds a security policy.', style: GoogleFonts.inter(fontSize: 12)),
+                                  value: provider.includeSecurity,
+                                  onChanged: (value) => provider.setIncludeSecurity(value),
+                                ),
+                                const Divider(),
+                                SwitchListTile(
+                                  title: Text('Include SUPPORT.md', style: GoogleFonts.inter(fontWeight: FontWeight.bold)),
+                                  subtitle: Text('Adds support information.', style: GoogleFonts.inter(fontSize: 12)),
+                                  value: provider.includeSupport,
+                                  onChanged: (value) => provider.setIncludeSupport(value),
+                                ),
+                                const Divider(),
+                                SwitchListTile(
+                                  title: Text('Include CODE_OF_CONDUCT.md', style: GoogleFonts.inter(fontWeight: FontWeight.bold)),
+                                  subtitle: Text('Adds a contributor covenant code of conduct.', style: GoogleFonts.inter(fontSize: 12)),
+                                  value: provider.includeCodeOfConduct,
+                                  onChanged: (value) => provider.setIncludeCodeOfConduct(value),
+                                ),
+                                const Divider(),
+                                SwitchListTile(
+                                  title: Text('Include Issue Templates', style: GoogleFonts.inter(fontWeight: FontWeight.bold)),
+                                  subtitle: Text('Adds GitHub issue and PR templates.', style: GoogleFonts.inter(fontSize: 12)),
+                                  value: provider.includeIssueTemplates,
+                                  onChanged: (value) => provider.setIncludeIssueTemplates(value),
+                                ),
+                              ],
+                            ),
                           ),
                         ),
 

@@ -4,6 +4,7 @@ import 'package:markdown/markdown.dart' as md;
 import '../models/readme_element.dart';
 import '../generator/markdown_generator.dart';
 import '../generator/license_generator.dart';
+import '../generator/documentation_generator.dart';
 import '../utils/templates.dart';
 import '../utils/downloader.dart';
 
@@ -13,6 +14,10 @@ class ProjectExporter {
     required Map<String, String> variables,
     required String licenseType,
     required bool includeContributing,
+    bool includeSecurity = false,
+    bool includeSupport = false,
+    bool includeCodeOfConduct = false,
+    bool includeIssueTemplates = false,
     String listBullet = '*',
     int sectionSpacing = 1,
     bool exportHtml = false,
@@ -88,6 +93,27 @@ $htmlContent
         sectionSpacing: sectionSpacing,
       );
       files['CONTRIBUTING.md'] = contributingContent;
+    }
+
+    final email = variables['EMAIL'] ?? 'email@example.com';
+    final discord = variables['DISCORD_LINK'] ?? '';
+
+    if (includeSecurity) {
+      files['SECURITY.md'] = DocumentationGenerator.generateSecurityPolicy(email);
+    }
+
+    if (includeSupport) {
+      files['SUPPORT.md'] = DocumentationGenerator.generateSupport(email, discord);
+    }
+
+    if (includeCodeOfConduct) {
+      files['CODE_OF_CONDUCT.md'] = DocumentationGenerator.generateCodeOfConduct(email);
+    }
+
+    if (includeIssueTemplates) {
+      files['.github/ISSUE_TEMPLATE/bug_report.md'] = DocumentationGenerator.generateBugReportTemplate();
+      files['.github/ISSUE_TEMPLATE/feature_request.md'] = DocumentationGenerator.generateFeatureRequestTemplate();
+      files['.github/PULL_REQUEST_TEMPLATE.md'] = DocumentationGenerator.generatePullRequestTemplate();
     }
 
     // Check for local images

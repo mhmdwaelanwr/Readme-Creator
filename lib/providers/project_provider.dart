@@ -20,6 +20,10 @@ class ProjectProvider with ChangeNotifier {
   };
   String _licenseType = 'None';
   bool _includeContributing = false;
+  bool _includeSecurity = false;
+  bool _includeSupport = false;
+  bool _includeCodeOfConduct = false;
+  bool _includeIssueTemplates = false;
   Color _primaryColor = Colors.blue;
   Color _secondaryColor = Colors.green;
   bool _showGrid = false;
@@ -41,6 +45,10 @@ class ProjectProvider with ChangeNotifier {
   Map<String, String> get variables => _variables;
   String get licenseType => _licenseType;
   bool get includeContributing => _includeContributing;
+  bool get includeSecurity => _includeSecurity;
+  bool get includeSupport => _includeSupport;
+  bool get includeCodeOfConduct => _includeCodeOfConduct;
+  bool get includeIssueTemplates => _includeIssueTemplates;
   Color get primaryColor => _primaryColor;
   Color get secondaryColor => _secondaryColor;
   bool get showGrid => _showGrid;
@@ -109,6 +117,10 @@ class ProjectProvider with ChangeNotifier {
 
     _licenseType = prefs.getString('licenseType') ?? 'None';
     _includeContributing = prefs.getBool('includeContributing') ?? false;
+    _includeSecurity = prefs.getBool('includeSecurity') ?? false;
+    _includeSupport = prefs.getBool('includeSupport') ?? false;
+    _includeCodeOfConduct = prefs.getBool('includeCodeOfConduct') ?? false;
+    _includeIssueTemplates = prefs.getBool('includeIssueTemplates') ?? false;
     _primaryColor = Color(prefs.getInt('primaryColor') ?? Colors.blue.toARGB32());
     _secondaryColor = Color(prefs.getInt('secondaryColor') ?? Colors.green.toARGB32());
     _showGrid = prefs.getBool('showGrid') ?? false;
@@ -168,6 +180,10 @@ class ProjectProvider with ChangeNotifier {
 
     await prefs.setString('licenseType', _licenseType);
     await prefs.setBool('includeContributing', _includeContributing);
+    await prefs.setBool('includeSecurity', _includeSecurity);
+    await prefs.setBool('includeSupport', _includeSupport);
+    await prefs.setBool('includeCodeOfConduct', _includeCodeOfConduct);
+    await prefs.setBool('includeIssueTemplates', _includeIssueTemplates);
     await prefs.setInt('primaryColor', _primaryColor.toARGB32());
     await prefs.setInt('secondaryColor', _secondaryColor.toARGB32());
     await prefs.setBool('showGrid', _showGrid);
@@ -193,6 +209,10 @@ class ProjectProvider with ChangeNotifier {
       'variables': _variables,
       'licenseType': _licenseType,
       'includeContributing': _includeContributing,
+      'includeSecurity': _includeSecurity,
+      'includeSupport': _includeSupport,
+      'includeCodeOfConduct': _includeCodeOfConduct,
+      'includeIssueTemplates': _includeIssueTemplates,
       'primaryColor': _primaryColor.toARGB32(),
       'secondaryColor': _secondaryColor.toARGB32(),
       'showGrid': _showGrid,
@@ -225,6 +245,22 @@ class ProjectProvider with ChangeNotifier {
 
       if (data['includeContributing'] != null) {
         _includeContributing = data['includeContributing'];
+      }
+
+      if (data['includeSecurity'] != null) {
+        _includeSecurity = data['includeSecurity'];
+      }
+
+      if (data['includeSupport'] != null) {
+        _includeSupport = data['includeSupport'];
+      }
+
+      if (data['includeCodeOfConduct'] != null) {
+        _includeCodeOfConduct = data['includeCodeOfConduct'];
+      }
+
+      if (data['includeIssueTemplates'] != null) {
+        _includeIssueTemplates = data['includeIssueTemplates'];
       }
 
       if (data['primaryColor'] != null) {
@@ -553,11 +589,29 @@ class ProjectProvider with ChangeNotifier {
     _safeNotify();
   }
 
-  void setIncludeContributing(bool include) {
-    _recordHistory();
-    _includeContributing = include;
-    _saveState();
-    _safeNotify();
+  void setIncludeContributing(bool value) {
+    _includeContributing = value;
+    notifyListeners();
+  }
+
+  void setIncludeSecurity(bool value) {
+    _includeSecurity = value;
+    notifyListeners();
+  }
+
+  void setIncludeSupport(bool value) {
+    _includeSupport = value;
+    notifyListeners();
+  }
+
+  void setIncludeCodeOfConduct(bool value) {
+    _includeCodeOfConduct = value;
+    notifyListeners();
+  }
+
+  void setIncludeIssueTemplates(bool value) {
+    _includeIssueTemplates = value;
+    notifyListeners();
   }
 
   void setPrimaryColor(Color color) {
