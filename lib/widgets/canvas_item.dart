@@ -6,6 +6,7 @@ import '../models/readme_element.dart';
 import '../providers/library_provider.dart';
 import '../providers/project_provider.dart';
 import 'element_renderer.dart';
+import '../core/constants/app_colors.dart';
 
 class CanvasItem extends StatefulWidget {
   final ReadmeElement element;
@@ -28,6 +29,7 @@ class _CanvasItemState extends State<CanvasItem> {
   Widget build(BuildContext context) {
     final provider = Provider.of<ProjectProvider>(context, listen: false);
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final colorScheme = Theme.of(context).colorScheme;
 
     return MouseRegion(
       onEnter: (_) => setState(() => _isHovered = true),
@@ -36,21 +38,23 @@ class _CanvasItemState extends State<CanvasItem> {
         onTap: () => provider.selectElement(widget.element.id),
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 200),
-          margin: const EdgeInsets.only(bottom: 12),
+          margin: const EdgeInsets.only(bottom: 16),
           decoration: BoxDecoration(
-            color: widget.isSelected ? Colors.blue.withAlpha(10) : Colors.transparent,
+            color: widget.isSelected
+                ? colorScheme.primary.withAlpha(isDark ? 30 : 10)
+                : (_isHovered ? (isDark ? Colors.white.withAlpha(5) : Colors.black.withAlpha(5)) : Colors.transparent),
             border: Border.all(
               color: widget.isSelected
-                  ? Colors.blue
-                  : (_isHovered ? Colors.blue.withAlpha(100) : Colors.transparent),
+                  ? colorScheme.primary
+                  : (_isHovered ? colorScheme.primary.withAlpha(100) : Colors.transparent),
               width: 2,
             ),
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(12),
           ),
           child: Stack(
             children: [
               Padding(
-                padding: const EdgeInsets.all(16.0),
+                padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 16.0),
                 child: ElementRenderer(element: widget.element),
               ),
               if (_isHovered || widget.isSelected)
@@ -62,70 +66,57 @@ class _CanvasItemState extends State<CanvasItem> {
                     duration: const Duration(milliseconds: 200),
                     child: Container(
                       decoration: BoxDecoration(
-                        color: isDark ? Colors.grey[800] : Colors.white,
-                        borderRadius: BorderRadius.circular(20),
+                        color: isDark ? AppColors.canvasBackgroundDark : Colors.white,
+                        borderRadius: BorderRadius.circular(8),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withAlpha(25),
-                            blurRadius: 4,
+                            color: Colors.black.withAlpha(20),
+                            blurRadius: 8,
                             offset: const Offset(0, 2),
                           ),
                         ],
-                        border: Border.all(color: Colors.grey.withAlpha(30)),
+                        border: Border.all(color: isDark ? Colors.white.withAlpha(20) : Colors.grey.withAlpha(30)),
                       ),
-                      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                      padding: const EdgeInsets.all(4),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          IconButton(
-                            icon: const Icon(Icons.arrow_upward, size: 16),
-                            onPressed: () => provider.moveElementUp(widget.element.id),
+                          _buildActionButton(
+                            icon: Icons.arrow_upward,
                             tooltip: 'Move Up',
-                            padding: const EdgeInsets.all(6),
-                            constraints: const BoxConstraints(),
-                            splashRadius: 16,
+                            onPressed: () => provider.moveElementUp(widget.element.id),
+                            colorScheme: colorScheme,
                           ),
-                          IconButton(
-                            icon: const Icon(Icons.arrow_downward, size: 16),
-                            onPressed: () => provider.moveElementDown(widget.element.id),
+                          _buildActionButton(
+                            icon: Icons.arrow_downward,
                             tooltip: 'Move Down',
-                            padding: const EdgeInsets.all(6),
-                            constraints: const BoxConstraints(),
-                            splashRadius: 16,
+                            onPressed: () => provider.moveElementDown(widget.element.id),
+                            colorScheme: colorScheme,
                           ),
                           Container(
                             height: 16,
                             width: 1,
-                            color: Colors.grey.withAlpha(50),
+                            color: isDark ? Colors.white.withAlpha(20) : Colors.grey.withAlpha(30),
                             margin: const EdgeInsets.symmetric(horizontal: 4),
                           ),
-                          IconButton(
-                            icon: const Icon(Icons.copy, size: 16),
-                            onPressed: () => provider.duplicateElement(widget.element.id),
+                          _buildActionButton(
+                            icon: Icons.copy,
                             tooltip: 'Duplicate',
-                            padding: const EdgeInsets.all(6),
-                            constraints: const BoxConstraints(),
-                            splashRadius: 16,
+                            onPressed: () => provider.duplicateElement(widget.element.id),
+                            colorScheme: colorScheme,
                           ),
-                          IconButton(
-                            icon: const Icon(Icons.save_as, size: 16),
-                            onPressed: () => _showSaveSnippetDialog(context, widget.element),
+                          _buildActionButton(
+                            icon: Icons.save_as,
                             tooltip: 'Save as Snippet',
-                            padding: const EdgeInsets.all(6),
-                            constraints: const BoxConstraints(),
-                            splashRadius: 16,
+                            onPressed: () => _showSaveSnippetDialog(context, widget.element),
+                            colorScheme: colorScheme,
                           ),
-                          IconButton(
-                            icon: const Icon(Icons.delete, size: 16, color: Colors.red),
-                            onPressed: () => provider.removeElement(widget.element.id),
+                          _buildActionButton(
+                            icon: Icons.delete_outline,
                             tooltip: 'Delete',
-                            padding: const EdgeInsets.all(6),
-                            constraints: const BoxConstraints(),
-                            splashRadius: 16,
-                          ),
-                          const Padding(
-                            padding: EdgeInsets.symmetric(horizontal: 6.0),
-                            child: Icon(Icons.drag_handle, size: 16, color: Colors.grey),
+                            onPressed: () => provider.removeElement(widget.element.id),
+                            color: AppColors.error,
+                            colorScheme: colorScheme,
                           ),
                         ],
                       ),
@@ -136,6 +127,25 @@ class _CanvasItemState extends State<CanvasItem> {
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildActionButton({
+    required IconData icon,
+    required String tooltip,
+    required VoidCallback onPressed,
+    required ColorScheme colorScheme,
+    Color? color,
+  }) {
+    return IconButton(
+      icon: Icon(icon, size: 16),
+      onPressed: onPressed,
+      tooltip: tooltip,
+      padding: const EdgeInsets.all(6),
+      constraints: const BoxConstraints(),
+      splashRadius: 20,
+      color: color ?? colorScheme.onSurface.withAlpha(180),
+      hoverColor: (color ?? colorScheme.primary).withAlpha(20),
     );
   }
 

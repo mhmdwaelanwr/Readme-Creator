@@ -187,53 +187,85 @@ class EditorCanvas extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Container(
-            padding: const EdgeInsets.all(24),
+            padding: const EdgeInsets.all(32),
             decoration: BoxDecoration(
-              color: colorScheme.primaryContainer.withAlpha(50),
+              color: colorScheme.primary.withAlpha(20),
               shape: BoxShape.circle,
+              border: Border.all(color: colorScheme.primary.withAlpha(50), width: 2),
             ),
-            child: Icon(Icons.drag_indicator, size: 48, color: colorScheme.primary.withAlpha(150)),
+            child: Icon(Icons.add_circle_outline_rounded, size: 64, color: colorScheme.primary),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 32),
           Text(
-            'Drag components here',
+            'Start Building Your README',
             style: GoogleFonts.inter(
-              fontSize: 18,
-              color: colorScheme.onSurface.withAlpha(200),
-              fontWeight: FontWeight.w600,
+              fontSize: 24,
+              color: colorScheme.onSurface,
+              fontWeight: FontWeight.bold,
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 12),
           Text(
-            'Start building your README',
+            'Drag components from the left sidebar\nor choose a template to get started.',
+            textAlign: TextAlign.center,
             style: GoogleFonts.inter(
-              fontSize: 14,
+              fontSize: 16,
               color: colorScheme.onSurface.withAlpha(150),
+              height: 1.5,
             ),
           ),
-          const SizedBox(height: 24),
-          OutlinedButton.icon(
-            icon: const Icon(Icons.file_copy_outlined),
-            label: const Text('Load a Template'),
+          const SizedBox(height: 32),
+          FilledButton.icon(
+            icon: const Icon(Icons.dashboard_customize),
+            label: const Text('Browse Templates'),
+            style: FilledButton.styleFrom(
+              padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 20),
+              textStyle: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w600),
+            ),
             onPressed: () {
               showDialog(
                 context: context,
                 builder: (context) => AlertDialog(
                   title: Text('Choose a Template', style: GoogleFonts.inter(fontWeight: FontWeight.bold)),
                   content: SizedBox(
-                    width: 400,
-                    child: ListView.builder(
-                      shrinkWrap: true,
+                    width: 500,
+                    height: 400,
+                    child: GridView.builder(
+                      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: 2,
+                        crossAxisSpacing: 16,
+                        mainAxisSpacing: 16,
+                        childAspectRatio: 1.5,
+                      ),
                       itemCount: Templates.all.length,
                       itemBuilder: (context, index) {
                         final template = Templates.all[index];
-                        return ListTile(
-                          title: Text(template.name, style: GoogleFonts.inter(fontWeight: FontWeight.w600)),
-                          subtitle: Text(template.description, style: GoogleFonts.inter(fontSize: 12)),
-                          onTap: () {
-                            provider.loadTemplate(template);
-                            Navigator.pop(context);
-                          },
+                        return Card(
+                          clipBehavior: Clip.antiAlias,
+                          child: InkWell(
+                            onTap: () {
+                              provider.loadTemplate(template);
+                              Navigator.pop(context);
+                            },
+                            child: Padding(
+                              padding: const EdgeInsets.all(16.0),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Icon(Icons.article, color: colorScheme.primary),
+                                  const Spacer(),
+                                  Text(template.name, style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 16)),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    template.description,
+                                    style: GoogleFonts.inter(fontSize: 12, color: colorScheme.onSurface.withAlpha(150)),
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
                         );
                       },
                     ),

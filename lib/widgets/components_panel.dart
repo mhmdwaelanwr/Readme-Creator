@@ -5,6 +5,7 @@ import '../models/readme_element.dart';
 import '../providers/library_provider.dart';
 import '../providers/project_provider.dart';
 import '../models/snippet.dart';
+import '../core/constants/app_colors.dart';
 
 class ComponentsPanel extends StatefulWidget {
   const ComponentsPanel({super.key});
@@ -158,14 +159,14 @@ class _ComponentsPanelState extends State<ComponentsPanel> {
 
   Widget _buildSectionHeader(String title, bool isDark) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 12.0, top: 16.0, left: 4.0),
+      padding: const EdgeInsets.only(bottom: 12.0, top: 24.0, left: 4.0),
       child: Text(
         title.toUpperCase(),
         style: GoogleFonts.inter(
           fontSize: 11,
           fontWeight: FontWeight.bold,
-          letterSpacing: 1.2,
-          color: Theme.of(context).colorScheme.onSurface.withAlpha(150),
+          letterSpacing: 1.5,
+          color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight,
         ),
       ),
     );
@@ -173,6 +174,8 @@ class _ComponentsPanelState extends State<ComponentsPanel> {
 
   Widget _buildDraggableItem(BuildContext context, ReadmeElementType type, String label, IconData icon) {
     final colorScheme = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Tooltip(
       message: _getTooltipMessage(type),
       waitDuration: const Duration(milliseconds: 500),
@@ -181,33 +184,24 @@ class _ComponentsPanelState extends State<ComponentsPanel> {
         rootOverlay: true,
         dragAnchorStrategy: pointerDragAnchorStrategy,
         feedback: Material(
-          elevation: 8.0,
-          borderRadius: BorderRadius.circular(16),
+          elevation: 12.0,
+          borderRadius: BorderRadius.circular(12),
           color: Colors.transparent,
+          shadowColor: Colors.black.withAlpha(100),
           child: Container(
-            width: 240,
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+            width: 220,
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
             decoration: BoxDecoration(
-              color: colorScheme.surface,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: colorScheme.primary.withAlpha(100)),
-              boxShadow: [
-                BoxShadow(color: Colors.black.withAlpha(50), blurRadius: 20, offset: const Offset(0, 8)),
-              ],
+              color: isDark ? AppColors.canvasBackgroundDark : Colors.white,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: colorScheme.primary),
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: colorScheme.primaryContainer,
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Icon(icon, color: colorScheme.primary, size: 20),
-                ),
-                const SizedBox(width: 16),
-                Text(label, style: GoogleFonts.inter(fontWeight: FontWeight.w600, fontSize: 15)),
+                Icon(icon, color: colorScheme.primary, size: 20),
+                const SizedBox(width: 12),
+                Text(label, style: GoogleFonts.inter(fontWeight: FontWeight.w600, fontSize: 14, color: isDark ? Colors.white : Colors.black87)),
               ],
             ),
           ),
@@ -215,12 +209,12 @@ class _ComponentsPanelState extends State<ComponentsPanel> {
         child: Container(
           margin: const EdgeInsets.only(bottom: 8.0),
           decoration: BoxDecoration(
-            color: colorScheme.surface,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: colorScheme.outlineVariant.withAlpha(80)),
+            color: isDark ? Colors.white.withAlpha(5) : Colors.white,
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: isDark ? Colors.white.withAlpha(10) : Colors.grey.withAlpha(20)),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withAlpha(5),
+                color: Colors.black.withAlpha(isDark ? 20 : 5),
                 blurRadius: 4,
                 offset: const Offset(0, 2),
               ),
@@ -228,33 +222,26 @@ class _ComponentsPanelState extends State<ComponentsPanel> {
           ),
           child: Material(
             color: Colors.transparent,
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(10),
             child: InkWell(
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(10),
+              hoverColor: colorScheme.primary.withAlpha(10),
               onTap: () {
-                // Optional: Add tap to add functionality if needed, but drag is primary
                 Provider.of<ProjectProvider>(context, listen: false).addElement(type);
               },
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
                 child: Row(
                   children: [
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: colorScheme.primaryContainer.withAlpha(100),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Icon(icon, color: colorScheme.primary, size: 20),
-                    ),
+                    Icon(icon, color: isDark ? Colors.white70 : Colors.black54, size: 20),
                     const SizedBox(width: 12),
                     Expanded(
                       child: Text(
                         label,
-                        style: GoogleFonts.inter(fontWeight: FontWeight.w500, fontSize: 14),
+                        style: GoogleFonts.inter(fontWeight: FontWeight.w500, fontSize: 14, color: isDark ? Colors.white : Colors.black87),
                       ),
                     ),
-                    Icon(Icons.drag_indicator, size: 18, color: colorScheme.onSurfaceVariant.withAlpha(100)),
+                    Icon(Icons.drag_indicator, size: 16, color: isDark ? Colors.white24 : Colors.black26),
                   ],
                 ),
               ),
@@ -266,37 +253,27 @@ class _ComponentsPanelState extends State<ComponentsPanel> {
   }
 
   Widget _buildDraggableSnippet(BuildContext context, Snippet snippet, bool isDark) {
-    final colorScheme = Theme.of(context).colorScheme;
     return Draggable<Snippet>(
       data: snippet,
       feedback: Material(
-        elevation: 8.0,
-        borderRadius: BorderRadius.circular(16),
+        elevation: 12.0,
+        borderRadius: BorderRadius.circular(12),
         color: Colors.transparent,
+        shadowColor: Colors.black.withAlpha(100),
         child: Container(
-          width: 240,
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+          width: 220,
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
           decoration: BoxDecoration(
-            color: colorScheme.surface,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: Colors.green),
-            boxShadow: [
-              BoxShadow(color: Colors.black.withAlpha(50), blurRadius: 20, offset: const Offset(0, 8)),
-            ],
+            color: isDark ? AppColors.canvasBackgroundDark : Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: AppColors.secondary),
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: Colors.green.withAlpha(30),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: const Icon(Icons.content_paste, color: Colors.green, size: 20),
-              ),
-              const SizedBox(width: 16),
-              Expanded(child: Text(snippet.name, style: GoogleFonts.inter(fontWeight: FontWeight.w600), overflow: TextOverflow.ellipsis)),
+              const Icon(Icons.content_paste, color: AppColors.secondary, size: 20),
+              const SizedBox(width: 12),
+              Expanded(child: Text(snippet.name, style: GoogleFonts.inter(fontWeight: FontWeight.w600, fontSize: 14), overflow: TextOverflow.ellipsis)),
             ],
           ),
         ),
@@ -304,12 +281,12 @@ class _ComponentsPanelState extends State<ComponentsPanel> {
       child: Container(
         margin: const EdgeInsets.only(bottom: 8.0),
         decoration: BoxDecoration(
-          color: colorScheme.surface,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: colorScheme.outlineVariant.withAlpha(80)),
+          color: isDark ? Colors.white.withAlpha(5) : Colors.white,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: isDark ? Colors.white.withAlpha(10) : Colors.grey.withAlpha(20)),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withAlpha(5),
+              color: Colors.black.withAlpha(isDark ? 20 : 5),
               blurRadius: 4,
               offset: const Offset(0, 2),
             ),
@@ -317,35 +294,31 @@ class _ComponentsPanelState extends State<ComponentsPanel> {
         ),
         child: Material(
           color: Colors.transparent,
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(10),
           child: InkWell(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(10),
+            hoverColor: AppColors.secondary.withAlpha(10),
             onTap: () {
                Provider.of<ProjectProvider>(context, listen: false).addSnippet(snippet);
             },
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
               child: Row(
                 children: [
-                  Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: Colors.green.withAlpha(30),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: const Icon(Icons.content_paste, color: Colors.green, size: 20),
-                  ),
+                  const Icon(Icons.content_paste, color: AppColors.secondary, size: 20),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text(
                       snippet.name,
-                      style: GoogleFonts.inter(fontWeight: FontWeight.w500, fontSize: 14),
+                      style: GoogleFonts.inter(fontWeight: FontWeight.w500, fontSize: 14, color: isDark ? Colors.white : Colors.black87),
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
                   IconButton(
                     icon: const Icon(Icons.delete_outline, size: 18),
-                    color: colorScheme.error,
+                    color: AppColors.error,
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(),
                     onPressed: () {
                       Provider.of<LibraryProvider>(context, listen: false).deleteSnippet(snippet.id);
                     },

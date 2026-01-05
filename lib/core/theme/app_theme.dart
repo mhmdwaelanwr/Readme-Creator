@@ -29,11 +29,24 @@ class AppTheme {
       cardTheme: CardThemeData(
         elevation: 0,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(12),
           side: BorderSide(color: Colors.grey.withAlpha(30)),
         ),
         color: Colors.white,
-        margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+        margin: const EdgeInsets.symmetric(vertical: 6, horizontal: 0),
+        clipBehavior: Clip.antiAlias,
+      ),
+      scrollbarTheme: ScrollbarThemeData(
+        thumbColor: WidgetStateProperty.all(const Color(0xFFCBD5E1)),
+        trackColor: WidgetStateProperty.all(const Color(0xFFF1F5F9)),
+        radius: const Radius.circular(4),
+        thickness: WidgetStateProperty.all(6),
+        thumbVisibility: WidgetStateProperty.all(true),
+      ),
+      dividerTheme: const DividerThemeData(
+        color: Color(0xFFE2E8F0),
+        thickness: 1,
+        space: 1,
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
@@ -101,15 +114,28 @@ class AppTheme {
       cardTheme: CardThemeData(
         elevation: 0,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(12),
           side: BorderSide(color: Colors.white.withAlpha(10)),
         ),
-        color: const Color(0xFF1E293B),
-        margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+        color: const Color(0xFF1E293B), // Slate 800
+        margin: const EdgeInsets.symmetric(vertical: 6, horizontal: 0),
+        clipBehavior: Clip.antiAlias,
+      ),
+      scrollbarTheme: ScrollbarThemeData(
+        thumbColor: WidgetStateProperty.all(const Color(0xFF475569)),
+        trackColor: WidgetStateProperty.all(const Color(0xFF1E293B)),
+        radius: const Radius.circular(4),
+        thickness: WidgetStateProperty.all(6),
+        thumbVisibility: WidgetStateProperty.all(true),
+      ),
+      dividerTheme: const DividerThemeData(
+        color: Color(0xFF334155),
+        thickness: 1,
+        space: 1,
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: const Color(0xFF1E293B),
+        fillColor: const Color(0xFF0F172A), // Slate 900
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide(color: Colors.white.withAlpha(20)),

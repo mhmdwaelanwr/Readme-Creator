@@ -12,6 +12,7 @@ import 'giphy_picker_dialog.dart';
 import '../core/constants/social_platforms.dart';
 import '../core/constants/country_codes.dart';
 import '../services/ai_service.dart';
+import '../utils/debouncer.dart';
 
 class ElementSettingsForm extends StatefulWidget {
   final ReadmeElement element;
@@ -36,7 +37,7 @@ class _ElementSettingsFormState extends State<ElementSettingsForm> {
   late TextEditingController _typeNameController;
 
   String _currentElementId = '';
-  Timer? _debounceTimer;
+  final Debouncer _debouncer = Debouncer(milliseconds: 500);
 
   @override
   void initState() {
@@ -74,7 +75,7 @@ class _ElementSettingsFormState extends State<ElementSettingsForm> {
 
   @override
   void dispose() {
-    _debounceTimer?.cancel();
+    _debouncer.dispose();
     _textController.dispose();
     _urlController.dispose();
     _altTextController.dispose();
@@ -235,10 +236,7 @@ class _ElementSettingsFormState extends State<ElementSettingsForm> {
   }
 
   void _debounceUpdate() {
-    if (_debounceTimer?.isActive ?? false) _debounceTimer!.cancel();
-    _debounceTimer = Timer(const Duration(milliseconds: 500), () {
-      _notifyUpdate();
-    });
+    _debouncer.run(_notifyUpdate);
   }
 
   void _onTextChanged() {

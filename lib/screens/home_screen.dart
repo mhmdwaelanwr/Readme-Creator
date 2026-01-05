@@ -28,6 +28,8 @@ import '../services/health_check_service.dart';
 import '../services/codebase_scanner_service.dart';
 import '../services/github_scanner_service.dart';
 import '../services/ai_service.dart';
+import '../utils/toast_helper.dart';
+import '../utils/debouncer.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -424,13 +426,13 @@ class _HomeScreenState extends State<HomeScreen> {
               if (content != null) {
                 provider.importFromJson(content);
                 if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Project imported successfully')));
+                  ToastHelper.show(context, 'Project imported successfully');
                 }
               }
             }
           } catch (e) {
             if (context.mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error importing: $e')));
+              ToastHelper.show(context, 'Error importing: $e', isError: true);
             }
           }
         } else if (value == 'ai_settings') {
@@ -613,8 +615,9 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  void _showProjectSettingsDialog(BuildContext context, ProjectProvider provider) {
-    showDialog(
+  void _showProjectSettingsDialog(BuildContext context, ProjectProvider provider) async {
+    final debouncer = Debouncer(milliseconds: 500);
+    await showDialog(
       context: context,
       builder: (context) => AlertDialog(
         title: Text('Project Settings', style: GoogleFonts.inter(fontWeight: FontWeight.bold)),
@@ -654,7 +657,11 @@ class _HomeScreenState extends State<HomeScreen> {
                                   border: const OutlineInputBorder(),
                                 ),
                                 style: GoogleFonts.inter(),
-                                onChanged: (value) => provider.updateVariable(entry.key, value),
+                                onChanged: (value) {
+                                  debouncer.run(() {
+                                    provider.updateVariable(entry.key, value);
+                                  });
+                                },
                               ),
                             );
                           }).toList(),
@@ -824,6 +831,7 @@ class _HomeScreenState extends State<HomeScreen> {
         ],
       ),
     );
+    debouncer.dispose();
   }
 
   void _showSnapshotsDialog(BuildContext context, ProjectProvider provider) {
@@ -1016,7 +1024,7 @@ $htmlContent
                 jsonContent: provider.exportToJson(),
               );
               Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Project saved to library')));
+              ToastHelper.show(context, 'Project saved to library');
             },
             child: const Text('Save'),
           ),
@@ -1173,16 +1181,16 @@ $htmlContent
                                           if (response.statusCode == 200) {
                                             textController.text = response.body;
                                             if (context.mounted) {
-                                              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Content fetched! Switch to "Text / File" tab to review.')));
+                                              ToastHelper.show(context, 'Content fetched! Switch to "Text / File" tab to review.');
                                             }
                                           } else {
                                             if (context.mounted) {
-                                              ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to fetch: ${response.statusCode}')));
+                                              ToastHelper.show(context, 'Failed to fetch: ${response.statusCode}', isError: true);
                                             }
                                           }
                                         } catch (e) {
                                           if (context.mounted) {
-                                            ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
+                                            ToastHelper.show(context, 'Error: $e', isError: true);
                                           }
                                         } finally {
                                           if (context.mounted) {
@@ -1211,7 +1219,7 @@ $htmlContent
                     if (textController.text.isNotEmpty) {
                       provider.importMarkdown(textController.text);
                       Navigator.pop(context);
-                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Markdown imported successfully')));
+                      ToastHelper.show(context, 'Markdown imported successfully');
                     }
                   },
                   child: const Text('Import'),
@@ -1432,7 +1440,7 @@ $htmlContent
                     provider.setGeminiApiKey(apiKeyController.text.trim());
                     provider.setGitHubToken(githubTokenController.text.trim());
                     Navigator.pop(context);
-                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Settings saved!')));
+                    ToastHelper.show(context, 'Settings saved!');
                   },
                   child: const Text('Save'),
                 ),
@@ -1520,7 +1528,7 @@ $htmlContent
                                         if (context.mounted) {
                                           provider.importMarkdown(markdown);
                                           Navigator.pop(context);
-                                          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('README generated successfully!')));
+                                          ToastHelper.show(context, 'README generated successfully!');
                                         }
                                       } catch (e) {
                                         if (context.mounted) {
@@ -1528,7 +1536,7 @@ $htmlContent
                                             isLoading = false;
                                             statusMessage = 'Error: $e';
                                           });
-                                          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
+                                          ToastHelper.show(context, 'Error: $e', isError: true);
                                         }
                                       }
                                     }
@@ -1584,7 +1592,7 @@ $htmlContent
                                       if (context.mounted) {
                                         provider.importMarkdown(markdown);
                                         Navigator.pop(context);
-                                        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('README generated successfully!')));
+                                        ToastHelper.show(context, 'README generated successfully!');
                                       }
                                     } catch (e) {
                                       if (context.mounted) {
@@ -1592,7 +1600,7 @@ $htmlContent
                                           isLoading = false;
                                           statusMessage = 'Error: $e';
                                         });
-                                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
+                                        ToastHelper.show(context, 'Error: $e', isError: true);
                                       }
                                     }
                                   },
@@ -1620,11 +1628,5 @@ $htmlContent
     );
   }
 }
-
-
-
-
-
-
 
 
