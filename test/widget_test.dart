@@ -37,7 +37,7 @@ void main() {
     await tester.pumpAndSettle();
 
     // Verify that our title is present.
-    expect(find.text('Advanced Readme Creator'), findsOneWidget);
+    expect(find.text('Readme Creator'), findsOneWidget);
     // Components is now in a Tab, so it should still be found.
     expect(find.text('Components'), findsOneWidget);
 

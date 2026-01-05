@@ -9,6 +9,7 @@ import '../providers/project_provider.dart';
 import '../utils/templates.dart';
 import 'canvas_item.dart';
 import '../core/constants/app_colors.dart';
+import '../utils/dialog_helper.dart';
 
 class EditorCanvas extends StatelessWidget {
   const EditorCanvas({super.key});
@@ -223,8 +224,8 @@ class EditorCanvas extends StatelessWidget {
               textStyle: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w600),
             ),
             onPressed: () {
-              showDialog(
-                context: context,
+              showSafeDialog(
+                context,
                 builder: (context) => AlertDialog(
                   title: Text('Choose a Template', style: GoogleFonts.inter(fontWeight: FontWeight.bold)),
                   content: SizedBox(

@@ -8,6 +8,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../providers/project_provider.dart';
 import '../utils/downloader.dart';
 import '../utils/toast_helper.dart';
+import '../utils/dialog_helper.dart';
 import '../core/constants/app_colors.dart';
 
 class SocialPreviewScreen extends StatefulWidget {
@@ -256,8 +257,8 @@ class _SocialPreviewScreenState extends State<SocialPreviewScreen> {
   Widget _buildColorPickerTile(String label, Color currentColor, Function(Color) onColorChanged) {
     return InkWell(
       onTap: () {
-        showDialog(
-          context: context,
+        showSafeDialog(
+          context,
           builder: (context) => AlertDialog(
             title: Text('Pick $label', style: GoogleFonts.inter(fontWeight: FontWeight.bold)),
             content: SingleChildScrollView(

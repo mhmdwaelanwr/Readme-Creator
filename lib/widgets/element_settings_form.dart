@@ -13,6 +13,7 @@ import '../core/constants/social_platforms.dart';
 import '../core/constants/country_codes.dart';
 import '../services/ai_service.dart';
 import '../utils/debouncer.dart';
+import '../utils/dialog_helper.dart';
 
 class ElementSettingsForm extends StatefulWidget {
   final ReadmeElement element;
@@ -945,8 +946,8 @@ class _ElementSettingsFormState extends State<ElementSettingsForm> {
                     // But for this specific element, it just shows stats.
                     // Let's offer to add the description as a paragraph?
                     if (data['description'] != null) {
-                       showDialog(
-                         context: context,
+                       showSafeDialog(
+                         context,
                          builder: (dialogContext) => AlertDialog(
                            title: const Text('Add Description?'),
                            content: Text(data['description']),
@@ -955,9 +956,6 @@ class _ElementSettingsFormState extends State<ElementSettingsForm> {
                              TextButton(
                                onPressed: () {
                                  Provider.of<ProjectProvider>(context, listen: false).addElement(ReadmeElementType.paragraph);
-                                 // The new element is added at the end. We need to find it and update text.
-                                 // This is a bit hacky. Better to just let user copy paste or have a dedicated "Import" feature.
-                                 // But let's try to update the LAST added element if it is a paragraph.
                                  final provider = Provider.of<ProjectProvider>(context, listen: false);
                                  final last = provider.elements.last;
                                  if (last is ParagraphElement) {

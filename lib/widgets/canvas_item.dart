@@ -7,6 +7,7 @@ import '../providers/library_provider.dart';
 import '../providers/project_provider.dart';
 import 'element_renderer.dart';
 import '../core/constants/app_colors.dart';
+import '../utils/dialog_helper.dart';
 
 class CanvasItem extends StatefulWidget {
   final ReadmeElement element;
@@ -151,8 +152,8 @@ class _CanvasItemState extends State<CanvasItem> {
 
   void _showSaveSnippetDialog(BuildContext context, ReadmeElement element) {
     final nameController = TextEditingController(text: element.description);
-    showDialog(
-      context: context,
+    showSafeDialog(
+      context,
       builder: (context) => AlertDialog(
         title: Text('Save as Snippet', style: GoogleFonts.inter(fontWeight: FontWeight.bold)),
         content: TextField(

@@ -32,6 +32,7 @@ import '../services/ai_service.dart';
 import '../utils/toast_helper.dart';
 import '../utils/debouncer.dart';
 import '../widgets/developer_info_dialog.dart';
+import '../utils/dialog_helper.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -191,8 +192,8 @@ class _HomeScreenState extends State<HomeScreen> {
                 tooltip: 'Templates',
                 icon: const Icon(Icons.file_copy),
                 onSelected: (template) {
-                  showDialog(
-                    context: context,
+                  showSafeDialog(
+                    context,
                     builder: (context) => AlertDialog(
                       title: Text('Load ${template.name}?', style: GoogleFonts.inter()),
                       content: const Text('This will replace your current workspace.'),
@@ -392,8 +393,8 @@ class _HomeScreenState extends State<HomeScreen> {
         } else if (value == 'snapshots') {
           _showSnapshotsDialog(context, provider);
         } else if (value == 'clear_workspace') {
-          showDialog(
-            context: context,
+          showSafeDialog(
+            context,
             builder: (context) => AlertDialog(
               title: const Text('Clear Workspace?'),
               content: const Text('This will remove all elements. This action cannot be undone (unless you have a snapshot).'),
@@ -469,8 +470,8 @@ class _HomeScreenState extends State<HomeScreen> {
         } else if (value == 'shortcuts') {
           _showKeyboardShortcutsDialog(context);
         } else if (value == 'about_dev') {
-          showDialog(
-            context: context,
+          showSafeDialog(
+            context,
             builder: (context) => const DeveloperInfoDialog(),
           );
         } else if (value == 'about') {
@@ -642,8 +643,8 @@ class _HomeScreenState extends State<HomeScreen> {
   void _showProjectSettingsDialog(BuildContext context, ProjectProvider provider) async {
     final debouncer = Debouncer(milliseconds: 500);
 
-    await showDialog<void>(
-      context: context,
+    await showSafeDialog<void>(
+      context,
       builder: (context) {
         // Use a block-style builder to avoid arrow/brace balance issues
         return AlertDialog(
@@ -870,8 +871,8 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _showSnapshotsDialog(BuildContext context, ProjectProvider provider) {
-    showDialog(
-      context: context,
+    showSafeDialog(
+      context,
       builder: (context) => AlertDialog(
         title: Text(AppLocalizations.of(context)!.localSnapshots, style: GoogleFonts.inter(fontWeight: FontWeight.bold)),
         content: SizedBox(
@@ -909,11 +910,11 @@ class _HomeScreenState extends State<HomeScreen> {
                                   icon: const Icon(Icons.restore),
                                   tooltip: AppLocalizations.of(context)!.restore,
                                   onPressed: () {
-                                    showDialog(
-                                      context: context,
+                                    showSafeDialog(
+                                      context,
                                       builder: (context) => AlertDialog(
                                         title: Text('${AppLocalizations.of(context)!.restore} Snapshot?', style: GoogleFonts.inter(fontWeight: FontWeight.bold)),
-                                        content: Text('Current work will be replaced.', style: GoogleFonts.inter()), // Missing l10n key
+                                        content: Text('Current work will be replaced.', style: GoogleFonts.inter()),
                                         actions: [
                                           TextButton(
                                             onPressed: () => Navigator.pop(context),
@@ -921,9 +922,8 @@ class _HomeScreenState extends State<HomeScreen> {
                                           ),
                                           TextButton(
                                             onPressed: () {
-                                              // Close confirm and list first, then perform restore to avoid build-scope rebuild issues
-                                              Navigator.pop(context); // Close confirm
-                                              Navigator.pop(context); // Close list
+                                              Navigator.pop(context); // close confirm
+                                              Navigator.pop(context); // close list
                                               WidgetsBinding.instance.addPostFrameCallback((_) {
                                                 provider.restoreSnapshot(index);
                                               });
@@ -942,7 +942,11 @@ class _HomeScreenState extends State<HomeScreen> {
                                     Navigator.pop(context);
                                     WidgetsBinding.instance.addPostFrameCallback((_) {
                                       provider.deleteSnapshot(index);
-                                      _showSnapshotsDialog(context, provider);
+                                      showSafeDialog(context, builder: (c) => AlertDialog(
+                                        title: Text(AppLocalizations.of(context)!.localSnapshots),
+                                        content: Text('Snapshot deleted.'),
+                                        actions: [TextButton(onPressed: () => Navigator.pop(c), child: Text(AppLocalizations.of(context)!.close))],
+                                      ));
                                     });
                                   },
                                 ),
@@ -1020,8 +1024,8 @@ $htmlContent
     final descController = TextEditingController();
     final tagsController = TextEditingController();
 
-    showDialog(
-      context: context,
+    showSafeDialog(
+      context,
       builder: (context) => AlertDialog(
         title: Text(AppLocalizations.of(context)!.saveToLibrary, style: GoogleFonts.inter(fontWeight: FontWeight.bold)),
         content: SizedBox(
@@ -1074,8 +1078,8 @@ $htmlContent
   }
 
   void _showHealthCheckDialog(BuildContext context, List<HealthIssue> issues, ProjectProvider provider) {
-    showDialog(
-      context: context,
+    showSafeDialog(
+      context,
       builder: (context) => AlertDialog(
         title: Text('Health Check', style: GoogleFonts.inter(fontWeight: FontWeight.bold)), // Missing l10n key
         content: SizedBox(
@@ -1115,8 +1119,8 @@ $htmlContent
     final textController = TextEditingController();
     final urlController = TextEditingController();
 
-    showDialog(
-      context: context,
+    showSafeDialog(
+      context,
       builder: (context) {
         bool isLoading = false;
         return StatefulBuilder(
@@ -1276,8 +1280,8 @@ $htmlContent
   }
 
   void _showKeyboardShortcutsDialog(BuildContext context) {
-    showDialog(
-      context: context,
+    showSafeDialog(
+      context,
       builder: (context) => AlertDialog(
         title: Text(AppLocalizations.of(context)!.keyboardShortcuts, style: GoogleFonts.inter(fontWeight: FontWeight.bold)),
         content: SingleChildScrollView(
@@ -1350,8 +1354,8 @@ $htmlContent
   }
 
   void _showDeveloperInfoDialog(BuildContext context) {
-    showDialog(
-      context: context,
+    showSafeDialog(
+      context,
       builder: (context) => const DeveloperInfoDialog(),
     );
   }
@@ -1373,7 +1377,7 @@ $htmlContent
           onTap: () {
             Navigator.pop(context);
             WidgetsBinding.instance.addPostFrameCallback((_) {
-              showDialog(context: context, builder: (c) => const DeveloperInfoDialog());
+              showSafeDialog(context, builder: (c) => const DeveloperInfoDialog());
             });
           },
         ),
@@ -1394,8 +1398,8 @@ $htmlContent
     bool isObscured = true;
     bool isGithubObscured = true;
 
-    showDialog(
-      context: context,
+    showSafeDialog(
+      context,
       builder: (context) {
         return StatefulBuilder(
           builder: (context, setState) {
@@ -1496,8 +1500,8 @@ $htmlContent
   void _showGenerateFromCodebaseDialog(BuildContext context, ProjectProvider provider) {
     final repoUrlController = TextEditingController();
 
-    showDialog<void>(
-      context: context,
+    showSafeDialog<void>(
+      context,
       builder: (context) {
         bool isLoading = false;
         String statusMessage = '';
@@ -1691,8 +1695,8 @@ $htmlContent
       {'code': 'zh', 'name': 'Chinese', 'native': '中文'},
     ];
 
-    showDialog<void>(
-      context: context,
+    showSafeDialog<void>(
+      context,
       builder: (context) {
         return AlertDialog(
           title: Text(AppLocalizations.of(context)!.changeLanguage, style: GoogleFonts.inter(fontWeight: FontWeight.bold)),

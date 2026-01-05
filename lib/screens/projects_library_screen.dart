@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../providers/library_provider.dart';
 import '../providers/project_provider.dart';
+import '../utils/dialog_helper.dart';
 
 class ProjectsLibraryScreen extends StatefulWidget {
   const ProjectsLibraryScreen({super.key});
@@ -95,8 +96,8 @@ class _ProjectsLibraryScreenState extends State<ProjectsLibraryScreen> {
                         child: InkWell(
                           borderRadius: BorderRadius.circular(12),
                           onTap: () {
-                            showDialog(
-                              context: context,
+                            showSafeDialog(
+                              context,
                               builder: (context) => AlertDialog(
                                 title: Text('Load "${project.name}"?'),
                                 content: const Text('This will replace your current workspace.'),
@@ -135,8 +136,8 @@ class _ProjectsLibraryScreenState extends State<ProjectsLibraryScreen> {
                                       icon: const Icon(Icons.more_vert),
                                       onSelected: (value) {
                                         if (value == 'delete') {
-                                          showDialog(
-                                            context: context,
+                                          showSafeDialog(
+                                            context,
                                             builder: (context) => AlertDialog(
                                               title: const Text('Delete Project?'),
                                               content: Text('Are you sure you want to delete "${project.name}"?'),

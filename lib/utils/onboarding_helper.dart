@@ -18,29 +18,51 @@ class OnboardingHelper {
 
     if (!context.mounted) return;
 
-    final targets = _createTargets(
-      context: context,
-      componentsKey: componentsKey,
-      canvasKey: canvasKey,
-      settingsKey: settingsKey,
-      exportKey: exportKey,
-    );
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      try {
+        final targets = _createTargets(
+          context: context,
+          componentsKey: componentsKey,
+          canvasKey: canvasKey,
+          settingsKey: settingsKey,
+          exportKey: exportKey,
+        );
 
-    TutorialCoachMark(
-      targets: targets,
-      colorShadow: Colors.black,
-      textSkip: "SKIP",
-      paddingFocus: 10,
-      opacityShadow: 0.8,
-      textStyleSkip: GoogleFonts.inter(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
-      onFinish: () {
+        // Ensure all keyTargets are attached before showing the coach mark.
+        final attached = targets.every((t) {
+          final key = t.keyTarget;
+          if (key == null) return false;
+          final ctx = (key as GlobalKey).currentContext;
+          return ctx != null && ctx.findRenderObject() != null;
+        });
+
+        if (!attached) {
+          // If not attached, avoid showing to prevent build-scope errors.
+          prefs.setBool('hasSeenOnboarding', true);
+          return;
+        }
+
+        TutorialCoachMark(
+          targets: targets,
+          colorShadow: Colors.black,
+          textSkip: "SKIP",
+          paddingFocus: 10,
+          opacityShadow: 0.8,
+          textStyleSkip: GoogleFonts.inter(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+          onFinish: () {
+            prefs.setBool('hasSeenOnboarding', true);
+          },
+          onSkip: () {
+            prefs.setBool('hasSeenOnboarding', true);
+            return true;
+          },
+        ).show(context: context);
+      } catch (e, st) {
+        // Don't crash the app if onboarding fails (e.g., due to layout changes after locale change).
+        debugPrint('Onboarding failed: $e\n$st');
         prefs.setBool('hasSeenOnboarding', true);
-      },
-      onSkip: () {
-        prefs.setBool('hasSeenOnboarding', true);
-        return true;
-      },
-    ).show(context: context);
+      }
+    });
   }
 
   static void restartOnboarding({
@@ -50,22 +72,40 @@ class OnboardingHelper {
     required GlobalKey settingsKey,
     required GlobalKey exportKey,
   }) {
-    final targets = _createTargets(
-      context: context,
-      componentsKey: componentsKey,
-      canvasKey: canvasKey,
-      settingsKey: settingsKey,
-      exportKey: exportKey,
-    );
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      try {
+        final targets = _createTargets(
+          context: context,
+          componentsKey: componentsKey,
+          canvasKey: canvasKey,
+          settingsKey: settingsKey,
+          exportKey: exportKey,
+        );
 
-    TutorialCoachMark(
-      targets: targets,
-      colorShadow: Colors.black,
-      textSkip: "SKIP",
-      paddingFocus: 10,
-      opacityShadow: 0.8,
-      textStyleSkip: GoogleFonts.inter(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
-    ).show(context: context);
+        final attached = targets.every((t) {
+          final key = t.keyTarget;
+          if (key == null) return false;
+          final ctx = (key as GlobalKey).currentContext;
+          return ctx != null && ctx.findRenderObject() != null;
+        });
+
+        if (!attached) {
+          debugPrint('Onboarding restart aborted: not all targets attached.');
+          return;
+        }
+
+        TutorialCoachMark(
+          targets: targets,
+          colorShadow: Colors.black,
+          textSkip: "SKIP",
+          paddingFocus: 10,
+          opacityShadow: 0.8,
+          textStyleSkip: GoogleFonts.inter(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+        ).show(context: context);
+      } catch (e, st) {
+        debugPrint('Onboarding restart failed: $e\n$st');
+      }
+    });
   }
 
   static List<TargetFocus> _createTargets({
