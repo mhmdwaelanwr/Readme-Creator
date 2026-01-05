@@ -174,8 +174,7 @@ This project is licensed under the **MIT License**. See the [LICENSE](LICENSE) f
 
 [![Reddit](https://img.shields.io/badge/Reddit-FF4500?style=for-the-badge&logo=reddit&logoColor=white)](https://reddit.com/user/mhmdwaelanwar)
 [![Twitch](https://img.shields.io/badge/Twitch-9146FF?style=for-the-badge&logo=twitch&logoColor=white)](https://twitch.tv/mhmdwaelanwr)
-[![Spotify](https://img.shields.io/badge/Spotify-1DB954?style=plastic&logo=spotify&logoColor=white)](https://open.spotify.com/user/https://discord.gg/eNpUVUzp)
-
+[![Spotify](https://img.shields.io/badge/Spotify-1DB954?style=for-the-badge&logo=spotify&logoColor=white)](https://open.spotify.com/user/https://open.spotify.com/user/31k7r3lakd4q7nzvdaht57vcp37y?si=02930906a0674a20)
 </div>
 
 ---
