@@ -30,6 +30,7 @@ import '../services/github_scanner_service.dart';
 import '../services/ai_service.dart';
 import '../utils/toast_helper.dart';
 import '../utils/debouncer.dart';
+import '../widgets/developer_info_dialog.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -364,8 +365,12 @@ class _HomeScreenState extends State<HomeScreen> {
           child: Row(children: [Icon(Icons.keyboard, color: Colors.grey), SizedBox(width: 8), Text('Keyboard Shortcuts')]),
         ),
         const PopupMenuItem(
+          value: 'about_dev',
+          child: Row(children: [Icon(Icons.person, color: Colors.grey), SizedBox(width: 8), Text('About Developer')]),
+        ),
+        const PopupMenuItem(
           value: 'about',
-          child: Row(children: [Icon(Icons.info_outline, color: Colors.grey), SizedBox(width: 8), Text('About')]),
+          child: Row(children: [Icon(Icons.info_outline, color: Colors.grey), SizedBox(width: 8), Text('About App')]),
         ),
       ],
       onSelected: (value) async {
@@ -449,6 +454,11 @@ class _HomeScreenState extends State<HomeScreen> {
           );
         } else if (value == 'shortcuts') {
           _showKeyboardShortcutsDialog(context);
+        } else if (value == 'about_dev') {
+          showDialog(
+            context: context,
+            builder: (context) => const DeveloperInfoDialog(),
+          );
         } else if (value == 'about') {
           _showAboutDialog(context);
         }
