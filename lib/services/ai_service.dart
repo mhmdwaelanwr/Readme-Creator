@@ -9,13 +9,15 @@ class AIService {
   static Future<String> improveText(String text, {String? apiKey}) async {
     if (apiKey != null && apiKey.isNotEmpty) {
       try {
-        final model = GenerativeModel(model: 'gemini-1.5-flash', apiKey: apiKey);
+        // Using the model version suggested by the user's context
+        final model = GenerativeModel(model: 'gemini-2.5-flash', apiKey: apiKey);
         final content = [Content.text('Improve the following text for a README file, making it more professional and concise:\n\n$text')];
         final response = await model.generateContent(content);
         return response.text ?? text;
       } catch (e) {
         debugPrint('Gemini API Error: $e');
-        return '$text (Error: Could not connect to AI)';
+        // Return the actual error message to help debugging
+        return '$text (Error: ${e.toString().replaceAll('GenerativeAIException: ', '')})';
       }
     }
 
@@ -47,13 +49,13 @@ class AIService {
   static Future<String> generateDescription(String topic, {String? apiKey}) async {
     if (apiKey != null && apiKey.isNotEmpty) {
       try {
-        final model = GenerativeModel(model: 'gemini-1.5-flash', apiKey: apiKey);
+        final model = GenerativeModel(model: 'gemini-2.5-flash', apiKey: apiKey);
         final content = [Content.text('Generate a short, engaging project description for a project about: $topic')];
         final response = await model.generateContent(content);
         return response.text ?? 'Could not generate description.';
       } catch (e) {
         debugPrint('Gemini API Error: $e');
-        return 'Error generating description.';
+        return 'Error: ${e.toString().replaceAll('GenerativeAIException: ', '')}';
       }
     }
 
@@ -70,13 +72,13 @@ class AIService {
   static Future<String> fixGrammar(String text, {String? apiKey}) async {
     if (apiKey != null && apiKey.isNotEmpty) {
       try {
-        final model = GenerativeModel(model: 'gemini-1.5-flash', apiKey: apiKey);
+        final model = GenerativeModel(model: 'gemini-2.5-flash', apiKey: apiKey);
         final content = [Content.text('Fix grammar and spelling in the following text:\n\n$text')];
         final response = await model.generateContent(content);
         return response.text ?? text;
       } catch (e) {
         debugPrint('Gemini API Error: $e');
-        return text;
+        return text; // For grammar, just return original text on error to avoid breaking flow
       }
     }
 
