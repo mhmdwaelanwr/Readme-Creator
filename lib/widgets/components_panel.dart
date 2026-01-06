@@ -1,4 +1,4 @@
-
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -53,6 +53,9 @@ class _ComponentsPanelState extends State<ComponentsPanel> {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final libraryProvider = Provider.of<LibraryProvider>(context);
+
+    // ... (item definitions are outside valid replacement scope if I don't include them, but I will include them to be safe or target after them)
+    // Actually, I'll target the return statement mostly.
 
     final typographyItems = [
       ComponentItem(ReadmeElementType.heading, 'Heading', Icons.title),
@@ -126,83 +129,102 @@ class _ComponentsPanelState extends State<ComponentsPanel> {
 
     return DefaultTabController(
       length: 2,
-      child: Container(
-        color: Theme.of(context).colorScheme.surface,
-        child: Column(
-          children: [
-            const TabBar(
-              tabs: [
-                Tab(text: 'Components'),
-                Tab(text: 'Snippets'),
+      child: ClipRect(
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+          child: Container(
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.surface.withOpacity(0.7),
+              border: Border(right: BorderSide(color: Theme.of(context).dividerColor.withOpacity(0.1))),
+            ),
+            child: Column(
+              children: [
+                Container(
+                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+                  child: TabBar(
+                    labelColor: Theme.of(context).primaryColor,
+                    unselectedLabelColor: Colors.grey,
+                    indicatorColor: Theme.of(context).primaryColor,
+                    indicatorSize: TabBarIndicatorSize.label,
+                    labelStyle: GoogleFonts.poppins(fontWeight: FontWeight.w600),
+                    tabs: const [
+                      Tab(text: 'Components'),
+                      Tab(text: 'Snippets'),
+                    ],
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: TextField(
+                    controller: _searchController,
+                    decoration: InputDecoration(
+                      hintText: 'Search...',
+                      prefixIcon: Icon(Icons.search, color: Theme.of(context).iconTheme.color?.withOpacity(0.5)),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide.none,
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      filled: true,
+                      fillColor: isDark ? Colors.black.withOpacity(0.2) : Colors.grey.withOpacity(0.1),
+                    ),
+                    style: GoogleFonts.inter(),
+                  ),
+                ),
+                Expanded(
+                  child: TabBarView(
+                    children: [
+                      // Components Tab
+                      ListView(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        children: [
+                          _buildFilteredSection('Typography', typographyItems, isDark),
+                          _buildFilteredSection('Media & Links', mediaItems, isDark),
+                          _buildFilteredSection('Structure', structureItems, isDark),
+                          _buildFilteredSection('Advanced', advancedItems, isDark),
+                          const SizedBox(height: 20),
+                        ],
+                      ),
+                      // Snippets Tab
+                      ListView(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        children: [
+                          if (builtInSnippets.isNotEmpty) ...[
+                            _buildSectionHeader('Templates', isDark),
+                            ...builtInSnippets.map((s) => _buildDraggableSnippet(context, s, isDark, isTemplate: true)),
+                            const SizedBox(height: 16),
+                          ],
+                          _buildSectionHeader('My Snippets', isDark),
+                          libraryProvider.snippets.isEmpty
+                              ? Center(
+                                  child: Padding(
+                                    padding: const EdgeInsets.only(top: 32.0),
+                                    child: Column(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      children: [
+                                        Icon(Icons.dashboard_customize, size: 48, color: Theme.of(context).colorScheme.primary.withAlpha(100)),
+                                        const SizedBox(height: 16),
+                                        const Text('No snippets saved.\\nRight-click an element to save.', textAlign: TextAlign.center),
+                                      ],
+                                    ),
+                                  ),
+                                )
+                              : Column(
+                                  children: libraryProvider.snippets.map((snippet) {
+                                    if (_searchQuery.isNotEmpty && !snippet.name.toLowerCase().contains(_searchQuery)) {
+                                      return const SizedBox.shrink();
+                                    }
+                                    return _buildDraggableSnippet(context, snippet, isDark);
+                                  }).toList(),
+                                ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
               ],
             ),
-            Padding(
-              padding: const EdgeInsets.all(12.0),
-              child: TextField(
-                controller: _searchController,
-                decoration: InputDecoration(
-                  hintText: 'Search components...',
-                  prefixIcon: const Icon(Icons.search),
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                  filled: true,
-                  fillColor: isDark ? Colors.grey[800] : Colors.grey[100],
-                ),
-                style: GoogleFonts.inter(),
-              ),
-            ),
-            const Divider(height: 1),
-            Expanded(
-              child: TabBarView(
-                children: [
-                  // Components Tab
-                  ListView(
-                    padding: const EdgeInsets.all(12.0),
-                    children: [
-                      _buildFilteredSection('Typography', typographyItems, isDark),
-                      _buildFilteredSection('Media & Links', mediaItems, isDark),
-                      _buildFilteredSection('Structure', structureItems, isDark),
-                      _buildFilteredSection('Advanced', advancedItems, isDark),
-                    ],
-                  ),
-                  // Snippets Tab
-                  ListView(
-                    padding: const EdgeInsets.all(12.0),
-                    children: [
-                      if (builtInSnippets.isNotEmpty) ...[
-                        _buildSectionHeader('Templates', isDark),
-                        ...builtInSnippets.map((s) => _buildDraggableSnippet(context, s, isDark, isTemplate: true)),
-                        const SizedBox(height: 16),
-                      ],
-                      _buildSectionHeader('My Snippets', isDark),
-                      libraryProvider.snippets.isEmpty
-                          ? Center(
-                              child: Padding(
-                                padding: const EdgeInsets.only(top: 32.0),
-                                child: Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Icon(Icons.dashboard_customize, size: 48, color: Theme.of(context).colorScheme.primary.withAlpha(100)),
-                                    const SizedBox(height: 16),
-                                    const Text('No snippets saved.\nRight-click an element to save.', textAlign: TextAlign.center),
-                                  ],
-                                ),
-                              ),
-                            )
-                          : Column(
-                              children: libraryProvider.snippets.map((snippet) {
-                                if (_searchQuery.isNotEmpty && !snippet.name.toLowerCase().contains(_searchQuery)) {
-                                  return const SizedBox.shrink();
-                                }
-                                return _buildDraggableSnippet(context, snippet, isDark);
-                              }).toList(),
-                            ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          ],
+          ),
         ),
       ),
     );

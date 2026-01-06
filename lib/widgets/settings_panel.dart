@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter/services.dart';
@@ -15,25 +16,41 @@ class SettingsPanel extends StatelessWidget {
     final colorScheme = Theme.of(context).colorScheme;
     return DefaultTabController(
       length: 2,
-      child: Container(
-        color: colorScheme.surface,
-        child: Column(
-          children: [
-            const TabBar(
-              tabs: [
-                Tab(text: 'Settings'),
-                Tab(text: 'Preview'),
+      child: ClipRect(
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+          child: Container(
+            decoration: BoxDecoration(
+              color: colorScheme.surface.withOpacity(0.7),
+              border: Border(left: BorderSide(color: Theme.of(context).dividerColor.withOpacity(0.1))),
+            ),
+            child: Column(
+              children: [
+                Container(
+                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+                  child: TabBar(
+                    labelColor: Theme.of(context).primaryColor,
+                    unselectedLabelColor: Colors.grey,
+                    indicatorColor: Theme.of(context).primaryColor,
+                    indicatorSize: TabBarIndicatorSize.label,
+                    labelStyle: GoogleFonts.poppins(fontWeight: FontWeight.w600),
+                    tabs: const [
+                      Tab(text: 'Settings'),
+                      Tab(text: 'Preview'),
+                    ],
+                  ),
+                ),
+                Expanded(
+                  child: TabBarView(
+                    children: [
+                      _buildSettingsTab(context),
+                      _buildPreviewTab(context),
+                    ],
+                  ),
+                ),
               ],
             ),
-            Expanded(
-              child: TabBarView(
-                children: [
-                  _buildSettingsTab(context),
-                  _buildPreviewTab(context),
-                ],
-              ),
-            ),
-          ],
+          ),
         ),
       ),
     );

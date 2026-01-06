@@ -50,9 +50,10 @@ class EditorCanvas extends StatelessWidget {
           builder: (context, candidateData, rejectedData) {
             final colorScheme = Theme.of(context).colorScheme;
             return Container(
+              // Make background transparent to show HomeScreen gradient
               color: candidateData.isNotEmpty
-                  ? colorScheme.primary.withAlpha(30)
-                  : (isDark ? AppColors.editorBackgroundDark : AppColors.editorBackgroundLight),
+                  ? colorScheme.primary.withAlpha(50)
+                  : Colors.transparent,
               child: Stack(
                 children: [
                   if (provider.showGrid)
