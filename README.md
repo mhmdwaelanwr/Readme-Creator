@@ -25,6 +25,7 @@
 - [🎥 Demo & Screenshots](#-demo--screenshots)
 - [✨ Key Features](#-key-features)
 - [🛠️ Tech Stack](#-tech-stack)
+- [📦 Platform Builds](#-platform-builds)
 - [🚀 Getting Started](#-getting-started)
 - [📖 Usage Guide](#-usage-guide)
 - [🤖 AI & Integrations](#-ai--integrations)
@@ -91,6 +92,19 @@ Built with **Flutter** and **Dart**.
 *   **AI**: Google Generative AI SDK (Gemini)
 *   **Markdown**: `markdown` package, custom generators
 *   **Utils**: `file_picker`, `archive`, `share_plus`, `printing`
+
+## 📦 Platform Builds
+
+Find the specific build and source code for your platform:
+
+| Platform | Repository |
+| :--- | :--- |
+| **🌐 Web** | [Readme-Creator-Web](https://github.com/mhmdwaelanwr/Readme-Creator-Web) |
+| **🪟 Windows** | [Readme-Creator-Windows](https://github.com/mhmdwaelanwr/Readme-Creator-Windows) |
+| **🍏 macOS** | [Readme-Creator-MacOs](https://github.com/mhmdwaelanwr/Readme-Creator-MacOs) |
+| **🐧 Linux** | [Readme-Creator-Linux](https://github.com/mhmdwaelanwr/Readme-Creator-Linux) |
+| **🤖 Android** | [Readme-Creator-Android](https://github.com/mhmdwaelanwr/Readme-Creator-Android) |
+| **🍎 iOS** | [Readme-Creator-IOS](https://github.com/mhmdwaelanwr/Readme-Creator-IOS) |
 
 ## 🚀 Getting Started
 
