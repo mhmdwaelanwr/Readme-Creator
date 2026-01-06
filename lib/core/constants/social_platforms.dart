@@ -19,6 +19,13 @@ class SocialPlatform {
 
 class SocialPlatforms {
   static final Map<String, SocialPlatform> platforms = {
+    'GitHub': SocialPlatform(
+      name: 'GitHub',
+      color: '181717',
+      logo: 'github',
+      icon: FontAwesomeIcons.github,
+      urlBuilder: (username) => 'https://github.com/$username',
+    ),
     'TikTok': SocialPlatform(
       name: 'TikTok',
       color: '000000',
@@ -327,11 +334,13 @@ class SocialPlatforms {
   static String getBadgeUrl(String platform, String style) {
     final p = platforms[platform];
     if (p == null) return '';
-    // Encode label and color
-    final label = Uri.encodeComponent(p.name);
+
+    // Use shields.io static/v1 API which handles encoding reliably
+    final message = Uri.encodeComponent(p.name);
     final color = p.color;
     final logo = p.logo;
-    return 'https://img.shields.io/badge/$label-$color?style=$style&logo=$logo&logoColor=white';
+
+    return 'https://img.shields.io/static/v1?label=&message=$message&color=$color&logo=$logo&logoColor=white&style=$style';
   }
 
   static String getTargetUrl(String platform, String username) {

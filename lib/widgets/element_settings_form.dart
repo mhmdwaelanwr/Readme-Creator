@@ -466,28 +466,19 @@ class _ElementSettingsFormState extends State<ElementSettingsForm> {
   }
 
   void _updateBadgeUrl(BadgeElement e) {
-    // Construct shields.io URL
-    // Format: https://img.shields.io/badge/<LABEL>-<MESSAGE>-<COLOR>
-    // If label is empty: https://img.shields.io/badge/<MESSAGE>-<COLOR>
-    // Parameters need encoding. Dash must be --, Underscore _ is space, Space is space.
-    // Shields.io specifics: https://img.shields.io/badge/Label-Message-Color
+    // Construct shields.io static/v1 URL
+    // Format: https://img.shields.io/static/v1?label=<LABEL>&message=<MESSAGE>&color=<COLOR>
 
-    String safe(String s) => s.replaceAll('-', '--').replaceAll('_', '__').replaceAll(' ', '_');
-
-    String labelPart = e.badgeLabel ?? '';
-    String messagePart = e.badgeMessage ?? '';
+    final labelPart = e.badgeLabel ?? '';
+    final messagePart = e.badgeMessage ?? '';
     String colorPart = e.badgeColor ?? 'blue';
     if (colorPart.isEmpty) colorPart = 'blue';
 
-    String path;
-    if (labelPart.isNotEmpty) {
-      path = '${safe(labelPart)}-${safe(messagePart)}-$colorPart';
-    } else {
-      path = '${safe(messagePart)}-$colorPart';
-    }
-
-    final uri = Uri.parse('https://img.shields.io/badge/$path');
-    final queryParams = <String, String>{};
+    final queryParams = <String, String>{
+      'label': labelPart,
+      'message': messagePart,
+      'color': colorPart,
+    };
 
     if (e.badgeStyle != null && e.badgeStyle!.isNotEmpty) {
       queryParams['style'] = e.badgeStyle!;
@@ -502,9 +493,10 @@ class _ElementSettingsFormState extends State<ElementSettingsForm> {
       queryParams['labelColor'] = e.badgeLabelColor!;
     }
 
-    final finalUri = uri.replace(queryParameters: queryParams.isNotEmpty ? queryParams : null);
-    e.imageUrl = finalUri.toString();
-    _imageUrlController.text = e.imageUrl; // update controller
+    final uri = Uri.https('img.shields.io', '/static/v1', queryParams);
+
+    e.imageUrl = uri.toString();
+    _imageUrlController.text = e.imageUrl;
   }
 
 
@@ -1600,6 +1592,10 @@ class _ElementSettingsFormState extends State<ElementSettingsForm> {
   }
 
   Widget _buildSocialsForm(SocialsElement element) {
+    // Ensure profiles is growable just in case
+    // (though SocialsElement.fromJson creates list from map which is growable usually,
+    // but explicit cast or List.from handles edge cases)
+
     return Column(
       children: [
         InputDecorator(
@@ -1627,12 +1623,26 @@ class _ElementSettingsFormState extends State<ElementSettingsForm> {
           ),
         ),
         const SizedBox(height: 16),
-        Text('Profiles', style: GoogleFonts.inter(fontWeight: FontWeight.bold)),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text('Profiles', style: GoogleFonts.inter(fontWeight: FontWeight.bold)),
+            Text('${element.profiles.length} items', style: GoogleFonts.inter(fontSize: 12, color: Colors.grey)),
+          ],
+        ),
         const SizedBox(height: 8),
+        if (element.profiles.isEmpty)
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Text('No profiles added.', style: GoogleFonts.inter(color: Colors.grey)),
+          ),
         ...element.profiles.asMap().entries.map((entry) {
           final index = entry.key;
           final profile = entry.value;
+          final platformKey = profile.platform;
+
           return Card(
+            key: ObjectKey(profile),
             margin: const EdgeInsets.only(bottom: 8),
             elevation: 0,
             shape: RoundedRectangleBorder(
@@ -1642,6 +1652,7 @@ class _ElementSettingsFormState extends State<ElementSettingsForm> {
             child: Padding(
               padding: const EdgeInsets.all(12.0),
               child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Expanded(
                     child: Column(
@@ -1650,26 +1661,35 @@ class _ElementSettingsFormState extends State<ElementSettingsForm> {
                           decoration: const InputDecoration(labelText: 'Platform', isDense: true, border: OutlineInputBorder()),
                           child: DropdownButtonHideUnderline(
                             child: DropdownButton<String>(
-                              value: SocialPlatforms.platforms.containsKey(profile.platform) ? profile.platform : null,
+                              value: SocialPlatforms.platforms.containsKey(platformKey) ? platformKey : null,
                               isDense: true,
+                              isExpanded: true,
+                              hint: const Text('Select Platform'),
                               items: SocialPlatforms.platforms.keys.map((key) {
-                                final platform = SocialPlatforms.platforms[key];
+                                final p = SocialPlatforms.platforms[key];
+                                Color iconColor = Colors.grey;
+                                if (p != null) {
+                                   try {
+                                     iconColor = Color(int.parse('0xFF${p.color}'));
+                                   } catch(_) {}
+                                }
                                 return DropdownMenuItem(
                                   value: key,
                                   child: Row(
                                     children: [
-                                      if (platform != null) ...[
-                                        Icon(platform.icon, size: 16, color: Color(int.parse('0xFF${platform.color}'))),
+                                      if (p != null) ...[
+                                        Icon(p.icon, size: 16, color: iconColor),
                                         const SizedBox(width: 8),
                                       ],
-                                      Flexible(child: Text(key, style: GoogleFonts.inter(), overflow: TextOverflow.ellipsis)),
+                                      Expanded(child: Text(key, style: GoogleFonts.inter(), overflow: TextOverflow.ellipsis)),
                                     ],
                                   ),
                                 );
                               }).toList(),
                               onChanged: (value) {
-                                if (value != null) {
+                                if (value != null && value != platformKey) {
                                   setState(() {
+                                    // Replace with new profile instance to trigger ObjectKey change
                                     element.profiles[index] = SocialProfile(platform: value, username: profile.username);
                                   });
                                   _notifyUpdate();

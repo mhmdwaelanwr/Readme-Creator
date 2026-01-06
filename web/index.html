@@ -20,6 +20,51 @@
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
   <meta name="description" content="A tool to generate Markdown README files">
 
+  <!-- Open Graph -->
+  <meta property="og:title" content="Readme Creator">
+  <meta property="og:description" content="A tool to generate Markdown README files easily.">
+  <meta property="og:image" content="icons/Icon-192.png">
+  <meta property="og:url" content="https://your-domain.com/">
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Readme Creator">
+  <meta name="twitter:description" content="A tool to generate Markdown README files easily.">
+  <meta name="twitter:image" content="icons/Icon-192.png">
+
+  <!-- Loading Indicator Style -->
+  <style>
+    body {
+      background-color: #0175C2; /* Same as manifest background_color */
+      margin: 0;
+      overflow: hidden; /* Hide scrollbars during loading */
+    }
+    .loader {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      margin: -60px 0 0 -60px; /* Center offset */
+      border: 16px solid #f3f3f3;
+      border-radius: 50%;
+      border-top: 16px solid #3498db;
+      width: 120px;
+      height: 120px;
+      -webkit-animation: spin 2s linear infinite; /* Safari */
+      animation: spin 2s linear infinite;
+    }
+
+    /* Safari */
+    @-webkit-keyframes spin {
+      0% { -webkit-transform: rotate(0deg); }
+      100% { -webkit-transform: rotate(360deg); }
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+  </style>
+
   <!-- iOS meta tags & icons -->
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black">
@@ -33,6 +78,21 @@
   <link rel="manifest" href="manifest.json">
 </head>
 <body>
+  <div class="loader"></div>
+  <noscript>
+    <div style="display: flex; justify-content: center; align-items: center; height: 100vh; color: white; font-family: sans-serif;">
+      <h1>JavaScript is required to run this application.</h1>
+    </div>
+  </noscript>
+  <script>
+    window.addEventListener('flutter-first-frame', function () {
+      var loader = document.querySelector('.loader');
+      if (loader) {
+        loader.remove();
+        document.body.style.overflow = 'auto';
+      }
+    });
+  </script>
   <script src="flutter_bootstrap.js" async></script>
 </body>
 </html>
