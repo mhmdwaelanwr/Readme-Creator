@@ -331,15 +331,35 @@ class SocialPlatforms {
     ),
   };
 
+  static final Set<String> supportedLogos = {
+    'github','tiktok','threads','discord','youtube','facebook','apple','google-play','buymeacoffee','twitch','instagram','linkedin','telegram','gitlab','google-developers','gitea','spotify','snapchat','reddit','paypal','gmail','whatsapp','skype','slack','bluesky','x','mastodon','stackoverflow','medium','patreon','ko-fi','dev.to','kaggle','behance','dribbble','codepen','pinterest','soundcloud','vimeo','leetcode','hackerrank','linktree','question','google','app-store'
+  };
+
   static String getBadgeUrl(String platform, String style) {
-    final p = platforms[platform];
-    if (p == null) return '';
-
-    // Use shields.io static/v1 API which handles encoding reliably
-    final message = Uri.encodeComponent(p.name);
-    final color = p.color;
-    final logo = p.logo;
-
+    // Normalize platform name (case-insensitive, trim, remove extra spaces)
+    String normalized = platform.trim().replaceAll(RegExp(r'\s+'), ' ');
+    // Try all possible cases
+    SocialPlatform? p = platforms[normalized];
+    if (p == null) p = platforms[normalized.toLowerCase()];
+    if (p == null) p = platforms[normalized.toUpperCase()];
+    if (p == null && normalized.isNotEmpty) {
+      String firstUpper = normalized[0].toUpperCase() + normalized.substring(1).toLowerCase();
+      p = platforms[firstUpper];
+    }
+    String logo = p?.logo ?? 'question';
+    // If logo not supported, fallback to 'question'
+    if (!supportedLogos.contains(logo.toLowerCase())) {
+      logo = 'question';
+    }
+    // Ensure logo is URL-safe
+    logo = Uri.encodeComponent(logo);
+    final message = Uri.encodeComponent(p?.name ?? normalized);
+    final color = p?.color ?? 'grey';
+    // If platform not found, return a local badge placeholder for live preview
+    if (p == null) {
+      // Return a special string to indicate local badge in preview
+      return '__local_badge__:' + normalized;
+    }
     return 'https://img.shields.io/static/v1?label=&message=$message&color=$color&logo=$logo&logoColor=white&style=$style';
   }
 
