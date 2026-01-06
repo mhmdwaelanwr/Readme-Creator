@@ -9,7 +9,7 @@ import '../models/readme_element.dart';
 import '../providers/project_provider.dart';
 import '../core/constants/dev_icons.dart';
 import '../services/github_service.dart';
-import 'giphy_picker_dialog.dart';
+import 'dialogs/giphy_picker_dialog.dart';
 import '../core/constants/social_platforms.dart';
 import '../core/constants/country_codes.dart';
 import '../services/ai_service.dart';

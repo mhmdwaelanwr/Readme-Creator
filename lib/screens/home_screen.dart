@@ -4,12 +4,12 @@ import 'package:readme_creator/l10n/app_localizations.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_colorpicker/flutter_colorpicker.dart';
+
 import 'package:provider/provider.dart';
 import 'package:pdf/pdf.dart';
 import 'package:printing/printing.dart';
 import 'package:markdown/markdown.dart' as md;
-import 'package:http/http.dart' as http;
+
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -18,7 +18,7 @@ import '../widgets/components_panel.dart';
 import '../widgets/editor_canvas.dart';
 import '../widgets/settings_panel.dart';
 import '../providers/project_provider.dart';
-import '../providers/library_provider.dart';
+
 import '../utils/templates.dart';
 import '../utils/project_exporter.dart';
 import '../utils/downloader.dart';
@@ -27,15 +27,12 @@ import 'projects_library_screen.dart';
 import 'social_preview_screen.dart';
 import 'github_actions_generator.dart';
 import '../services/health_check_service.dart';
-import '../services/codebase_scanner_service.dart';
-import '../services/github_scanner_service.dart';
-import '../services/ai_service.dart';
-import '../services/github_publisher_service.dart';
+
 import '../utils/toast_helper.dart';
-import '../utils/debouncer.dart';
+
 import '../widgets/developer_info_dialog.dart';
 import '../utils/dialog_helper.dart';
-import '../generator/file_generators.dart';
+
 import 'onboarding_screen.dart';
 import 'gallery_screen.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -47,6 +44,13 @@ import '../widgets/dialogs/import_markdown_dialog.dart';
 import '../widgets/dialogs/generate_codebase_dialog.dart';
 import '../widgets/dialogs/publish_to_github_dialog.dart';
 import '../widgets/dialogs/save_to_library_dialog.dart';
+import '../widgets/dialogs/snapshots_dialog.dart';
+import '../widgets/dialogs/health_check_dialog.dart';
+import '../widgets/dialogs/keyboard_shortcuts_dialog.dart';
+import '../widgets/dialogs/ai_settings_dialog.dart';
+import '../widgets/dialogs/extra_files_dialog.dart';
+import '../widgets/dialogs/language_dialog.dart';
+import '../widgets/dialogs/confirm_dialog.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -222,22 +226,11 @@ class _HomeScreenState extends State<HomeScreen> {
                 onSelected: (template) {
                   showSafeDialog(
                     context,
-                    builder: (context) => AlertDialog(
-                      title: Text('Load ${template.name}?', style: GoogleFonts.inter()),
-                      content: const Text('This will replace your current workspace.'),
-                      actions: [
-                        TextButton(
-                          onPressed: () => Navigator.pop(context),
-                          child: const Text('Cancel'),
-                        ),
-                        TextButton(
-                          onPressed: () {
-                            provider.loadTemplate(template);
-                            Navigator.pop(context);
-                          },
-                          child: const Text('Load'),
-                        ),
-                      ],
+                    builder: (context) => ConfirmDialog(
+                      title: 'Load ${template.name}?',
+                      content: 'This will replace your current workspace.',
+                      confirmText: 'Load',
+                      onConfirm: () => provider.loadTemplate(template),
                     ),
                   );
                 },
@@ -403,23 +396,12 @@ class _HomeScreenState extends State<HomeScreen> {
         } else if (value == 'clear_workspace') {
           showSafeDialog(
             context,
-            builder: (context) => AlertDialog(
-              title: const Text('Clear Workspace?'),
-              content: const Text('This will remove all elements. This action cannot be undone (unless you have a snapshot).'),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: const Text('Cancel'),
-                ),
-                TextButton(
-                  onPressed: () {
-                    provider.clearElements();
-                    Navigator.pop(context);
-                  },
-                  style: TextButton.styleFrom(foregroundColor: Colors.red),
-                  child: const Text('Clear'),
-                ),
-              ],
+            builder: (context) => ConfirmDialog(
+              title: 'Clear Workspace?',
+              content: 'This will remove all elements. This action cannot be undone (unless you have a snapshot).',
+              confirmText: 'Clear',
+              isDestructive: true,
+              onConfirm: () => provider.clearElements(),
             ),
           );
         } else if (value == 'import_markdown') {
@@ -769,99 +751,7 @@ class _HomeScreenState extends State<HomeScreen> {
   void _showSnapshotsDialog(BuildContext context, ProjectProvider provider) {
     showSafeDialog(
       context,
-      builder: (context) => AlertDialog(
-        title: Text(AppLocalizations.of(context)!.localSnapshots, style: GoogleFonts.inter(fontWeight: FontWeight.bold)),
-        content: SizedBox(
-          width: 400,
-          height: 400,
-          child: Column(
-            children: [
-              ElevatedButton.icon(
-                icon: const Icon(Icons.save),
-                label: const Text('Create New Snapshot'), // Missing l10n key, keeping English for now or adding later if critical
-                onPressed: () {
-                  provider.saveSnapshot();
-                  Navigator.pop(context);
-                  _showSnapshotsDialog(context, provider); // Reopen to show new snapshot
-                },
-              ),
-              const Divider(),
-              Expanded(
-                child: provider.snapshots.isEmpty
-                    ? Center(child: Text('No snapshots saved.', style: GoogleFonts.inter())) // Missing l10n key
-                    : ListView.builder(
-                        itemCount: provider.snapshots.length,
-                        itemBuilder: (context, index) {
-                          // We don't have timestamps in the snapshot string currently,
-                          // but we could parse it to show some info, or just show "Snapshot #".
-                          // Since it's a stack, index 0 is latest.
-                          return ListTile(
-                            leading: const Icon(Icons.history),
-                            title: Text('Snapshot ${provider.snapshots.length - index}', style: GoogleFonts.inter()),
-                            subtitle: index == 0 ? Text('Latest', style: GoogleFonts.inter()) : null, // Missing l10n key
-                            trailing: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                IconButton(
-                                  icon: const Icon(Icons.restore),
-                                  tooltip: AppLocalizations.of(context)!.restore,
-                                  onPressed: () {
-                                    showSafeDialog(
-                                      context,
-                                      builder: (context) => AlertDialog(
-                                        title: Text('${AppLocalizations.of(context)!.restore} Snapshot?', style: GoogleFonts.inter(fontWeight: FontWeight.bold)),
-                                        content: Text('Current work will be replaced.', style: GoogleFonts.inter()),
-                                        actions: [
-                                          TextButton(
-                                            onPressed: () => Navigator.pop(context),
-                                            child: Text(AppLocalizations.of(context)!.cancel),
-                                          ),
-                                          TextButton(
-                                            onPressed: () {
-                                              Navigator.pop(context); // close confirm
-                                              Navigator.pop(context); // close list
-                                              WidgetsBinding.instance.addPostFrameCallback((_) {
-                                                provider.restoreSnapshot(index);
-                                              });
-                                            },
-                                            child: Text(AppLocalizations.of(context)!.restore),
-                                          ),
-                                        ],
-                                      ),
-                                    );
-                                  },
-                                ),
-                                IconButton(
-                                  icon: const Icon(Icons.delete, color: Colors.red),
-                                  tooltip: AppLocalizations.of(context)!.delete,
-                                  onPressed: () {
-                                    Navigator.pop(context);
-                                    WidgetsBinding.instance.addPostFrameCallback((_) {
-                                      provider.deleteSnapshot(index);
-                                      showSafeDialog(context, builder: (c) => const AlertDialog(
-                                        title: Text('Snapshot deleted.'),
-                                        content: Text('Snapshot deleted.'),
-                                        actions: [TextButton(onPressed: null, child: Text('Close'))], // Simplified for brevity as this was inside a callback
-                                      ));
-                                    });
-                                  },
-                                ),
-                              ],
-                            ),
-                          );
-                        },
-                      ),
-              ),
-            ],
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text(AppLocalizations.of(context)!.close),
-          ),
-        ],
-      ),
+      builder: (context) => const SnapshotsDialog(),
     );
   }
 
@@ -915,112 +805,16 @@ $htmlContent
   }
 
   void _showSaveToLibraryDialog(BuildContext context, ProjectProvider provider) {
-    final libraryProvider = Provider.of<LibraryProvider>(context, listen: false);
-    final nameController = TextEditingController(text: provider.variables['PROJECT_NAME'] ?? 'My Project');
-    final descController = TextEditingController();
-    final tagsController = TextEditingController();
-
     showSafeDialog(
       context,
-      builder: (context) => StyledDialog(
-        title: DialogHeader(title: AppLocalizations.of(context)!.saveToLibrary, icon: Icons.save_alt, color: Colors.blue),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Save your current project to the local library for quick access later.', style: GoogleFonts.inter(color: Colors.grey)),
-            const SizedBox(height: 24),
-            TextField(
-              controller: nameController,
-              decoration: InputDecoration(
-                labelText: AppLocalizations.of(context)!.projectName,
-                border: const OutlineInputBorder(),
-                prefixIcon: const Icon(Icons.title),
-              ),
-              style: GoogleFonts.inter(),
-            ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: descController,
-              decoration: InputDecoration(
-                labelText: AppLocalizations.of(context)!.description,
-                border: const OutlineInputBorder(),
-                prefixIcon: const Icon(Icons.description),
-              ),
-              style: GoogleFonts.inter(),
-            ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: tagsController,
-              decoration: InputDecoration(
-                labelText: AppLocalizations.of(context)!.tags,
-                hintText: 'flutter, readme, docs',
-                border: const OutlineInputBorder(),
-                prefixIcon: const Icon(Icons.label),
-              ),
-              style: GoogleFonts.inter(),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text(AppLocalizations.of(context)!.cancel),
-          ),
-          FilledButton(
-            onPressed: () {
-              final tags = tagsController.text.split(',').map((e) => e.trim()).where((e) => e.isNotEmpty).toList();
-              libraryProvider.saveProject(
-                name: nameController.text,
-                description: descController.text,
-                tags: tags,
-                jsonContent: provider.exportToJson(),
-              );
-              Navigator.pop(context);
-              ToastHelper.show(context, AppLocalizations.of(context)!.projectSaved);
-            },
-            child: Text(AppLocalizations.of(context)!.save),
-          ),
-        ],
-      ),
+      builder: (context) => const SaveToLibraryDialog(),
     );
   }
 
   void _showHealthCheckDialog(BuildContext context, List<HealthIssue> issues, ProjectProvider provider) {
     showSafeDialog(
       context,
-      builder: (context) => AlertDialog(
-        title: Text('Health Check', style: GoogleFonts.inter(fontWeight: FontWeight.bold)), // Missing l10n key
-        content: SizedBox(
-          width: 400,
-          height: 300,
-          child: ListView.builder(
-            itemCount: issues.length,
-            itemBuilder: (context, index) {
-              final issue = issues[index];
-              return ListTile(
-                leading: Icon(
-                  issue.severity == IssueSeverity.error ? Icons.error : (issue.severity == IssueSeverity.warning ? Icons.warning : Icons.info),
-                  color: issue.severity == IssueSeverity.error ? Colors.red : (issue.severity == IssueSeverity.warning ? Colors.orange : Colors.blue),
-                ),
-                title: Text(issue.message, style: GoogleFonts.inter(fontSize: 14)),
-                trailing: issue.elementId != null
-                    ? IconButton(
-                        icon: const Icon(Icons.arrow_forward),
-                        onPressed: () {
-                          provider.selectElement(issue.elementId!);
-                          Navigator.pop(context);
-                        },
-                      )
-                    : null,
-              );
-            },
-          ),
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: Text(AppLocalizations.of(context)!.close)),
-        ],
-      ),
+      builder: (context) => HealthCheckDialog(issues: issues, provider: provider),
     );
   }
 
@@ -1034,81 +828,7 @@ $htmlContent
   void _showKeyboardShortcutsDialog(BuildContext context) {
     showSafeDialog(
       context,
-      builder: (context) => AlertDialog(
-        title: Text(AppLocalizations.of(context)!.keyboardShortcuts, style: GoogleFonts.inter(fontWeight: FontWeight.bold)),
-        content: SingleChildScrollView(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('${AppLocalizations.of(context)!.commonShortcuts}:', style: GoogleFonts.inter(fontWeight: FontWeight.bold)),
-              const SizedBox(height: 8),
-              _buildShortcutRow(context, AppLocalizations.of(context)!.newProject, 'Ctrl + N', '⌘ + N'),
-              _buildShortcutRow(context, AppLocalizations.of(context)!.openProject, 'Ctrl + O', '⌘ + O'),
-              _buildShortcutRow(context, AppLocalizations.of(context)!.saveProject, 'Ctrl + S', '⌘ + S'),
-              _buildShortcutRow(context, AppLocalizations.of(context)!.exportProject, 'Ctrl + E', '⌘ + E'),
-              _buildShortcutRow(context, AppLocalizations.of(context)!.print, 'Ctrl + P', '⌘ + P'),
-              _buildShortcutRow(context, AppLocalizations.of(context)!.undo, 'Ctrl + Z', '⌘ + Z'),
-              _buildShortcutRow(context, AppLocalizations.of(context)!.redo, 'Ctrl + Y', '⌘ + Y'),
-              _buildShortcutRow(context, AppLocalizations.of(context)!.focusMode, 'F11', 'F11'),
-              _buildShortcutRow(context, AppLocalizations.of(context)!.showPreview, 'Ctrl + Shift + H', '⌘ + Shift + H'),
-              _buildShortcutRow(context, AppLocalizations.of(context)!.toggleGrid, 'Ctrl + G', '⌘ + G'),
-              _buildShortcutRow(context, AppLocalizations.of(context)!.toggleTheme, 'Ctrl + T', '⌘ + T'),
-              _buildShortcutRow(context, AppLocalizations.of(context)!.openSettings, 'Ctrl + ,', '⌘ + ,'),
-              _buildShortcutRow(context, AppLocalizations.of(context)!.help, 'F1', 'F1'),
-              const SizedBox(height: 16),
-              Text('${AppLocalizations.of(context)!.elementShortcuts}:', style: GoogleFonts.inter(fontWeight: FontWeight.bold)),
-              const SizedBox(height: 8),
-              _buildShortcutRow(context, AppLocalizations.of(context)!.addHeading, 'Ctrl + Alt + 1', '⌘ + Option + 1'),
-              _buildShortcutRow(context, AppLocalizations.of(context)!.addSubheading, 'Ctrl + Alt + 2', '⌘ + Option + 2'),
-              _buildShortcutRow(context, AppLocalizations.of(context)!.addParagraph, 'Ctrl + Alt + 3', '⌘ + Option + 3'),
-              _buildShortcutRow(context, AppLocalizations.of(context)!.addImage, 'Ctrl + Alt + I', '⌘ + Option + I'),
-              _buildShortcutRow(context, AppLocalizations.of(context)!.addTable, 'Ctrl + Alt + T', '⌘ + Option + T'),
-              _buildShortcutRow(context, AppLocalizations.of(context)!.addList, 'Ctrl + Alt + L', '⌘ + Option + L'),
-              _buildShortcutRow(context, AppLocalizations.of(context)!.addQuote, 'Ctrl + Alt + Q', '⌘ + Option + Q'),
-              _buildShortcutRow(context, AppLocalizations.of(context)!.addLink, 'Ctrl + Alt + K', '⌘ + Option + K'),
-            ],
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text(AppLocalizations.of(context)!.close),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildShortcutRow(BuildContext context, String label, String windowsKey, String macKey) {
-    final isMac = Theme.of(context).platform == TargetPlatform.macOS;
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Expanded(
-            child: Text(
-              label,
-              overflow: TextOverflow.ellipsis,
-              maxLines: 2,
-            ),
-          ),
-          const SizedBox(width: 8),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-            decoration: BoxDecoration(
-              color: Colors.grey.shade200,
-              borderRadius: BorderRadius.circular(4),
-              border: Border.all(color: Colors.grey.shade300),
-            ),
-            child: Text(
-              isMac ? macKey : windowsKey,
-              style: GoogleFonts.firaCode(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.black87),
-            ),
-          ),
-        ],
-      ),
+      builder: (context) => const KeyboardShortcutsDialog(),
     );
   }
 
@@ -1151,79 +871,12 @@ $htmlContent
     );
   }
 
-    void _showAISettingsDialog(BuildContext context, ProjectProvider provider) {
-    final apiKeyController = TextEditingController(text: provider.geminiApiKey);
-    bool isObscured = true;
-
+  void _showAISettingsDialog(BuildContext context, ProjectProvider provider) {
     showSafeDialog(
       context,
-      builder: (context) {
-        return StatefulBuilder(
-          builder: (context, setState) {
-            return AlertDialog(
-              title: Text(AppLocalizations.of(context)!.aiSettings, style: GoogleFonts.inter(fontWeight: FontWeight.bold)),
-              content: SizedBox(
-                width: 400,
-                child: SingleChildScrollView(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text('Gemini AI', style: GoogleFonts.inter(fontWeight: FontWeight.bold)),
-                      const SizedBox(height: 8),
-                      Text(AppLocalizations.of(context)!.enterGeminiKey, style: GoogleFonts.inter(fontSize: 12)),
-                      const SizedBox(height: 8),
-                      TextField(
-                        controller: apiKeyController,
-                        obscureText: isObscured,
-                        decoration: InputDecoration(
-                          labelText: AppLocalizations.of(context)!.geminiApiKey,
-                          border: const OutlineInputBorder(),
-                          suffixIcon: IconButton(
-                            icon: Icon(isObscured ? Icons.visibility : Icons.visibility_off),
-                            onPressed: () => setState(() => isObscured = !isObscured),
-                          ),
-                        ),
-                        style: GoogleFonts.inter(),
-                      ),
-                      const SizedBox(height: 4),
-                      InkWell(
-                        onTap: () {
-                          launchUrl(Uri.parse('https://aistudio.google.com/app/apikey'));
-                        },
-                        child: Text(
-                          AppLocalizations.of(context)!.getApiKey,
-                          style: GoogleFonts.inter(color: Colors.blue, decoration: TextDecoration.underline, fontSize: 12),
-                        ),
-                      ),
-                      const SizedBox(height: 24),
-                    ],
-                  ),
-                ),
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: Text(AppLocalizations.of(context)!.cancel),
-                ),
-                ElevatedButton(
-                  onPressed: () {
-                    final key = apiKeyController.text.trim();
-                    Navigator.pop(context);
-                    WidgetsBinding.instance.addPostFrameCallback((_) {
-                      provider.setGeminiApiKey(key);
-                      ToastHelper.show(context, AppLocalizations.of(context)!.settingsSaved);
-                    });
-                  },
-                  child: Text(AppLocalizations.of(context)!.save),
-                ),
-              ],
-            );
-          },
-        );
-      },
+      builder: (context) => const AISettingsDialog(),
     );
-    }
+  }
 
   void _showPublishToGitHubDialog(BuildContext context, ProjectProvider provider) {
     showSafeDialog(
@@ -1239,196 +892,17 @@ $htmlContent
     );
   }
 
-    void _showExtraFilesDialog(BuildContext context, ProjectProvider provider) {
+  void _showExtraFilesDialog(BuildContext context, ProjectProvider provider) {
     showSafeDialog(
       context,
-      builder: (context) => AlertDialog(
-        title: Text('Generate Extra Files', style: GoogleFonts.inter(fontWeight: FontWeight.bold)),
-        content: SizedBox(
-          width: 400,
-          child: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                ListTile(
-                  leading: const Icon(Icons.gavel),
-                  title: const Text('LICENSE'),
-                  subtitle: const Text('Generate a standard license file.'),
-                  onTap: () {
-                    Navigator.pop(context);
-                    final content = FileGenerators.generateLicense(provider.licenseType, provider.variables['GITHUB_USERNAME'] ?? 'Author');
-                    downloadTextFile(content, 'LICENSE');
-                  },
-                ),
-                ListTile(
-                  leading: const Icon(Icons.handshake),
-                  title: const Text('CONTRIBUTING.md'),
-                  subtitle: const Text('Guidelines for contributors.'),
-                  onTap: () {
-                    Navigator.pop(context);
-                    final content = FileGenerators.generateContributing(provider.variables);
-                    downloadTextFile(content, 'CONTRIBUTING.md');
-                  },
-                ),
-                ListTile(
-                  leading: const Icon(Icons.security),
-                  title: const Text('SECURITY.md'),
-                  subtitle: const Text('Security policy.'),
-                  onTap: () {
-                    Navigator.pop(context);
-                    final content = FileGenerators.generateSecurity(provider.variables);
-                    downloadTextFile(content, 'SECURITY.md');
-                  },
-                ),
-                ListTile(
-                  leading: const Icon(Icons.rule),
-                  title: const Text('CODE_OF_CONDUCT.md'),
-                  subtitle: const Text('Contributor Covenant Code of Conduct.'),
-                  onTap: () {
-                    Navigator.pop(context);
-                    final content = FileGenerators.generateCodeOfConduct(provider.variables);
-                    downloadTextFile(content, 'CODE_OF_CONDUCT.md');
-                  },
-                ),
-                ListTile(
-                  leading: const Icon(Icons.bug_report),
-                  title: const Text('Issue Templates'),
-                  subtitle: const Text('Bug report and feature request templates.'),
-                  onTap: () {
-                    Navigator.pop(context);
-                    final bugReport = FileGenerators.generateBugReportTemplate();
-                    final featureRequest = FileGenerators.generateFeatureRequestTemplate();
-                    // TODO: Download as zip or separate files. For now, just one example or improve downloader.
-                    downloadTextFile(bugReport, 'bug_report.md');
-                    downloadTextFile(featureRequest, 'feature_request.md');
-                    ToastHelper.show(context, 'Templates downloaded');
-                  },
-                ),
-              ],
-            ),
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Close'),
-          ),
-        ],
-      ),
+      builder: (context) => const ExtraFilesDialog(),
     );
   }
 
   void _showLanguageDialog(BuildContext context, ProjectProvider provider) {
     showSafeDialog(
       context,
-      builder: (context) => AlertDialog(
-        title: Text(AppLocalizations.of(context)!.changeLanguage, style: GoogleFonts.inter(fontWeight: FontWeight.bold)),
-        content: SizedBox(
-          width: 300,
-          child: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                ListTile(
-                  title: const Text('English'),
-                  trailing: provider.locale?.languageCode == 'en' ? const Icon(Icons.check, color: Colors.blue) : null,
-                  onTap: () {
-                    provider.setLocale(const Locale('en'));
-                    Navigator.pop(context);
-                  },
-                ),
-                ListTile(
-                  title: const Text('العربية (Arabic)'),
-                  trailing: provider.locale?.languageCode == 'ar' ? const Icon(Icons.check, color: Colors.blue) : null,
-                  onTap: () {
-                    provider.setLocale(const Locale('ar'));
-                    Navigator.pop(context);
-                  },
-                ),
-                ListTile(
-                  title: const Text('Español (Spanish)'),
-                  trailing: provider.locale?.languageCode == 'es' ? const Icon(Icons.check, color: Colors.blue) : null,
-                  onTap: () {
-                    provider.setLocale(const Locale('es'));
-                    Navigator.pop(context);
-                  },
-                ),
-                ListTile(
-                  title: const Text('Français (French)'),
-                  trailing: provider.locale?.languageCode == 'fr' ? const Icon(Icons.check, color: Colors.blue) : null,
-                  onTap: () {
-                    provider.setLocale(const Locale('fr'));
-                    Navigator.pop(context);
-                  },
-                ),
-                ListTile(
-                  title: const Text('Deutsch (German)'),
-                  trailing: provider.locale?.languageCode == 'de' ? const Icon(Icons.check, color: Colors.blue) : null,
-                  onTap: () {
-                    provider.setLocale(const Locale('de'));
-                    Navigator.pop(context);
-                  },
-                ),
-                ListTile(
-                  title: const Text('हिन्दी (Hindi)'),
-                  trailing: provider.locale?.languageCode == 'hi' ? const Icon(Icons.check, color: Colors.blue) : null,
-                  onTap: () {
-                    provider.setLocale(const Locale('hi'));
-                    Navigator.pop(context);
-                  },
-                ),
-                ListTile(
-                  title: const Text('日本語 (Japanese)'),
-                  trailing: provider.locale?.languageCode == 'ja' ? const Icon(Icons.check, color: Colors.blue) : null,
-                  onTap: () {
-                    provider.setLocale(const Locale('ja'));
-                    Navigator.pop(context);
-                  },
-                ),
-                ListTile(
-                  title: const Text('Português (Portuguese)'),
-                  trailing: provider.locale?.languageCode == 'pt' ? const Icon(Icons.check, color: Colors.blue) : null,
-                  onTap: () {
-                    provider.setLocale(const Locale('pt'));
-                    Navigator.pop(context);
-                  },
-                ),
-                ListTile(
-                  title: const Text('Русский (Russian)'),
-                  trailing: provider.locale?.languageCode == 'ru' ? const Icon(Icons.check, color: Colors.blue) : null,
-                  onTap: () {
-                    provider.setLocale(const Locale('ru'));
-                    Navigator.pop(context);
-                  },
-                ),
-                ListTile(
-                  title: const Text('中文 (Chinese)'),
-                  trailing: provider.locale?.languageCode == 'zh' ? const Icon(Icons.check, color: Colors.blue) : null,
-                  onTap: () {
-                    provider.setLocale(const Locale('zh'));
-                    Navigator.pop(context);
-                  },
-                ),
-                const Divider(),
-                ListTile(
-                  title: const Text('System Default'),
-                  trailing: provider.locale == null ? const Icon(Icons.check, color: Colors.blue) : null,
-                  onTap: () {
-                    provider.setLocale(null);
-                    Navigator.pop(context);
-                  },
-                ),
-              ],
-            ),
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text(AppLocalizations.of(context)!.close),
-          ),
-        ],
-      ),
+      builder: (context) => const LanguageDialog(),
     );
   }
 }

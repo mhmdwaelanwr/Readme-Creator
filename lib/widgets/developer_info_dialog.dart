@@ -4,6 +4,7 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../core/constants/app_colors.dart';
+import '../utils/dialog_helper.dart'; // Added import
 
 class DeveloperInfoDialog extends StatelessWidget {
   const DeveloperInfoDialog({super.key});
@@ -12,43 +13,53 @@ class DeveloperInfoDialog extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    return AlertDialog(
-      title: Row(
-        children: [
-          const Icon(Icons.code, color: AppColors.primary),
-          const SizedBox(width: 12),
-          Text('About Developer', style: GoogleFonts.inter(fontWeight: FontWeight.bold)),
-        ],
+    // Refactored to use StyledDialog
+    return StyledDialog(
+      title: const DialogHeader(
+        title: 'About Developer',
+        icon: Icons.code,
+        color: AppColors.primary,
       ),
-      content: SizedBox(
-        width: 600,
-        height: 500,
-        child: DefaultTabController(
-          length: 3,
-          child: Column(
-            children: [
-              TabBar(
+      width: 600,
+      height: 500,
+      contentPadding: EdgeInsets.zero,
+      content: DefaultTabController(
+        length: 3,
+        child: Column(
+          children: [
+            Container(
+              margin: const EdgeInsets.fromLTRB(24, 0, 24, 16),
+              decoration: BoxDecoration(
+                color: Colors.grey.withAlpha(20),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: TabBar(
                 labelColor: AppColors.primary,
                 unselectedLabelColor: isDark ? Colors.grey : Colors.black54,
-                indicatorColor: AppColors.primary,
+                indicatorSize: TabBarIndicatorSize.tab,
+                indicator: BoxDecoration(
+                  color: AppColors.primary.withAlpha(30),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: AppColors.primary),
+                ),
+                dividerColor: Colors.transparent,
                 tabs: const [
                   Tab(text: 'Socials & Dev'),
                   Tab(text: 'Contact'),
                   Tab(text: 'Support'),
                 ],
               ),
-              const SizedBox(height: 16),
-              Expanded(
-                child: TabBarView(
-                  children: [
-                    _buildSocialsTab(context),
-                    _buildContactTab(context),
-                    _buildSupportTab(context),
-                  ],
-                ),
+            ),
+            Expanded(
+              child: TabBarView(
+                children: [
+                  _buildSocialsTab(context),
+                  _buildContactTab(context),
+                  _buildSupportTab(context),
+                ],
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
       actions: [
