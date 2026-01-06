@@ -24,7 +24,6 @@ import '../utils/project_exporter.dart';
 import '../utils/downloader.dart';
 import '../utils/onboarding_helper.dart';
 import 'projects_library_screen.dart';
-import '../generator/markdown_generator.dart';
 import 'social_preview_screen.dart';
 import 'github_actions_generator.dart';
 import '../services/health_check_service.dart';
@@ -41,6 +40,8 @@ import 'onboarding_screen.dart';
 import 'gallery_screen.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import '../widgets/element_renderer.dart';
+import 'funding_generator_screen.dart';
+import '../generator/markdown_generator.dart'; // Added import
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -376,6 +377,10 @@ class _HomeScreenState extends State<HomeScreen> {
           child: Row(children: [const Icon(Icons.build, color: Colors.grey), const SizedBox(width: 8), Text(AppLocalizations.of(context)!.githubActionsGenerator)]),
         ),
         PopupMenuItem(
+          value: 'funding',
+          child: Row(children: [const Icon(Icons.volunteer_activism, color: Colors.pink), const SizedBox(width: 8), const Text('Funding Generator')]),
+        ),
+        PopupMenuItem(
           value: 'publish_github',
           child: Row(children: [const Icon(Icons.cloud_upload, color: Colors.blue), const SizedBox(width: 8), Text('Publish to GitHub')]),
         ),
@@ -465,6 +470,8 @@ class _HomeScreenState extends State<HomeScreen> {
             context,
             MaterialPageRoute(builder: (context) => const GitHubActionsGenerator()),
           );
+        } else if (value == 'funding') {
+          Navigator.push(context, MaterialPageRoute(builder: (context) => const FundingGeneratorScreen()));
         } else if (value == 'publish_github') {
           _showPublishToGitHubDialog(context, provider);
         } else if (value == 'export_json') {
@@ -2127,3 +2134,5 @@ $htmlContent
     );
   }
 }
+
+
