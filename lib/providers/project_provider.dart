@@ -416,6 +416,24 @@ class ProjectProvider with ChangeNotifier {
     insertElement(_elements.length, type);
   }
 
+  void addElementObject(ReadmeElement element) {
+    _recordHistory();
+    _elements.add(element);
+    _selectedElementId = element.id;
+    _saveState();
+    _safeNotify();
+  }
+
+  void insertElementObject(int index, ReadmeElement element) {
+    _recordHistory();
+    if (index < 0) index = 0;
+    if (index > _elements.length) index = _elements.length;
+    _elements.insert(index, element);
+    _selectedElementId = element.id;
+    _saveState();
+    _safeNotify();
+  }
+
   void insertElement(int index, ReadmeElementType type) {
     _recordHistory();
     final newElement = _createElementByType(type);

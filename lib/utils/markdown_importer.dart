@@ -241,7 +241,11 @@ class MarkdownImporter {
          break;
 
       case 'hr':
-         elements.add(ParagraphElement(text: '---'));
+         elements.add(DividerElement());
+         break;
+
+      case 'details':
+         _parseCollapsible(node, elements);
          break;
 
       default:
@@ -441,6 +445,43 @@ class MarkdownImporter {
     if (headers.isNotEmpty) {
       elements.add(TableElement(headers: headers, rows: rows, alignments: alignments));
     }
+  }
+
+  void _parseCollapsible(md.Element node, List<ReadmeElement> elements) {
+    // Structure: <details><summary>Summary</summary>...content...</details>
+    String summary = 'Click to expand';
+    String content = '';
+
+    if (node.children != null) {
+      for (final child in node.children!) {
+        if (child is md.Element && child.tag == 'summary') {
+          summary = child.textContent;
+        } else {
+          // Collect other content as raw markdown/html
+          // This is tricky because children are Nodes (Text or Element).
+          // We can reconstruct markdown from them.
+          if (content.isNotEmpty) content += '\n\n';
+          if (child is md.Text) {
+            content += child.text;
+          } else if (child is md.Element) {
+             // If we have a nested block, we might lose formatting if we standard textContent.
+             // We need a decent reconstructor.
+             // For simplicity, we grab textContent but that loses bold/links.
+             // Let's use _reconstructMarkdown(child.children) but that handles inline.
+             // If it's a paragraph <p>, we want the text.
+             if (child.tag == 'p' || child.tag == 'div') {
+                content += _reconstructMarkdown(child.children);
+             } else {
+                // Approximate reconstruction or raw html if possible.
+                // Since this is importing, we accept some loss or raw text.
+                content += child.textContent;
+             }
+          }
+        }
+      }
+    }
+
+    elements.add(CollapsibleElement(summary: summary, content: content));
   }
 
   String _reconstructMarkdown(List<md.Node>? nodes) {

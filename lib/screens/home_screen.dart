@@ -39,6 +39,8 @@ import '../utils/dialog_helper.dart';
 import '../generator/file_generators.dart';
 import 'onboarding_screen.dart';
 import 'gallery_screen.dart';
+import 'package:flutter_svg/flutter_svg.dart';
+import '../widgets/element_renderer.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -564,6 +566,26 @@ class _HomeScreenState extends State<HomeScreen> {
                           data: markdown,
                           selectable: true,
                           padding: const EdgeInsets.all(32),
+                          // Use builders instead of deprecated imageBuilder
+                          builders: {
+                             'img': BadgeImageBuilder(builder: (url, {width, height}) {
+                                if (url.contains('img.shields.io') || url.contains('contrib.rocks')) {
+                                  return SvgPicture.network(
+                                    url,
+                                    width: width,
+                                    height: height,
+                                    placeholderBuilder: (_) => const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2)),
+                                  );
+                                }
+                                // Fallback to network image if not shield/svg or let default handler work?
+                                // MarkdownBuilder returns Widget.
+                                return Image.network(url, width: width, height: height, errorBuilder: (_, __, ___) => const SizedBox());
+                             }),
+                          },
+                          // We need to enable HTML to support the <a><img ...></a> structure generated for some elements
+                          // But flutter_markdown has limited HTML support.
+                          // ExtensionSet.gitHubWeb enables common extensions including tables, strikethrough.
+                          extensionSet: md.ExtensionSet.gitHubWeb,
                           styleSheet: MarkdownStyleSheet.fromTheme(Theme.of(context)).copyWith(
                             p: GoogleFonts.inter(fontSize: 16, height: 1.5, color: isDark ? const Color(0xFFC9D1D9) : const Color(0xFF24292F)),
                             h1: GoogleFonts.inter(fontSize: 32, fontWeight: FontWeight.w600, height: 1.25, color: isDark ? const Color(0xFFC9D1D9) : const Color(0xFF24292F)),
@@ -1989,7 +2011,7 @@ $htmlContent
         ],
       ),
     );
-    }
+  }
 
   void _showLanguageDialog(BuildContext context, ProjectProvider provider) {
     showSafeDialog(

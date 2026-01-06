@@ -6,7 +6,6 @@ import '../models/readme_element.dart';
 import '../providers/library_provider.dart';
 import '../providers/project_provider.dart';
 import '../models/snippet.dart';
-import '../core/constants/app_colors.dart';
 
 class ComponentsPanel extends StatefulWidget {
   const ComponentsPanel({super.key});
@@ -209,285 +208,139 @@ class _ComponentsPanelState extends State<ComponentsPanel> {
     );
   }
 
+  Widget _buildDraggableItem(BuildContext context, ReadmeElementType type, String label, IconData icon) {
+    // We can use Draggable for drag and drop to canvas if supported,
+    // OR just InkWell to add on click.
+    // Assuming EditorCanvas handles Droppable or we just add on click.
+    // The previous implementation likely only had InkWell.
+    // Let's make it Draggable AND InkWell.
+    return Draggable<ReadmeElementType>(
+      data: type,
+      feedback: Material(
+        elevation: 4,
+        borderRadius: BorderRadius.circular(8),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          decoration: BoxDecoration(
+            color: Theme.of(context).cardColor,
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon),
+              const SizedBox(width: 8),
+              Text(label, style: GoogleFonts.inter()),
+            ],
+          ),
+        ),
+      ),
+      childWhenDragging: Opacity(
+        opacity: 0.5,
+        child: _buildItemTile(context, type, label, icon),
+      ),
+      child: _buildItemTile(context, type, label, icon),
+    );
+  }
+
+  Widget _buildItemTile(BuildContext context, ReadmeElementType type, String label, IconData icon) {
+    return Card(
+      margin: const EdgeInsets.only(bottom: 8),
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(8),
+        side: BorderSide(color: Theme.of(context).dividerColor.withAlpha(50)),
+      ),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(8),
+        onTap: () {
+          Provider.of<ProjectProvider>(context, listen: false).addElement(type);
+        },
+        child: Padding(
+          padding: const EdgeInsets.all(12.0),
+          child: Row(
+            children: [
+              Icon(icon, size: 20, color: Theme.of(context).colorScheme.primary),
+              const SizedBox(width: 12),
+              Expanded(child: Text(label, style: GoogleFonts.inter(fontSize: 14), overflow: TextOverflow.ellipsis)),
+              const Icon(Icons.add, size: 16, color: Colors.grey),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildSectionHeader(String title, bool isDark) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 12.0, top: 24.0, left: 4.0),
+      padding: const EdgeInsets.only(bottom: 8.0, left: 4),
       child: Text(
         title.toUpperCase(),
         style: GoogleFonts.inter(
           fontSize: 11,
           fontWeight: FontWeight.bold,
-          letterSpacing: 1.5,
-          color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight,
+          color: isDark ? Colors.grey[400] : Colors.grey[700],
+          letterSpacing: 1.2,
         ),
       ),
     );
-  }
-
-  Widget _buildDraggableItem(BuildContext context, ReadmeElementType type, String label, IconData icon) {
-    final colorScheme = Theme.of(context).colorScheme;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
-    return Tooltip(
-      message: _getTooltipMessage(type),
-      waitDuration: const Duration(milliseconds: 500),
-      child: Draggable<ReadmeElementType>(
-        data: type,
-        rootOverlay: true,
-        dragAnchorStrategy: pointerDragAnchorStrategy,
-        feedback: Material(
-          elevation: 12.0,
-          borderRadius: BorderRadius.circular(12),
-          color: Colors.transparent,
-          shadowColor: Colors.black.withAlpha(100),
-          child: Container(
-            width: 220,
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-            decoration: BoxDecoration(
-              color: isDark ? AppColors.canvasBackgroundDark : Colors.white,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: colorScheme.primary),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(icon, color: colorScheme.primary, size: 20),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    label,
-                    style: GoogleFonts.inter(fontWeight: FontWeight.w600, fontSize: 14, color: isDark ? Colors.white : Colors.black87),
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-        child: Container(
-          margin: const EdgeInsets.only(bottom: 10.0),
-          decoration: BoxDecoration(
-            color: isDark ? Colors.white.withAlpha(10) : Colors.white,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: isDark ? Colors.white.withAlpha(15) : Colors.grey.withAlpha(20)),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withAlpha(isDark ? 40 : 10),
-                blurRadius: 8,
-                offset: const Offset(0, 4),
-              ),
-            ],
-            gradient: isDark
-                ? LinearGradient(
-                    colors: [Colors.white.withAlpha(12), Colors.white.withAlpha(5)],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  )
-                : const LinearGradient(
-                    colors: [Colors.white, Color(0xFFF8F9FA)],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-          ),
-          child: Material(
-            color: Colors.transparent,
-            borderRadius: BorderRadius.circular(12),
-            child: InkWell(
-              borderRadius: BorderRadius.circular(12),
-              hoverColor: colorScheme.primary.withAlpha(15),
-              onTap: () {
-                Provider.of<ProjectProvider>(context, listen: false).addElement(type);
-              },
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                child: Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: colorScheme.primary.withAlpha(20),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Icon(icon, color: colorScheme.primary, size: 20),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: Text(
-                        label,
-                        style: GoogleFonts.inter(fontWeight: FontWeight.w600, fontSize: 14, color: isDark ? Colors.white : Colors.black87),
-                      ),
-                    ),
-                    Icon(Icons.drag_indicator, size: 18, color: isDark ? Colors.white24 : Colors.black26),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  IconData _getIconForSnippet(Snippet snippet) {
-    try {
-      final json = jsonDecode(snippet.elementJson);
-      final typeStr = json['type'] as String;
-      if (typeStr.contains('table')) return Icons.table_chart;
-      if (typeStr.contains('socials')) return Icons.share;
-      if (typeStr.contains('collapsible')) return Icons.expand_more;
-      if (typeStr.contains('dynamicWidget')) return Icons.extension;
-      if (typeStr.contains('heading')) return Icons.title;
-      if (typeStr.contains('paragraph')) return Icons.text_fields;
-      if (typeStr.contains('image')) return Icons.image;
-      if (typeStr.contains('codeBlock')) return Icons.code;
-      if (typeStr.contains('list')) return Icons.list;
-      if (typeStr.contains('badge')) return Icons.shield;
-      if (typeStr.contains('icon')) return Icons.emoji_emotions;
-      if (typeStr.contains('embed')) return Icons.code_off;
-      if (typeStr.contains('githubStats')) return Icons.bar_chart;
-      if (typeStr.contains('contributors')) return Icons.people;
-      if (typeStr.contains('mermaid')) return Icons.account_tree;
-      if (typeStr.contains('toc')) return Icons.list_alt;
-      if (typeStr.contains('blockquote')) return Icons.format_quote;
-      if (typeStr.contains('divider')) return Icons.horizontal_rule;
-      if (typeStr.contains('raw')) return Icons.code;
-    } catch (e) {
-      // ignore
-    }
-    return Icons.content_paste;
   }
 
   Widget _buildDraggableSnippet(BuildContext context, Snippet snippet, bool isDark, {bool isTemplate = false}) {
     return Draggable<Snippet>(
       data: snippet,
       feedback: Material(
-        elevation: 12.0,
-        borderRadius: BorderRadius.circular(12),
-        color: Colors.transparent,
-        shadowColor: Colors.black.withAlpha(100),
+        elevation: 4,
+        borderRadius: BorderRadius.circular(8),
         child: Container(
-          width: 220,
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           decoration: BoxDecoration(
-            color: isDark ? AppColors.canvasBackgroundDark : Colors.white,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: AppColors.secondary),
+            color: Theme.of(context).cardColor,
+            borderRadius: BorderRadius.circular(8),
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(_getIconForSnippet(snippet), color: AppColors.secondary, size: 20),
-              const SizedBox(width: 12),
-              Expanded(child: Text(snippet.name, style: GoogleFonts.inter(fontWeight: FontWeight.w600, fontSize: 14), overflow: TextOverflow.ellipsis)),
+              Icon(isTemplate ? Icons.copy : Icons.bookmark, size: 16),
+              const SizedBox(width: 8),
+              Text(snippet.name, style: GoogleFonts.inter()),
             ],
           ),
         ),
       ),
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 8.0),
-        decoration: BoxDecoration(
-          color: isDark ? Colors.white.withAlpha(5) : Colors.white,
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: isDark ? Colors.white.withAlpha(10) : Colors.grey.withAlpha(20)),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withAlpha(isDark ? 20 : 5),
-              blurRadius: 4,
-              offset: const Offset(0, 2),
-            ),
-          ],
+      child: Card(
+        margin: const EdgeInsets.only(bottom: 8),
+        color: isTemplate ? null : (isDark ? Colors.blue.withAlpha(20) : Colors.blue.withAlpha(10)),
+        elevation: 0,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(8),
+          side: isTemplate ? BorderSide(color: Theme.of(context).dividerColor.withAlpha(50)) : BorderSide.none,
         ),
-        child: Material(
-          color: Colors.transparent,
-          borderRadius: BorderRadius.circular(10),
-          child: InkWell(
-            borderRadius: BorderRadius.circular(10),
-            hoverColor: AppColors.secondary.withAlpha(10),
-            onTap: () {
-               Provider.of<ProjectProvider>(context, listen: false).addSnippet(snippet);
-            },
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-              child: Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: AppColors.secondary.withAlpha(20),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Icon(_getIconForSnippet(snippet), color: AppColors.secondary, size: 20),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      snippet.name,
-                      style: GoogleFonts.inter(fontWeight: FontWeight.w500, fontSize: 14, color: isDark ? Colors.white : Colors.black87),
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                  if (!isTemplate)
-                    IconButton(
-                      icon: const Icon(Icons.delete_outline, size: 18),
-                      color: AppColors.error,
-                      padding: EdgeInsets.zero,
-                      constraints: const BoxConstraints(),
-                      onPressed: () {
-                        Provider.of<LibraryProvider>(context, listen: false).deleteSnippet(snippet.id);
-                      },
-                    ),
-                ],
-              ),
-            ),
-          ),
+        child: ListTile(
+          dense: true,
+          leading: Icon(isTemplate ? Icons.copy : Icons.bookmark, size: 18, color: isTemplate ? Colors.grey : Colors.blue),
+          title: Text(snippet.name, style: GoogleFonts.inter(fontSize: 13, fontWeight: isTemplate ? FontWeight.normal : FontWeight.w500)),
+          trailing: isTemplate
+              ? const Icon(Icons.add, size: 16)
+              : IconButton(
+                  icon: const Icon(Icons.close, size: 16),
+                  onPressed: () {
+                    Provider.of<LibraryProvider>(context, listen: false).deleteSnippet(snippet.id);
+                  },
+                ),
+          onTap: () {
+            // Parse JSON and add element
+            try {
+              // We use addSnippet which handles parsing and adding safely
+              final provider = Provider.of<ProjectProvider>(context, listen: false);
+              provider.addSnippet(snippet);
+            } catch (e) {
+              ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error adding snippet: $e')));
+            }
+          },
         ),
       ),
     );
-  }
-
-  String _getTooltipMessage(ReadmeElementType type) {
-    switch (type) {
-      case ReadmeElementType.heading:
-        return 'Heading: Generates # Heading code';
-      case ReadmeElementType.paragraph:
-        return 'Paragraph: Standard text block';
-      case ReadmeElementType.image:
-        return 'Image: Generates ![Alt](URL) code';
-      case ReadmeElementType.linkButton:
-        return 'Link Button: Generates [Text](URL) link';
-      case ReadmeElementType.codeBlock:
-        return 'Code Block: Generates ```code``` block';
-      case ReadmeElementType.list:
-        return 'List: Generates bullet or numbered lists';
-      case ReadmeElementType.badge:
-        return 'Badge: Generates shield/badge image link';
-      case ReadmeElementType.table:
-        return 'Table: Generates Markdown table structure';
-      case ReadmeElementType.icon:
-        return 'Icon: Adds tech stack icons';
-      case ReadmeElementType.embed:
-        return 'Embed: Adds links to Gists or Videos';
-      case ReadmeElementType.githubStats:
-        return 'GitHub Stats: Adds dynamic repo stats';
-      case ReadmeElementType.contributors:
-        return 'Contributors: Adds contributors list/grid';
-      case ReadmeElementType.mermaid:
-        return 'Mermaid: Adds Mermaid.js diagrams';
-      case ReadmeElementType.toc:
-        return 'TOC: Auto-generated Table of Contents';
-      case ReadmeElementType.socials:
-        return 'Social Links: Adds social media badges';
-      case ReadmeElementType.blockquote:
-        return 'Blockquote: Adds a quoted text block';
-      case ReadmeElementType.divider:
-        return 'Divider: Adds a horizontal rule';
-      case ReadmeElementType.collapsible:
-        return 'Collapsible: Adds a details/summary section';
-      case ReadmeElementType.dynamicWidget:
-        return 'Dynamic Widget: Spotify, YouTube, etc.';
-      case ReadmeElementType.raw:
-        return 'Raw: Insert raw Markdown or HTML';
-    }
   }
 }
 

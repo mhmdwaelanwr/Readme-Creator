@@ -629,7 +629,27 @@ class ElementRenderer extends StatelessWidget {
       );
     } else if (element is RawElement) {
       final e = element as RawElement;
+      // If we are in "Preview" mode (which ElementRenderer usually is), we should try to render it if possible.
+      // But RawElement contains raw Markdown or HTML.
+      // Flutter Markdown can render Markdown, and basic HTML.
+      // But if it contains complex HTML/JS, we can't render it in Flutter perfectly.
+      // We show a preview box that indicates what's there.
+      // The user complained "not showing code in preview".
+      // They probably meant they want to see the rendered result of the raw markdown?
+      // Or they want to see the code itself?
+      // "not showing code in preview" -> If I type `<b>Bold</b>`, I expect to see "<b>Bold</b>" or "**Bold**"?
+      // Usually "Preview" means "Rendered Result".
+      // If they put `<b>Bold</b>`, they expect "Bold" (bolded).
+      // My implementation shows the CODE in a box.
+      // "Raw Markdown / HTML" usually means "Insert this text AS IS into the file".
+      // So in the final file it is `<b>Bold</b>`.
+      // If the user views the final file on GitHub, they see "**Bold**".
+      // In MY app preview, I am showing the source code because I can't guarantee rendering of raw HTML.
+      // BUT if the user wants to see "drag & drop" preview, maybe they want rendered markdown?
+      // Use MarkdownBody to render the content.
+
       return Container(
+        width: double.infinity,
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
           color: isDark ? Colors.grey[900] : Colors.grey[100],
@@ -643,37 +663,32 @@ class ElementRenderer extends StatelessWidget {
               children: [
                 const Icon(Icons.code, size: 16, color: Colors.grey),
                 const SizedBox(width: 8),
-                Text('Raw Markdown / HTML', style: GoogleFonts.firaCode(fontSize: 12, color: Colors.grey)),
-                if (e.css.isNotEmpty) ...[
-                  const SizedBox(width: 8),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                    decoration: BoxDecoration(
-                      color: Colors.blue.withAlpha(50),
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                    child: Text('CSS', style: GoogleFonts.firaCode(fontSize: 10, color: Colors.blue)),
-                  ),
-                ],
+                Text('Raw Content', style: GoogleFonts.firaCode(fontSize: 12, color: Colors.grey)),
               ],
             ),
             const SizedBox(height: 8),
-            Text(
-              e.content.isEmpty ? '(Empty)' : e.content,
-              style: GoogleFonts.firaCode(fontSize: 14, color: textColor),
-              maxLines: 10,
-              overflow: TextOverflow.ellipsis,
+            // Render the raw markdown/html as best as we can
+            MarkdownBody(
+              data: e.content,
+              styleSheet: MarkdownStyleSheet(
+                p: GoogleFonts.inter(color: textColor, fontSize: 16),
+              ),
+              onTapLink: (text, href, title) async {
+                  if (href != null) {
+                    final uri = Uri.tryParse(href);
+                    if (uri != null && await canLaunchUrl(uri)) {
+                      await launchUrl(uri);
+                    }
+                  }
+              },
             ),
             if (e.css.isNotEmpty) ...[
               const SizedBox(height: 8),
               const Divider(height: 1),
-              const SizedBox(height: 8),
-              Text('CSS:', style: GoogleFonts.firaCode(fontSize: 10, color: Colors.grey)),
+              Text('Applied CSS:', style: GoogleFonts.firaCode(fontSize: 10, color: Colors.grey)),
               Text(
                 e.css,
                 style: GoogleFonts.firaCode(fontSize: 12, color: Colors.grey[600]),
-                maxLines: 5,
-                overflow: TextOverflow.ellipsis,
               ),
             ],
           ],

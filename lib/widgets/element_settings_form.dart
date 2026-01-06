@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher_string.dart';
 import '../models/readme_element.dart';
 import '../providers/project_provider.dart';
 import '../core/constants/dev_icons.dart';
@@ -37,6 +38,13 @@ class _ElementSettingsFormState extends State<ElementSettingsForm> {
   late TextEditingController _nameController;
   late TextEditingController _typeNameController;
 
+  late TextEditingController _badgeLabelParamController;
+  late TextEditingController _badgeMessageParamController;
+  late TextEditingController _badgeColorController;
+  late TextEditingController _badgeLogoController;
+  late TextEditingController _badgeLogoColorController;
+  late TextEditingController _badgeLabelColorController;
+
   String _currentElementId = '';
   final Debouncer _debouncer = Debouncer(milliseconds: 500);
 
@@ -61,6 +69,13 @@ class _ElementSettingsFormState extends State<ElementSettingsForm> {
     _nameController = TextEditingController();
     _typeNameController = TextEditingController();
 
+    _badgeLabelParamController = TextEditingController();
+    _badgeMessageParamController = TextEditingController();
+    _badgeColorController = TextEditingController();
+    _badgeLogoController = TextEditingController();
+    _badgeLogoColorController = TextEditingController();
+    _badgeLabelColorController = TextEditingController();
+
     _textController.addListener(() => _onTextChanged());
     _urlController.addListener(() => _onUrlChanged());
     _altTextController.addListener(() => _onAltTextChanged());
@@ -72,6 +87,13 @@ class _ElementSettingsFormState extends State<ElementSettingsForm> {
     _widthController.addListener(() => _onWidthChanged());
     _nameController.addListener(() => _onNameChanged());
     _typeNameController.addListener(() => _onTypeNameChanged());
+
+    _badgeLabelParamController.addListener(() => _onBadgeParamsChanged());
+    _badgeMessageParamController.addListener(() => _onBadgeParamsChanged());
+    _badgeColorController.addListener(() => _onBadgeParamsChanged());
+    _badgeLogoController.addListener(() => _onBadgeParamsChanged());
+    _badgeLogoColorController.addListener(() => _onBadgeParamsChanged());
+    _badgeLabelColorController.addListener(() => _onBadgeParamsChanged());
   }
 
   @override
@@ -88,6 +110,12 @@ class _ElementSettingsFormState extends State<ElementSettingsForm> {
     _widthController.dispose();
     _nameController.dispose();
     _typeNameController.dispose();
+    _badgeLabelParamController.dispose();
+    _badgeMessageParamController.dispose();
+    _badgeColorController.dispose();
+    _badgeLogoController.dispose();
+    _badgeLogoColorController.dispose();
+    _badgeLabelColorController.dispose();
     super.dispose();
   }
 
@@ -126,6 +154,12 @@ class _ElementSettingsFormState extends State<ElementSettingsForm> {
       _labelController.text = e.label;
       _imageUrlController.text = e.imageUrl;
       _targetUrlController.text = e.targetUrl;
+      _badgeLabelParamController.text = e.badgeLabel ?? '';
+      _badgeMessageParamController.text = e.badgeMessage ?? '';
+      _badgeColorController.text = e.badgeColor ?? '';
+      _badgeLogoController.text = e.badgeLogo ?? '';
+      _badgeLogoColorController.text = e.badgeLogoColor ?? '';
+      _badgeLabelColorController.text = e.badgeLabelColor ?? '';
     }
     if (e is IconElement) {
       _nameController.text = e.name;
@@ -175,6 +209,12 @@ class _ElementSettingsFormState extends State<ElementSettingsForm> {
       _syncText(_labelController, e.label);
       _syncText(_imageUrlController, e.imageUrl);
       _syncText(_targetUrlController, e.targetUrl);
+      _syncText(_badgeLabelParamController, e.badgeLabel ?? '');
+      _syncText(_badgeMessageParamController, e.badgeMessage ?? '');
+      _syncText(_badgeColorController, e.badgeColor ?? '');
+      _syncText(_badgeLogoController, e.badgeLogo ?? '');
+      _syncText(_badgeLogoColorController, e.badgeLogoColor ?? '');
+      _syncText(_badgeLabelColorController, e.badgeLabelColor ?? '');
     }
     if (e is IconElement) {
       _syncText(_nameController, e.name);
@@ -387,6 +427,84 @@ class _ElementSettingsFormState extends State<ElementSettingsForm> {
         _debounceUpdate();
       }
     }
+  }
+
+  void _onBadgeParamsChanged() {
+    final e = widget.element;
+    if (e is BadgeElement) {
+      bool changed = false;
+      if (e.badgeLabel != _badgeLabelParamController.text) {
+        e.badgeLabel = _badgeLabelParamController.text;
+        changed = true;
+      }
+      if (e.badgeMessage != _badgeMessageParamController.text) {
+        e.badgeMessage = _badgeMessageParamController.text;
+        changed = true;
+      }
+      if (e.badgeColor != _badgeColorController.text) {
+        e.badgeColor = _badgeColorController.text;
+        changed = true;
+      }
+      if (e.badgeLogo != _badgeLogoController.text) {
+        e.badgeLogo = _badgeLogoController.text;
+        changed = true;
+      }
+      if (e.badgeLogoColor != _badgeLogoColorController.text) {
+        e.badgeLogoColor = _badgeLogoColorController.text;
+        changed = true;
+      }
+      if (e.badgeLabelColor != _badgeLabelColorController.text) {
+        e.badgeLabelColor = _badgeLabelColorController.text;
+        changed = true;
+      }
+
+      if (changed) {
+        _updateBadgeUrl(e);
+        _debounceUpdate();
+      }
+    }
+  }
+
+  void _updateBadgeUrl(BadgeElement e) {
+    // Construct shields.io URL
+    // Format: https://img.shields.io/badge/<LABEL>-<MESSAGE>-<COLOR>
+    // If label is empty: https://img.shields.io/badge/<MESSAGE>-<COLOR>
+    // Parameters need encoding. Dash must be --, Underscore _ is space, Space is space.
+    // Shields.io specifics: https://img.shields.io/badge/Label-Message-Color
+
+    String safe(String s) => s.replaceAll('-', '--').replaceAll('_', '__').replaceAll(' ', '_');
+
+    String labelPart = e.badgeLabel ?? '';
+    String messagePart = e.badgeMessage ?? '';
+    String colorPart = e.badgeColor ?? 'blue';
+    if (colorPart.isEmpty) colorPart = 'blue';
+
+    String path;
+    if (labelPart.isNotEmpty) {
+      path = '${safe(labelPart)}-${safe(messagePart)}-${colorPart}';
+    } else {
+      path = '${safe(messagePart)}-${colorPart}';
+    }
+
+    final uri = Uri.parse('https://img.shields.io/badge/$path');
+    final queryParams = <String, String>{};
+
+    if (e.badgeStyle != null && e.badgeStyle!.isNotEmpty) {
+      queryParams['style'] = e.badgeStyle!;
+    }
+    if (e.badgeLogo != null && e.badgeLogo!.isNotEmpty) {
+      queryParams['logo'] = e.badgeLogo!;
+    }
+    if (e.badgeLogoColor != null && e.badgeLogoColor!.isNotEmpty) {
+      queryParams['logoColor'] = e.badgeLogoColor!;
+    }
+    if (e.badgeLabelColor != null && e.badgeLabelColor!.isNotEmpty) {
+      queryParams['labelColor'] = e.badgeLabelColor!;
+    }
+
+    final finalUri = uri.replace(queryParameters: queryParams.isNotEmpty ? queryParams : null);
+    e.imageUrl = finalUri.toString();
+    _imageUrlController.text = e.imageUrl; // update controller
   }
 
 
@@ -628,12 +746,6 @@ class _ElementSettingsFormState extends State<ElementSettingsForm> {
             decoration: const InputDecoration(labelText: 'Alt Text'),
             style: GoogleFonts.inter(),
           ),
-          const SizedBox(height: 16),
-          TextFormField(
-            controller: _widthController,
-            decoration: const InputDecoration(labelText: 'Width (optional)'),
-            style: GoogleFonts.inter(),
-          ),
         ],
       );
     } else if (element is LinkButtonElement) {
@@ -743,50 +855,7 @@ class _ElementSettingsFormState extends State<ElementSettingsForm> {
         ],
       );
     } else if (element is BadgeElement) {
-      return Column(
-        children: [
-          TextFormField(
-            controller: _labelController,
-            decoration: const InputDecoration(labelText: 'Label'),
-            style: GoogleFonts.inter(),
-          ),
-          const SizedBox(height: 16),
-          TextFormField(
-            controller: _imageUrlController,
-            decoration: const InputDecoration(labelText: 'Image URL'),
-            validator: _validateUrl,
-            autovalidateMode: AutovalidateMode.onUserInteraction,
-            style: GoogleFonts.inter(),
-          ),
-          const SizedBox(height: 16),
-          TextFormField(
-            controller: _targetUrlController,
-            decoration: const InputDecoration(labelText: 'Target URL'),
-            validator: _validateUrl,
-            autovalidateMode: AutovalidateMode.onUserInteraction,
-            style: GoogleFonts.inter(),
-          ),
-          if (provider.elements.whereType<HeadingElement>().isNotEmpty) ...[
-            const SizedBox(height: 8),
-            DropdownButtonFormField<String>(
-              decoration: const InputDecoration(labelText: 'Or link to section'),
-              items: provider.elements.whereType<HeadingElement>().map((h) {
-                final anchor = '#${h.text.toLowerCase().replaceAll(' ', '-')}';
-                return DropdownMenuItem(
-                  value: anchor,
-                  child: Text(h.text, style: GoogleFonts.inter()),
-                );
-              }).toList(),
-              onChanged: (value) {
-                if (value != null) {
-                  element.targetUrl = value;
-                  _notifyUpdate();
-                }
-              },
-            ),
-          ],
-        ],
-      );
+      return _buildBadgeSettings(element, provider);
     } else if (element is IconElement) {
       return Column(
         children: [
@@ -1382,6 +1451,147 @@ class _ElementSettingsFormState extends State<ElementSettingsForm> {
     return const Center(child: Text('No settings for this element'));
   }
 
+  Widget _buildBadgeSettings(BadgeElement element, ProjectProvider provider) {
+    return Column(
+      children: [
+        ExpansionTile(
+          title: Text('Static Badge Builder', style: GoogleFonts.inter(fontWeight: FontWeight.bold)),
+          initiallyExpanded: true,
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Column(
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextFormField(
+                          controller: _badgeLabelParamController,
+                          decoration: const InputDecoration(labelText: 'Label (Left)'),
+                          style: GoogleFonts.inter(),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: TextFormField(
+                          controller: _badgeMessageParamController,
+                          decoration: const InputDecoration(labelText: 'Message (Right)'),
+                          style: GoogleFonts.inter(),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextFormField(
+                          controller: _badgeColorController,
+                          decoration: const InputDecoration(labelText: 'Color (Right)'),
+                          style: GoogleFonts.inter(),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: DropdownButtonFormField<String>(
+                          value: element.badgeStyle ?? 'flat',
+                          decoration: const InputDecoration(labelText: 'Style'),
+                          items: const [
+                            DropdownMenuItem(value: 'flat', child: Text('Flat')),
+                            DropdownMenuItem(value: 'flat-square', child: Text('Flat Square')),
+                            DropdownMenuItem(value: 'plastic', child: Text('Plastic')),
+                            DropdownMenuItem(value: 'for-the-badge', child: Text('For The Badge')),
+                            DropdownMenuItem(value: 'social', child: Text('Social')),
+                          ],
+                          onChanged: (value) {
+                            if (value != null) {
+                              element.badgeStyle = value;
+                              _onBadgeParamsChanged(); // Trigger URL regen
+                            }
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextFormField(
+                          controller: _badgeLogoController,
+                          decoration: const InputDecoration(labelText: 'Logo (Slug)'),
+                          style: GoogleFonts.inter(),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: TextFormField(
+                          controller: _badgeLogoColorController,
+                          decoration: const InputDecoration(labelText: 'Logo Color'),
+                          style: GoogleFonts.inter(),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  TextFormField(
+                    controller: _badgeLabelColorController,
+                    decoration: const InputDecoration(labelText: 'Label Color (Left Background)'),
+                    style: GoogleFonts.inter(),
+                  ),
+                  const SizedBox(height: 8),
+                  const Text('Available logos can be found on simpleicons.org. Use the "slug" or name.', style: TextStyle(color: Colors.grey, fontSize: 12)),
+                ],
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
+        TextFormField(
+          controller: _labelController,
+          decoration: const InputDecoration(labelText: 'Alt Text / Tooltip'),
+          style: GoogleFonts.inter(),
+        ),
+        const SizedBox(height: 16),
+        TextFormField(
+          controller: _imageUrlController,
+          decoration: const InputDecoration(labelText: 'Image URL (Auto-generated)'),
+          validator: _validateUrl,
+          autovalidateMode: AutovalidateMode.onUserInteraction,
+          style: GoogleFonts.inter(),
+        ),
+        const SizedBox(height: 16),
+        Row(
+          children: [
+            Expanded(
+              child: ElevatedButton.icon(
+                icon: const Icon(Icons.link),
+                label: const Text('Open in Browser'),
+                onPressed: () {
+                  final url = element.targetUrl;
+                  if (url.isNotEmpty) {
+                    launchUrlString(url);
+                  }
+                },
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: ElevatedButton.icon(
+                icon: const Icon(Icons.copy),
+                label: const Text('Copy Link'),
+                onPressed: () {
+                  Clipboard.setData(ClipboardData(text: element.targetUrl));
+                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Link copied to clipboard')));
+                },
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
   Widget _buildSocialsForm(SocialsElement element) {
     return Column(
       children: [
@@ -1445,7 +1655,7 @@ class _ElementSettingsFormState extends State<ElementSettingsForm> {
                                         Icon(platform.icon, size: 16, color: Color(int.parse('0xFF${platform.color}'))),
                                         const SizedBox(width: 8),
                                       ],
-                                      Text(key, style: GoogleFonts.inter()),
+                                      Flexible(child: Text(key, style: GoogleFonts.inter(), overflow: TextOverflow.ellipsis)),
                                     ],
                                   ),
                                 );

@@ -341,10 +341,31 @@ class BadgeElement extends ReadmeElement {
   String targetUrl;
   String label;
 
-  BadgeElement({this.imageUrl = 'https://img.shields.io/badge/Label-Message-blue', this.targetUrl = '', this.label = 'Badge', super.id}) : super(type: ReadmeElementType.badge);
+  // Custom properties for static badges generator
+  String? badgeLabel;
+  String? badgeMessage;
+  String? badgeColor;
+  String? badgeStyle;
+  String? badgeLogo;
+  String? badgeLogoColor;
+  String? badgeLabelColor;
+
+  BadgeElement({
+    this.imageUrl = 'https://img.shields.io/badge/Label-Message-blue',
+    this.targetUrl = '',
+    this.label = 'Badge',
+    this.badgeLabel,
+    this.badgeMessage,
+    this.badgeColor,
+    this.badgeStyle,
+    this.badgeLogo,
+    this.badgeLogoColor,
+    this.badgeLabelColor,
+    super.id
+  }) : super(type: ReadmeElementType.badge);
 
   @override
-  String get description => 'Badge';
+  String get description => 'Badge: $label';
 
   @override
   Map<String, dynamic> toJson() => {
@@ -353,6 +374,13 @@ class BadgeElement extends ReadmeElement {
     'imageUrl': imageUrl,
     'targetUrl': targetUrl,
     'label': label,
+    'badgeLabel': badgeLabel,
+    'badgeMessage': badgeMessage,
+    'badgeColor': badgeColor,
+    'badgeStyle': badgeStyle,
+    'badgeLogo': badgeLogo,
+    'badgeLogoColor': badgeLogoColor,
+    'badgeLabelColor': badgeLabelColor,
   };
 
   factory BadgeElement.fromJson(Map<String, dynamic> json) {
@@ -360,6 +388,13 @@ class BadgeElement extends ReadmeElement {
       imageUrl: json['imageUrl'],
       targetUrl: json['targetUrl'],
       label: json['label'],
+      badgeLabel: json['badgeLabel'],
+      badgeMessage: json['badgeMessage'],
+      badgeColor: json['badgeColor'],
+      badgeStyle: json['badgeStyle'],
+      badgeLogo: json['badgeLogo'],
+      badgeLogoColor: json['badgeLogoColor'],
+      badgeLabelColor: json['badgeLabelColor'],
       id: json['id'],
     );
   }
