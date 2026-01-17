@@ -17,7 +17,6 @@ class EditorCanvas extends StatelessWidget {
     final provider = Provider.of<ProjectProvider>(context);
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    // Responsive sizing logic
     double maxWidth = 850;
     double? deviceHeight;
     double borderRadius = 12;
@@ -60,17 +59,7 @@ class EditorCanvas extends StatelessWidget {
               color: isDark ? AppColors.editorBackgroundDark : AppColors.editorBackgroundLight,
               child: Stack(
                 children: [
-                  // FIXED: High-Performance Dotted Grid using DrawCircle
-                  if (provider.showGrid)
-                    Positioned.fill(
-                      child: RepaintBoundary(
-                        child: CustomPaint(
-                          painter: DottedGridPainter(isDark: isDark),
-                        ),
-                      ),
-                    ),
-
-                  // Main Canvas Implementation
+                  // Main Scrollable Area
                   Positioned.fill(
                     child: SingleChildScrollView(
                       physics: const BouncingScrollPhysics(),
@@ -98,17 +87,32 @@ class EditorCanvas extends StatelessWidget {
                                 ],
                                 border: Border.all(
                                   color: isDark ? Colors.white.withAlpha(25) : Colors.black.withAlpha(12),
-                                  width: provider.deviceMode == DeviceMode.desktop ? 1 : 12, // Visual Frame
+                                  width: provider.deviceMode == DeviceMode.desktop ? 1 : 12,
                                 ),
                               ),
                               clipBehavior: Clip.antiAlias,
-                              child: GestureDetector(
-                                onTap: () => provider.selectElement(''),
-                                child: RepaintBoundary(
-                                  child: provider.elements.isEmpty
-                                      ? _buildEmptyState(context)
-                                      : _buildElementList(provider, canvasPadding, isDark),
-                                ),
+                              child: Stack(
+                                children: [
+                                  // NEW: Grid is now INSIDE the design canvas
+                                  if (provider.showGrid)
+                                    Positioned.fill(
+                                      child: RepaintBoundary(
+                                        child: CustomPaint(
+                                          painter: DottedGridPainter(isDark: isDark),
+                                        ),
+                                      ),
+                                    ),
+                                  
+                                  GestureDetector(
+                                    onTap: () => provider.selectElement(''),
+                                    behavior: HitTestBehavior.opaque,
+                                    child: RepaintBoundary(
+                                      child: provider.elements.isEmpty
+                                          ? _buildEmptyState(context)
+                                          : _buildElementList(provider, canvasPadding, isDark),
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
                           ),
@@ -260,6 +264,7 @@ class EditorCanvas extends StatelessWidget {
 
   Widget _buildEmptyState(BuildContext context) {
     return Container(
+      width: double.infinity,
       padding: const EdgeInsets.symmetric(vertical: 120, horizontal: 40),
       child: Column(
         children: [
@@ -298,17 +303,15 @@ class DottedGridPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    // Increased visibility and stability
     final paint = Paint()
-      ..color = isDark ? Colors.white.withAlpha(38) : Colors.black.withAlpha(20)
+      ..color = isDark ? Colors.white.withAlpha(45) : Colors.black.withAlpha(25)
       ..style = PaintingStyle.fill;
 
-    const double gap = 30.0;
+    const double gap = 25.0; // Slightly tighter gap for a cleaner look
     
-    // Draw circles instead of points for better web support
-    for (double x = 0; x <= size.width; x += gap) {
-      for (double y = 0; y <= size.height; y += gap) {
-        canvas.drawCircle(Offset(x, y), 1.2, paint);
+    for (double x = gap; x < size.width; x += gap) {
+      for (double y = gap; y < size.height; y += gap) {
+        canvas.drawCircle(Offset(x, y), 1.0, paint);
       }
     }
   }
