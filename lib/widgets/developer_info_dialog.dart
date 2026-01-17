@@ -4,7 +4,7 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../core/constants/app_colors.dart';
-import '../utils/dialog_helper.dart'; // Added import
+import '../utils/dialog_helper.dart';
 
 class DeveloperInfoDialog extends StatelessWidget {
   const DeveloperInfoDialog({super.key});
@@ -13,49 +13,51 @@ class DeveloperInfoDialog extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    // Refactored to use StyledDialog
     return StyledDialog(
       title: const DialogHeader(
         title: 'About Developer',
         icon: Icons.code,
         color: AppColors.primary,
       ),
-      width: 600,
-      height: 500,
+      width: 650,
+      height: 600,
       contentPadding: EdgeInsets.zero,
       content: DefaultTabController(
         length: 3,
         child: Column(
           children: [
-            Container(
-              margin: const EdgeInsets.fromLTRB(24, 0, 24, 16),
-              decoration: BoxDecoration(
-                color: Colors.grey.withAlpha(20),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: TabBar(
-                labelColor: AppColors.primary,
-                unselectedLabelColor: isDark ? Colors.grey : Colors.black54,
-                indicatorSize: TabBarIndicatorSize.tab,
-                indicator: BoxDecoration(
-                  color: AppColors.primary.withAlpha(30),
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: AppColors.primary),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 8.0),
+              child: Container(
+                decoration: BoxDecoration(
+                  color: isDark ? Colors.white.withAlpha(10) : Colors.black.withAlpha(5),
+                  borderRadius: BorderRadius.circular(12),
                 ),
-                dividerColor: Colors.transparent,
-                tabs: const [
-                  Tab(text: 'Socials & Dev'),
-                  Tab(text: 'Contact'),
-                  Tab(text: 'Support'),
-                ],
+                child: TabBar(
+                  labelColor: isDark ? Colors.white : AppColors.primary,
+                  unselectedLabelColor: isDark ? Colors.white60 : Colors.black54,
+                  indicatorSize: TabBarIndicatorSize.tab,
+                  indicator: BoxDecoration(
+                    color: AppColors.primary.withAlpha(isDark ? 40 : 20),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: AppColors.primary.withAlpha(100)),
+                  ),
+                  dividerColor: Colors.transparent,
+                  labelStyle: GoogleFonts.inter(fontWeight: FontWeight.bold),
+                  tabs: const [
+                    Tab(text: 'Socials & Dev'),
+                    Tab(text: 'Contact'),
+                    Tab(text: 'Support'),
+                  ],
+                ),
               ),
             ),
             Expanded(
               child: TabBarView(
                 children: [
-                  _buildSocialsTab(context),
-                  _buildContactTab(context),
-                  _buildSupportTab(context),
+                  _buildSocialsTab(context, isDark),
+                  _buildContactTab(context, isDark),
+                  _buildSupportTab(context, isDark),
                 ],
               ),
             ),
@@ -65,46 +67,57 @@ class DeveloperInfoDialog extends StatelessWidget {
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context),
-          child: const Text('Close'),
+          child: Text('Close', style: GoogleFonts.inter(fontWeight: FontWeight.w600)),
         ),
       ],
     );
   }
 
-  Widget _buildSocialsTab(BuildContext context) {
+  Widget _buildSocialsTab(BuildContext context, bool isDark) {
     return SingleChildScrollView(
+      padding: const EdgeInsets.all(24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildSectionTitle('Social Media'),
-          Wrap(
-            spacing: 12,
-            runSpacing: 12,
+          _buildSectionTitle('SOCIAL MEDIA'),
+          const SizedBox(height: 12),
+          GridView.count(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            crossAxisCount: MediaQuery.of(context).size.width > 600 ? 4 : 3,
+            mainAxisSpacing: 12,
+            crossAxisSpacing: 12,
+            childAspectRatio: 1.1,
             children: [
-              _buildSocialButton(FontAwesomeIcons.facebook, 'Facebook', 'https://facebook.com/mhmdwaelanwr'),
-              _buildSocialButton(FontAwesomeIcons.instagram, 'Instagram', 'https://instagram.com/mhmdwaelanwr'),
-              _buildSocialButton(FontAwesomeIcons.twitter, 'Threads', 'https://threads.net/@mhmdwaelanwr'), // Threads icon not always available, using Twitter/X or generic
-              _buildSocialButton(FontAwesomeIcons.linkedin, 'LinkedIn', 'https://linkedin.com/in/mhmdwaelanwr'),
-              _buildSocialButton(FontAwesomeIcons.tiktok, 'TikTok', 'https://tiktok.com/@mhmdwaelanwr'),
-              _buildSocialButton(FontAwesomeIcons.youtube, 'YouTube', 'https://youtube.com/@mhmdwaelanwr'),
-              _buildSocialButton(FontAwesomeIcons.twitch, 'Twitch', 'https://twitch.tv/mhmdwaelanwr'),
-              _buildSocialButton(FontAwesomeIcons.snapchat, 'Snapchat', 'https://snapchat.com/add/mhmdwaelanwr'),
-              _buildSocialButton(FontAwesomeIcons.reddit, 'Reddit', 'https://reddit.com/user/mhmdwaelanwar'),
-              _buildSocialButton(FontAwesomeIcons.telegram, 'Telegram', 'https://t.me/mhmdwaelanwr'),
-              _buildSocialButton(FontAwesomeIcons.discord, 'Discord', null, copyText: 'mhmdwaelanwr'),
-              _buildSocialButton(FontAwesomeIcons.spotify, 'Spotify', 'https://open.spotify.com/user/mhmdwaelanwr'),
+              _buildSocialGridItem(FontAwesomeIcons.facebook, 'Facebook', 'https://facebook.com/mhmdwaelanwr', Colors.blue[700]!),
+              _buildSocialGridItem(FontAwesomeIcons.instagram, 'Instagram', 'https://instagram.com/mhmdwaelanwr', Colors.pink),
+              _buildSocialGridItem(FontAwesomeIcons.threads, 'Threads', 'https://threads.net/@mhmdwaelanwr', isDark ? Colors.white : Colors.black),
+              _buildSocialGridItem(FontAwesomeIcons.linkedin, 'LinkedIn', 'https://linkedin.com/in/mhmdwaelanwr', Colors.blue[800]!),
+              _buildSocialGridItem(FontAwesomeIcons.tiktok, 'TikTok', 'https://tiktok.com/@mhmdwaelanwr', isDark ? Colors.white : Colors.black),
+              _buildSocialGridItem(FontAwesomeIcons.youtube, 'YouTube', 'https://youtube.com/@mhmdwaelanwr', Colors.red),
+              _buildSocialGridItem(FontAwesomeIcons.twitch, 'Twitch', 'https://twitch.tv/mhmdwaelanwr', Colors.deepPurple),
+              _buildSocialGridItem(FontAwesomeIcons.snapchat, 'Snapchat', 'https://snapchat.com/add/mhmdwaelanwr', Colors.yellow[700]!),
+              _buildSocialGridItem(FontAwesomeIcons.reddit, 'Reddit', 'https://reddit.com/user/mhmdwaelanwar', Colors.orange[800]!),
+              _buildSocialGridItem(FontAwesomeIcons.telegram, 'Telegram', 'https://t.me/mhmdwaelanwr', Colors.blue),
+              _buildSocialGridItem(FontAwesomeIcons.discord, 'Discord', null, Colors.indigoAccent, copyText: 'mhmdwaelanwr'),
+              _buildSocialGridItem(FontAwesomeIcons.spotify, 'Spotify', 'https://open.spotify.com/user/mhmdwaelanwr', Colors.green),
             ],
           ),
-          const SizedBox(height: 24),
-          _buildSectionTitle('Developer Profiles'),
-          Wrap(
-            spacing: 12,
-            runSpacing: 12,
+          const SizedBox(height: 32),
+          _buildSectionTitle('DEVELOPER PROFILES'),
+          const SizedBox(height: 12),
+          GridView.count(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            crossAxisCount: MediaQuery.of(context).size.width > 600 ? 4 : 3,
+            mainAxisSpacing: 12,
+            crossAxisSpacing: 12,
+            childAspectRatio: 1.1,
             children: [
-              _buildSocialButton(FontAwesomeIcons.github, 'GitHub', 'https://github.com/mhmdwaelanwr'),
-              _buildSocialButton(FontAwesomeIcons.gitlab, 'GitLab', 'https://gitlab.com/mhmdwaelanwr'),
-              _buildSocialButton(FontAwesomeIcons.google, 'Google Dev', 'https://g.dev/mhmdwaelanwr'),
-              _buildSocialButton(FontAwesomeIcons.codeBranch, 'Gitea', 'https://gitea.com/mhmdwaelanwr'), // Generic code branch for Gitea
+              _buildSocialGridItem(FontAwesomeIcons.github, 'GitHub', 'https://github.com/mhmdwaelanwr', isDark ? Colors.white : Colors.black),
+              _buildSocialGridItem(FontAwesomeIcons.gitlab, 'GitLab', 'https://gitlab.com/mhmdwaelanwr', Colors.orange),
+              _buildSocialGridItem(FontAwesomeIcons.google, 'Google Dev', 'https://g.dev/mhmdwaelanwr', Colors.blue),
+              _buildSocialGridItem(FontAwesomeIcons.codeBranch, 'Gitea', 'https://gitea.com/mhmdwaelanwr', Colors.green),
             ],
           ),
         ],
@@ -112,86 +125,102 @@ class DeveloperInfoDialog extends StatelessWidget {
     );
   }
 
-  Widget _buildContactTab(BuildContext context) {
-    return SingleChildScrollView(
-      child: Column(
-        children: [
-          _buildContactTile(Icons.email, 'Primary Email', 'mhmdwaelanwr@gmail.com', onTap: () => _launchUrl('mailto:mhmdwaelanwr@gmail.com')),
-          _buildContactTile(Icons.email_outlined, 'Secondary Email', 'mhmdwaelanwr@outlook.com', onTap: () => _launchUrl('mailto:mhmdwaelanwr@outlook.com')),
-          const Divider(),
-          _buildContactTile(Icons.phone, 'Primary Phone', '+201010373387', onTap: () => _launchUrl('tel:+201010373387')),
-          _buildContactTile(FontAwesomeIcons.whatsapp, 'WhatsApp', '+201010412724', onTap: () => _launchUrl('https://wa.me/201010412724')),
-          _buildContactTile(FontAwesomeIcons.skype, 'Skype', '01010412724', onTap: () => _launchUrl('skype:01010412724?chat')),
-        ],
-      ),
+  Widget _buildContactTab(BuildContext context, bool isDark) {
+    return ListView(
+      padding: const EdgeInsets.all(24),
+      children: [
+        _buildContactTile(Icons.email_rounded, 'Primary Email', 'mhmdwaelanwr@gmail.com', onTap: () => _launchUrl('mailto:mhmdwaelanwr@gmail.com')),
+        _buildContactTile(Icons.email_outlined, 'Secondary Email', 'mhmdwaelanwr@outlook.com', onTap: () => _launchUrl('mailto:mhmdwaelanwr@outlook.com')),
+        const Padding(
+          padding: EdgeInsets.symmetric(vertical: 8.0),
+          child: Divider(),
+        ),
+        _buildContactTile(Icons.phone_rounded, 'Primary Phone', '+201010373387', onTap: () => _launchUrl('tel:+201010373387')),
+        _buildContactTile(FontAwesomeIcons.whatsapp, 'WhatsApp', '+201010412724', color: Colors.green, onTap: () => _launchUrl('https://wa.me/201010412724')),
+        _buildContactTile(FontAwesomeIcons.skype, 'Skype', '01010412724', color: Colors.blue, onTap: () => _launchUrl('skype:01010412724?chat')),
+      ],
     );
   }
 
-  Widget _buildSupportTab(BuildContext context) {
+  Widget _buildSupportTab(BuildContext context, bool isDark) {
     return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const Icon(FontAwesomeIcons.heart, color: Colors.red, size: 48),
-          const SizedBox(height: 16),
-          Text('Support the Developer', style: GoogleFonts.inter(fontSize: 18, fontWeight: FontWeight.bold)),
-          const SizedBox(height: 24),
-          Wrap(
-            spacing: 16,
-            children: [
-              _buildSocialButton(FontAwesomeIcons.paypal, 'PayPal', 'https://paypal.me/mhmdwaelanwar', color: const Color(0xFF003087)),
-              _buildSocialButton(Icons.question_answer, 'NGL', 'https://ngl.link/mhmdwaelanwar', color: Colors.pink),
-              // Rave? Assuming Flutterwave or similar, or just a link if provided. User just said "rave".
-              // I'll add a generic button for Rave if I don't have a URL, or just skip if unsure.
-              // User said "rave : mhmdwaelanwr". Maybe rave.com/mhmdwaelanwr?
-              // Let's assume it's a platform.
-            ],
-          ),
-        ],
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                color: Colors.red.withAlpha(15),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(FontAwesomeIcons.solidHeart, color: Colors.red, size: 64),
+            ),
+            const SizedBox(height: 24),
+            Text(
+              'Support My Work',
+              style: GoogleFonts.poppins(fontSize: 24, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'If you find this tool helpful, consider supporting its development.',
+              textAlign: TextAlign.center,
+              style: GoogleFonts.inter(color: Colors.grey, fontSize: 16),
+            ),
+            const SizedBox(height: 40),
+            Wrap(
+              spacing: 16,
+              runSpacing: 16,
+              children: [
+                _buildSocialButton(FontAwesomeIcons.paypal, 'PayPal', 'https://paypal.me/mhmdwaelanwar', color: const Color(0xFF003087)),
+                _buildSocialButton(Icons.question_answer_rounded, 'NGL', 'https://ngl.link/mhmdwaelanwar', color: Colors.pinkAccent),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
 
   Widget _buildSectionTitle(String title) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12.0),
-      child: Text(
-        title,
-        style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.grey),
+    return Text(
+      title,
+      style: GoogleFonts.inter(
+        fontSize: 12,
+        fontWeight: FontWeight.w800,
+        color: AppColors.primary.withAlpha(180),
+        letterSpacing: 1.2,
       ),
     );
   }
 
-  Widget _buildSocialButton(IconData icon, String label, String? url, {String? copyText, Color? color}) {
-    return Tooltip(
-      message: url ?? (copyText != null ? 'Copy $copyText' : label),
+  Widget _buildSocialGridItem(IconData icon, String label, String? url, Color iconColor, {String? copyText}) {
+    return Material(
+      color: Colors.transparent,
       child: InkWell(
         onTap: () {
           if (url != null) {
             _launchUrl(url);
           } else if (copyText != null) {
             Clipboard.setData(ClipboardData(text: copyText));
-            // We need context to show toast, but this is a stateless widget helper.
-            // We can't easily show toast here without context passed down or looking up.
-            // But InkWell has context in builder? No.
-            // We can just rely on tooltip or user knowing it copied.
           }
         },
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(16),
         child: Container(
-          width: 100,
-          padding: const EdgeInsets.symmetric(vertical: 12),
           decoration: BoxDecoration(
-            border: Border.all(color: Colors.grey.withAlpha(50)),
-            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: Colors.grey.withAlpha(40)),
+            borderRadius: BorderRadius.circular(16),
+            color: Colors.grey.withAlpha(5),
           ),
           child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(icon, size: 24, color: color ?? AppColors.primary),
-              const SizedBox(height: 8),
+              Icon(icon, size: 28, color: iconColor),
+              const SizedBox(height: 10),
               Text(
                 label,
-                style: GoogleFonts.inter(fontSize: 12),
+                style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w600),
                 textAlign: TextAlign.center,
                 overflow: TextOverflow.ellipsis,
               ),
@@ -202,27 +231,55 @@ class DeveloperInfoDialog extends StatelessWidget {
     );
   }
 
-  Widget _buildContactTile(IconData icon, String title, String subtitle, {VoidCallback? onTap}) {
-    return ListTile(
-      leading: Container(
-        padding: const EdgeInsets.all(8),
-        decoration: BoxDecoration(
-          color: AppColors.primary.withAlpha(20),
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: Icon(icon, color: AppColors.primary, size: 20),
+  Widget _buildSocialButton(IconData icon, String label, String url, {Color? color}) {
+    return ElevatedButton.icon(
+      icon: Icon(icon, size: 18),
+      label: Text(label),
+      onPressed: () => _launchUrl(url),
+      style: ElevatedButton.styleFrom(
+        backgroundColor: color ?? AppColors.primary,
+        foregroundColor: Colors.white,
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        elevation: 0,
       ),
-      title: Text(title, style: GoogleFonts.inter(fontWeight: FontWeight.w600, fontSize: 14)),
-      subtitle: Text(subtitle, style: GoogleFonts.inter(fontSize: 13)),
-      trailing: const Icon(Icons.arrow_forward_ios, size: 14, color: Colors.grey),
-      onTap: onTap,
+    );
+  }
+
+  Widget _buildContactTile(IconData icon, String title, String subtitle, {Color? color, VoidCallback? onTap}) {
+    return Card(
+      margin: const EdgeInsets.only(bottom: 12),
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: BorderSide(color: Colors.grey.withAlpha(30)),
+      ),
+      child: ListTile(
+        leading: Container(
+          padding: const EdgeInsets.all(10),
+          decoration: BoxDecoration(
+            color: (color ?? AppColors.primary).withAlpha(20),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Icon(icon, color: color ?? AppColors.primary, size: 22),
+        ),
+        title: Text(title, style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 14)),
+        subtitle: Text(subtitle, style: GoogleFonts.inter(fontSize: 13, color: Colors.grey)),
+        trailing: const Icon(Icons.open_in_new_rounded, size: 16, color: Colors.grey),
+        onTap: onTap,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      ),
     );
   }
 
   Future<void> _launchUrl(String urlString) async {
     final uri = Uri.parse(urlString);
-    if (await canLaunchUrl(uri)) {
-      await launchUrl(uri);
+    try {
+      if (await canLaunchUrl(uri)) {
+        await launchUrl(uri, mode: LaunchMode.externalApplication);
+      }
+    } catch (e) {
+      debugPrint('Could not launch $urlString: $e');
     }
   }
 }
