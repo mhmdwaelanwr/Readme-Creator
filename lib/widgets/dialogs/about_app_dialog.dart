@@ -78,6 +78,27 @@ class AboutAppDialog extends StatelessWidget {
               onTap: () => _launchUrl('https://github.com/mhmdwaelanwr/Readme-Creator'),
             ),
             
+            const SizedBox(height: 12),
+            // NEW: License Card
+            _buildInfoCard(
+              context,
+              icon: Icons.gavel_rounded,
+              title: 'Legal & Transparency',
+              subtitle: 'Third-Party Licenses',
+              trailing: 'View',
+              onTap: () {
+                showLicensePage(
+                  context: context,
+                  applicationName: 'Readme Creator',
+                  applicationVersion: '1.0.0',
+                  applicationIcon: Padding(
+                    padding: const EdgeInsets.all(12.0),
+                    child: Icon(Icons.description_rounded, size: 48, color: AppColors.primary),
+                  ),
+                );
+              },
+            ),
+            
             const SizedBox(height: 32),
             
             // Tech Stack Footer
