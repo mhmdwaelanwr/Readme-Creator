@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../models/readme_element.dart';
@@ -36,91 +37,92 @@ class _CanvasItemState extends State<CanvasItem> {
       onEnter: (_) => setState(() => _isHovered = true),
       onExit: (_) => setState(() => _isHovered = false),
       child: GestureDetector(
-        onTap: () => provider.selectElement(widget.element.id),
+        onTap: () {
+          HapticFeedback.lightImpact();
+          provider.selectElement(widget.element.id);
+        },
         child: AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
-          margin: const EdgeInsets.only(bottom: 16),
+          duration: const Duration(milliseconds: 250),
+          curve: Curves.easeInOut,
+          margin: const EdgeInsets.only(bottom: 12),
+          transform: Matrix4.identity()..translate(_isHovered ? 4.0 : 0.0, 0.0),
           decoration: BoxDecoration(
             color: widget.isSelected
-                ? colorScheme.primary.withAlpha(isDark ? 30 : 10)
-                : (_isHovered ? (isDark ? Colors.white.withAlpha(5) : Colors.black.withAlpha(5)) : Colors.transparent),
+                ? colorScheme.primary.withAlpha(isDark ? 25 : 8)
+                : (_isHovered ? (isDark ? Colors.white.withAlpha(8) : Colors.black.withAlpha(4)) : Colors.transparent),
             border: Border.all(
               color: widget.isSelected
                   ? colorScheme.primary
-                  : (_isHovered ? colorScheme.primary.withAlpha(100) : Colors.transparent),
-              width: 2,
+                  : (_isHovered ? colorScheme.primary.withAlpha(80) : Colors.transparent),
+              width: 1.5,
             ),
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: _isHovered && !widget.isSelected ? [
+              BoxShadow(color: Colors.black.withAlpha(10), blurRadius: 10, offset: const Offset(0, 4))
+            ] : null,
           ),
           child: Stack(
             children: [
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 16.0),
+                padding: const EdgeInsets.all(20.0),
                 child: ElementRenderer(element: widget.element),
               ),
               if (_isHovered || widget.isSelected)
                 Positioned(
-                  right: 8,
-                  top: 8,
-                  child: AnimatedOpacity(
-                    opacity: _isHovered || widget.isSelected ? 1.0 : 0.0,
-                    duration: const Duration(milliseconds: 200),
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: isDark ? AppColors.canvasBackgroundDark : Colors.white,
-                        borderRadius: BorderRadius.circular(8),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withAlpha(20),
-                            blurRadius: 8,
-                            offset: const Offset(0, 2),
-                          ),
-                        ],
-                        border: Border.all(color: isDark ? Colors.white.withAlpha(20) : Colors.grey.withAlpha(30)),
-                      ),
-                      padding: const EdgeInsets.all(4),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          _buildActionButton(
-                            icon: Icons.arrow_upward,
-                            tooltip: 'Move Up',
-                            onPressed: () => provider.moveElementUp(widget.element.id),
-                            colorScheme: colorScheme,
-                          ),
-                          _buildActionButton(
-                            icon: Icons.arrow_downward,
-                            tooltip: 'Move Down',
-                            onPressed: () => provider.moveElementDown(widget.element.id),
-                            colorScheme: colorScheme,
-                          ),
-                          Container(
-                            height: 16,
-                            width: 1,
-                            color: isDark ? Colors.white.withAlpha(20) : Colors.grey.withAlpha(30),
-                            margin: const EdgeInsets.symmetric(horizontal: 4),
-                          ),
-                          _buildActionButton(
-                            icon: Icons.copy,
-                            tooltip: 'Duplicate',
-                            onPressed: () => provider.duplicateElement(widget.element.id),
-                            colorScheme: colorScheme,
-                          ),
-                          _buildActionButton(
-                            icon: Icons.save_as,
-                            tooltip: 'Save as Snippet',
-                            onPressed: () => _showSaveSnippetDialog(context, widget.element),
-                            colorScheme: colorScheme,
-                          ),
-                          _buildActionButton(
-                            icon: Icons.delete_outline,
-                            tooltip: 'Delete',
-                            onPressed: () => provider.removeElement(widget.element.id),
-                            color: AppColors.error,
-                            colorScheme: colorScheme,
-                          ),
-                        ],
-                      ),
+                  right: 12,
+                  top: 12,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: isDark ? const Color(0xFF1E293B) : Colors.white,
+                      borderRadius: BorderRadius.circular(12),
+                      boxShadow: [
+                        BoxShadow(color: Colors.black.withAlpha(15), blurRadius: 12, offset: const Offset(0, 4)),
+                      ],
+                      border: Border.all(color: isDark ? Colors.white.withAlpha(15) : Colors.grey.withAlpha(20)),
+                    ),
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        _buildActionButton(
+                          icon: Icons.keyboard_arrow_up_rounded,
+                          tooltip: 'Move Up',
+                          onPressed: () {
+                            HapticFeedback.selectionClick();
+                            provider.moveElementUp(widget.element.id);
+                          },
+                          colorScheme: colorScheme,
+                        ),
+                        _buildActionButton(
+                          icon: Icons.keyboard_arrow_down_rounded,
+                          tooltip: 'Move Down',
+                          onPressed: () {
+                            HapticFeedback.selectionClick();
+                            provider.moveElementDown(widget.element.id);
+                          },
+                          colorScheme: colorScheme,
+                        ),
+                        const SizedBox(width: 4),
+                        _buildActionButton(
+                          icon: Icons.copy_all_rounded,
+                          tooltip: 'Duplicate',
+                          onPressed: () {
+                            HapticFeedback.mediumImpact();
+                            provider.duplicateElement(widget.element.id);
+                          },
+                          colorScheme: colorScheme,
+                        ),
+                        _buildActionButton(
+                          icon: Icons.delete_sweep_rounded,
+                          tooltip: 'Remove',
+                          onPressed: () {
+                            HapticFeedback.heavyImpact();
+                            provider.removeElement(widget.element.id);
+                          },
+                          color: Colors.redAccent,
+                          colorScheme: colorScheme,
+                        ),
+                      ],
                     ),
                   ),
                 ),
@@ -139,51 +141,13 @@ class _CanvasItemState extends State<CanvasItem> {
     Color? color,
   }) {
     return IconButton(
-      icon: Icon(icon, size: 16),
+      icon: Icon(icon, size: 18),
       onPressed: onPressed,
       tooltip: tooltip,
-      padding: const EdgeInsets.all(6),
+      padding: const EdgeInsets.all(8),
       constraints: const BoxConstraints(),
-      splashRadius: 20,
-      color: color ?? colorScheme.onSurface.withAlpha(180),
-      hoverColor: (color ?? colorScheme.primary).withAlpha(20),
-    );
-  }
-
-  void _showSaveSnippetDialog(BuildContext context, ReadmeElement element) {
-    final nameController = TextEditingController(text: element.description);
-    showSafeDialog(
-      context,
-      builder: (context) => AlertDialog(
-        title: Text('Save as Snippet', style: GoogleFonts.inter(fontWeight: FontWeight.bold)),
-        content: TextField(
-          controller: nameController,
-          decoration: const InputDecoration(
-            labelText: 'Snippet Name',
-            border: OutlineInputBorder(),
-          ),
-          style: GoogleFonts.inter(),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              if (nameController.text.isNotEmpty) {
-                Provider.of<LibraryProvider>(context, listen: false).saveSnippet(
-                  name: nameController.text,
-                  elementJson: jsonEncode(element.toJson()),
-                );
-                Navigator.pop(context);
-                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Snippet saved!')));
-              }
-            },
-            child: const Text('Save'),
-          ),
-        ],
-      ),
+      splashRadius: 24,
+      color: color ?? colorScheme.onSurface.withAlpha(200),
     );
   }
 }
