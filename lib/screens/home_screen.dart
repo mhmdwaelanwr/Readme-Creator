@@ -161,9 +161,9 @@ class _HomeScreenState extends State<HomeScreen> {
               children: [
                 Icon(Icons.description, color: Theme.of(context).colorScheme.primary),
                 const SizedBox(width: 12),
-                Flexible(
+                const Flexible(
                   child: Text(
-                    AppLocalizations.of(context)!.appTitle,
+                    'Markdown Creator',
                     overflow: TextOverflow.ellipsis,
                     maxLines: 1,
                   ),

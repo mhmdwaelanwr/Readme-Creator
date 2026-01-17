@@ -1,4 +1,4 @@
-// Readme Creator
+// Markdown Creator
 // Development by: Mohamed Anwar (mhmdwaelanwr)
 
 import 'dart:async';
@@ -8,7 +8,8 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:provider/provider.dart';
 
-// UNCOMMENT THIS AFTER RUNNING FLUTTERFIRE CONFIGURE:
+// IMPORTANT: If you have successfully run 'flutterfire configure', 
+// uncomment the line below and the options in Firebase.initializeApp.
 // import 'firebase_options.dart'; 
 
 import 'l10n/app_localizations.dart';
@@ -54,7 +55,7 @@ class MyApp extends StatelessWidget {
     return Consumer<ProjectProvider>(
       builder: (context, provider, child) {
         return MaterialApp(
-          title: 'Readme Creator',
+          title: 'Markdown Creator',
           debugShowCheckedModeBanner: false,
           localizationsDelegates: const [
             AppLocalizations.delegate,

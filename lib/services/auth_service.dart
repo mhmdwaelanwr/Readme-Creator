@@ -8,6 +8,7 @@ import 'package:crypto/crypto.dart';
 import 'dart:math';
 
 class AuthService {
+  // Flag to check if Firebase is fully initialized with options
   bool get isReady {
     try {
       return Firebase.apps.isNotEmpty;
@@ -16,12 +17,13 @@ class AuthService {
     }
   }
 
+  // Official developer email for Owner privileges
   static const String adminEmail = "mhmdwaelanwr@gmail.com"; 
 
   FirebaseAuth get _auth => FirebaseAuth.instance;
   final GoogleSignIn _googleSignIn = GoogleSignIn();
 
-  // Tokens storage (Temporary for the session, should be managed by a provider for persistence if needed)
+  // Tokens storage for integration services
   String? githubToken;
   String? googleAccessToken;
 
@@ -63,7 +65,7 @@ class AuthService {
     if (!isReady) return null;
     try {
       GithubAuthProvider githubProvider = GithubAuthProvider();
-      githubProvider.addScope('repo'); // Essential for project access
+      githubProvider.addScope('repo'); 
       githubProvider.addScope('user');
 
       UserCredential credential;
@@ -73,7 +75,6 @@ class AuthService {
         credential = await _auth.signInWithProvider(githubProvider);
       }
 
-      // Extract GitHub Access Token
       if (credential.credential is OAuthCredential) {
         githubToken = (credential.credential as OAuthCredential).accessToken;
       }
@@ -111,18 +112,6 @@ class AuthService {
     }
   }
 
-  String _generateNonce([int length = 32]) {
-    const charset = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
-    final random = Random.secure();
-    return List.generate(length, (_) => charset[random.nextInt(charset.length)]).join();
-  }
-
-  String _sha256ofString(String input) {
-    final bytes = utf8.encode(input);
-    final digest = sha256.convert(bytes);
-    return digest.toString();
-  }
-
   // --- Native Login ---
 
   Future<UserCredential?> signUpWithEmail(String email, String password) async {
@@ -135,7 +124,7 @@ class AuthService {
     return await _auth.signInWithEmailAndPassword(email: email, password: password);
   }
 
-  // --- Phone Number ---
+  // --- Phone Authentication ---
 
   Future<void> verifyPhoneNumber({
     required String phoneNumber,
@@ -161,6 +150,20 @@ class AuthService {
       smsCode: smsCode,
     );
     return await _auth.signInWithCredential(credential);
+  }
+
+  // --- Utility ---
+
+  String _generateNonce([int length = 32]) {
+    const charset = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
+    final random = Random.secure();
+    return List.generate(length, (_) => charset[random.nextInt(charset.length)]).join();
+  }
+
+  String _sha256ofString(String input) {
+    final bytes = utf8.encode(input);
+    final digest = sha256.convert(bytes);
+    return digest.toString();
   }
 
   Future<UserCredential?> signInAnonymously() async {
