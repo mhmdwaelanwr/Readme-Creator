@@ -8,8 +8,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:provider/provider.dart';
 
-// IMPORTANT: If you have successfully run 'flutterfire configure', 
-// uncomment the line below and the options in Firebase.initializeApp.
+// UNCOMMENT THIS AFTER RUNNING FLUTTERFIRE CONFIGURE:
 // import 'firebase_options.dart'; 
 
 import 'l10n/app_localizations.dart';
@@ -18,22 +17,21 @@ import 'providers/library_provider.dart';
 import 'screens/home_screen.dart';
 import 'core/theme/app_theme.dart';
 
-void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
+void main() {
+  runZonedGuarded(() async {
+    WidgetsFlutterBinding.ensureInitialized();
 
-  bool firebaseInitialized = false;
-  try {
-    // Attempt initialization. If options are not provided, it may run in limited mode
-    // or fail. We wrap it to prevent app crash.
-    await Firebase.initializeApp(
-      // options: DefaultFirebaseOptions.currentPlatform, 
-    );
-    firebaseInitialized = true;
-  } catch (e) {
-    debugPrint('Firebase Note: App running in Local Mode. $e');
-  }
+    bool firebaseInitialized = false;
+    try {
+      // PRO TIP: When firebase_options.dart is ready, change this to:
+      // await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+      await Firebase.initializeApp();
+      firebaseInitialized = true;
+      debugPrint('Firebase Core: Connected');
+    } catch (e) {
+      debugPrint('Firebase Core: Running in Offline Mode ($e)');
+    }
 
-  runZonedGuarded(() {
     runApp(
       MultiProvider(
         providers: [
@@ -44,7 +42,7 @@ void main() async {
       ),
     );
   }, (error, stack) {
-    debugPrint('Global Error: $error');
+    debugPrint('Critical System Error: $error');
   });
 }
 

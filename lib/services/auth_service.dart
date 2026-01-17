@@ -21,6 +21,10 @@ class AuthService {
   FirebaseAuth get _auth => FirebaseAuth.instance;
   final GoogleSignIn _googleSignIn = GoogleSignIn();
 
+  // Tokens storage (Temporary for the session, should be managed by a provider for persistence if needed)
+  String? githubToken;
+  String? googleAccessToken;
+
   Stream<User?> get user {
     if (!isReady) return Stream.value(null);
     return _auth.authStateChanges();
@@ -41,6 +45,9 @@ class AuthService {
       final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
       if (googleUser == null) return null;
       final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
+      
+      googleAccessToken = googleAuth.accessToken;
+
       final AuthCredential credential = GoogleAuthProvider.credential(
         accessToken: googleAuth.accessToken,
         idToken: googleAuth.idToken,
@@ -56,11 +63,22 @@ class AuthService {
     if (!isReady) return null;
     try {
       GithubAuthProvider githubProvider = GithubAuthProvider();
+      githubProvider.addScope('repo'); // Essential for project access
+      githubProvider.addScope('user');
+
+      UserCredential credential;
       if (kIsWeb) {
-        return await _auth.signInWithPopup(githubProvider);
+        credential = await _auth.signInWithPopup(githubProvider);
       } else {
-        return await _auth.signInWithProvider(githubProvider);
+        credential = await _auth.signInWithProvider(githubProvider);
       }
+
+      // Extract GitHub Access Token
+      if (credential.credential is OAuthCredential) {
+        githubToken = (credential.credential as OAuthCredential).accessToken;
+      }
+
+      return credential;
     } catch (e) {
       debugPrint('GitHub Auth Error: $e');
       return null;
@@ -81,7 +99,6 @@ class AuthService {
         nonce: nonce,
       );
 
-      // Using OAuthProvider directly is more robust across different firebase_auth versions
       final AuthCredential credential = OAuthProvider("apple.com").credential(
         idToken: appleCredential.identityToken,
         rawNonce: rawNonce,
@@ -94,7 +111,6 @@ class AuthService {
     }
   }
 
-  // Helper for Apple Sign In Nonce
   String _generateNonce([int length = 32]) {
     const charset = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
     final random = Random.secure();
@@ -107,7 +123,7 @@ class AuthService {
     return digest.toString();
   }
 
-  // --- Native Login: Email & Password ---
+  // --- Native Login ---
 
   Future<UserCredential?> signUpWithEmail(String email, String password) async {
     if (!isReady) return null;
@@ -119,7 +135,7 @@ class AuthService {
     return await _auth.signInWithEmailAndPassword(email: email, password: password);
   }
 
-  // --- Native Login: Phone Number ---
+  // --- Phone Number ---
 
   Future<void> verifyPhoneNumber({
     required String phoneNumber,
@@ -147,8 +163,6 @@ class AuthService {
     return await _auth.signInWithCredential(credential);
   }
 
-  // --- Extras ---
-
   Future<UserCredential?> signInAnonymously() async {
     if (!isReady) return null;
     try {
@@ -162,6 +176,8 @@ class AuthService {
   Future<void> signOut() async {
     if (!isReady) return;
     try {
+      githubToken = null;
+      googleAccessToken = null;
       if (await _googleSignIn.isSignedIn()) await _googleSignIn.signOut();
       await _auth.signOut();
     } catch (_) {}

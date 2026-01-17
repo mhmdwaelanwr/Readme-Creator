@@ -5,9 +5,12 @@ import 'package:google_fonts/google_fonts.dart';
 import '../models/readme_element.dart';
 import '../models/snippet.dart';
 import '../providers/project_provider.dart';
+import '../services/auth_service.dart';
 import 'canvas_item.dart';
 import '../core/constants/app_colors.dart';
 import '../utils/dialog_helper.dart';
+import '../utils/toast_helper.dart';
+import 'dialogs/login_dialog.dart';
 
 class EditorCanvas extends StatelessWidget {
   const EditorCanvas({super.key});
@@ -15,9 +18,9 @@ class EditorCanvas extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final provider = Provider.of<ProjectProvider>(context);
+    final authService = AuthService();
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    // Responsive sizing logic
     double maxWidth = 850;
     double? deviceHeight;
     double borderRadius = 12;
@@ -36,13 +39,13 @@ class EditorCanvas extends StatelessWidget {
 
     return CallbackShortcuts(
       bindings: {
-        const SingleActivator(LogicalKeyboardKey.keyZ, control: true): () => provider.undo(),
-        const SingleActivator(LogicalKeyboardKey.keyY, control: true): () => provider.redo(),
-        const SingleActivator(LogicalKeyboardKey.delete): () {
-          if (provider.selectedElementId != null) {
-            provider.removeElement(provider.selectedElementId!);
+        const SingleActivator(LogicalKeyboardKey.keyS, control: true): () {
+          if (!authService.isReady) {
+            ToastHelper.show(context, 'Cloud Sync requires Firebase Setup.', isError: true);
           }
         },
+        const SingleActivator(LogicalKeyboardKey.keyZ, control: true): () => provider.undo(),
+        const SingleActivator(LogicalKeyboardKey.keyY, control: true): () => provider.redo(),
       },
       child: Focus(
         autofocus: true,
@@ -60,17 +63,29 @@ class EditorCanvas extends StatelessWidget {
               color: isDark ? AppColors.editorBackgroundDark : AppColors.editorBackgroundLight,
               child: Stack(
                 children: [
-                  // Main Scrollable Area
+                  // High-Contrast Grid Logic
+                  if (provider.showGrid)
+                    Positioned.fill(
+                      child: RepaintBoundary(
+                        child: CustomPaint(
+                          painter: DottedGridPainter(isDark: isDark),
+                        ),
+                      ),
+                    ),
+
+                  // Main Interactive Workspace
                   Positioned.fill(
                     child: SingleChildScrollView(
                       physics: const BouncingScrollPhysics(),
                       child: Column(
                         children: [
                           const SizedBox(height: 100),
+                          _buildAuthContextBanner(context, authService, isDark),
+                          const SizedBox(height: 20),
                           Center(
                             child: AnimatedContainer(
                               duration: const Duration(milliseconds: 300),
-                              curve: Curves.easeInOut,
+                              curve: Curves.easeOutCubic,
                               constraints: BoxConstraints(
                                 maxWidth: maxWidth,
                                 minHeight: deviceHeight ?? 400,
@@ -81,39 +96,23 @@ class EditorCanvas extends StatelessWidget {
                                 borderRadius: BorderRadius.circular(borderRadius),
                                 boxShadow: [
                                   BoxShadow(
-                                    color: Colors.black.withAlpha(isDark ? 100 : 25),
+                                    color: Colors.black.withOpacity(isDark ? 0.4 : 0.1),
                                     blurRadius: 30,
-                                    offset: const Offset(0, 10),
+                                    offset: const Offset(0, 15),
                                   ),
                                 ],
                                 border: Border.all(
-                                  color: isDark ? Colors.white.withAlpha(25) : Colors.black.withAlpha(12),
+                                  color: isDark ? Colors.white.withOpacity(0.1) : Colors.black.withOpacity(0.05),
                                   width: provider.deviceMode == DeviceMode.desktop ? 1 : 12,
                                 ),
                               ),
                               clipBehavior: Clip.antiAlias,
-                              child: Stack(
-                                children: [
-                                  // NEW: Grid is now INSIDE the design canvas correctly
-                                  if (provider.showGrid)
-                                    Positioned.fill(
-                                      child: RepaintBoundary(
-                                        child: CustomPaint(
-                                          painter: DottedGridPainter(isDark: isDark),
-                                        ),
-                                      ),
-                                    ),
-                                  
-                                  GestureDetector(
-                                    onTap: () => provider.selectElement(''),
-                                    behavior: HitTestBehavior.opaque,
-                                    child: RepaintBoundary(
-                                      child: provider.elements.isEmpty
-                                          ? _buildEmptyState(context)
-                                          : _buildElementList(provider, canvasPadding, isDark),
-                                    ),
-                                  ),
-                                ],
+                              child: GestureDetector(
+                                onTap: () => provider.selectElement(''),
+                                behavior: HitTestBehavior.opaque,
+                                child: provider.elements.isEmpty
+                                    ? _buildEmptyState(context)
+                                    : _buildElementList(provider, canvasPadding, isDark),
                               ),
                             ),
                           ),
@@ -123,14 +122,43 @@ class EditorCanvas extends StatelessWidget {
                     ),
                   ),
 
-                  // Floating UI Elements
+                  // Integrated Toolbar
                   _buildFloatingToolbar(context, provider, isDark),
-                  if (candidateData.isNotEmpty) _buildDropIndicator(context),
                 ],
               ),
             );
           },
         ),
+      ),
+    );
+  }
+
+  Widget _buildAuthContextBanner(BuildContext context, AuthService auth, bool isDark) {
+    if (auth.githubToken != null) return const SizedBox.shrink();
+
+    return Container(
+      width: 400,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      decoration: BoxDecoration(
+        color: AppColors.primary.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.primary.withOpacity(0.2)),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.cloud_off_rounded, size: 16, color: Colors.orange),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              'GitHub integration inactive. Login to enable auto-import.',
+              style: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.w600, color: isDark ? Colors.white70 : Colors.black87),
+            ),
+          ),
+          TextButton(
+            onPressed: () => showSafeDialog(context, builder: (context) => const LoginDialog()),
+            child: const Text('Login', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+          ),
+        ],
       ),
     );
   }
@@ -152,8 +180,11 @@ class EditorCanvas extends StatelessWidget {
         final element = provider.elements[index];
         return KeyedSubtree(
           key: ValueKey(element.id),
-          child: _DropZoneWrapper(
-            index: index,
+          child: DropZone(
+            onDrop: (data) {
+              if (data is ReadmeElementType) provider.insertElement(index, data);
+              else if (data is Snippet) provider.insertSnippet(index, data);
+            },
             child: CanvasItem(
               element: element,
               isSelected: element.id == provider.selectedElementId,
@@ -174,11 +205,11 @@ class EditorCanvas extends StatelessWidget {
           height: 48,
           padding: const EdgeInsets.symmetric(horizontal: 12),
           decoration: BoxDecoration(
-            color: (isDark ? const Color(0xFF1E293B) : Colors.white).withAlpha(240),
+            color: (isDark ? const Color(0xFF1E293B) : Colors.white).withOpacity(0.95),
             borderRadius: BorderRadius.circular(24),
-            border: Border.all(color: (isDark ? Colors.white : Colors.black).withAlpha(25)),
+            border: Border.all(color: (isDark ? Colors.white : Colors.black).withOpacity(0.1)),
             boxShadow: [
-              BoxShadow(color: Colors.black.withAlpha(25), blurRadius: 10, offset: const Offset(0, 4)),
+              BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 10, offset: const Offset(0, 4)),
             ],
           ),
           child: Row(
@@ -203,7 +234,10 @@ class EditorCanvas extends StatelessWidget {
               _toolbarButton(
                 Icons.delete_forever_rounded,
                 'Clear',
-                () => _confirmClear(context, provider),
+                () {
+                  provider.clearElements();
+                  ToastHelper.show(context, 'Workspace cleared');
+                },
                 color: Colors.orange,
               ),
             ],
@@ -218,64 +252,24 @@ class EditorCanvas extends StatelessWidget {
       icon: Icon(icon, size: 20),
       onPressed: onTap,
       tooltip: tooltip,
-      color: isActive ? Colors.blue : (onTap == null ? Colors.grey.withAlpha(128) : color),
+      color: isActive ? Colors.blue : (onTap == null ? Colors.grey.withOpacity(0.5) : color),
       visualDensity: VisualDensity.compact,
-    );
-  }
-
-  void _confirmClear(BuildContext context, ProjectProvider provider) {
-    showSafeDialog(
-      context,
-      builder: (context) => AlertDialog(
-        title: const Text('Clear All?'),
-        content: const Text('Do you want to remove all elements from this project?'),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-            onPressed: () {
-              provider.clearElements();
-              Navigator.pop(context);
-            },
-            child: const Text('Clear Everything'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildDropIndicator(BuildContext context) {
-    return IgnorePointer(
-      child: Container(
-        color: Colors.blue.withAlpha(25),
-        child: Center(
-          child: Container(
-            padding: const EdgeInsets.all(24),
-            decoration: BoxDecoration(
-              color: Colors.blue,
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: const Icon(Icons.add_circle_outline, color: Colors.white, size: 48),
-          ),
-        ),
-      ),
     );
   }
 
   Widget _buildEmptyState(BuildContext context) {
     return Container(
-      width: double.infinity,
       padding: const EdgeInsets.symmetric(vertical: 120, horizontal: 40),
       child: Column(
         children: [
           const Icon(Icons.auto_awesome_mosaic_rounded, size: 80, color: Colors.blue),
           const SizedBox(height: 32),
           Text(
-            'New README Project',
+            'Start Your Masterpiece',
             style: GoogleFonts.poppins(fontSize: 24, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 8),
-          const Text('Drag and drop components to build your file', style: TextStyle(color: Colors.grey)),
+          const Text('Drag components from the library to build your documentation', style: TextStyle(color: Colors.grey)),
         ],
       ),
     );
@@ -289,38 +283,33 @@ class DottedGridPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = isDark ? Colors.white.withAlpha(45) : Colors.black.withAlpha(25)
+      ..color = isDark ? Colors.white.withOpacity(0.15) : Colors.black.withOpacity(0.08)
       ..style = PaintingStyle.fill;
 
-    const double gap = 25.0; 
-    final path = Path();
-    
-    for (double x = gap; x < size.width; x += gap) {
-      for (double y = gap; y < size.height; y += gap) {
-        path.addOval(Rect.fromCircle(center: Offset(x, y), radius: 1.0));
+    const double gap = 30.0;
+    for (double x = 0; x <= size.width; x += gap) {
+      for (double y = 0; y <= size.height; y += gap) {
+        canvas.drawCircle(Offset(x, y), 1.2, paint);
       }
     }
-    canvas.drawPath(path, paint);
   }
 
   @override
   bool shouldRepaint(covariant DottedGridPainter oldDelegate) => oldDelegate.isDark != isDark;
 }
 
-class _DropZoneWrapper extends StatefulWidget {
+class DropZone extends StatefulWidget {
   final Widget child;
-  final int index;
-  const _DropZoneWrapper({required this.child, required this.index});
-
+  final Function(Object data) onDrop;
+  const DropZone({super.key, required this.child, required this.onDrop});
   @override
-  State<_DropZoneWrapper> createState() => _DropZoneWrapperState();
+  State<DropZone> createState() => _DropZoneState();
 }
 
-class _DropZoneWrapperState extends State<_DropZoneWrapper> {
+class _DropZoneState extends State<DropZone> {
   bool _isHovered = false;
   @override
   Widget build(BuildContext context) {
-    final provider = Provider.of<ProjectProvider>(context, listen: false);
     return DragTarget<Object>(
       onWillAcceptWithDetails: (details) {
         final accepts = details.data is ReadmeElementType || details.data is Snippet;
@@ -330,11 +319,7 @@ class _DropZoneWrapperState extends State<_DropZoneWrapper> {
       onLeave: (_) => setState(() => _isHovered = false),
       onAcceptWithDetails: (details) {
         setState(() => _isHovered = false);
-        if (details.data is ReadmeElementType) {
-          provider.insertElement(widget.index, details.data as ReadmeElementType);
-        } else if (details.data is Snippet) {
-          provider.insertSnippet(widget.index, details.data as Snippet);
-        }
+        widget.onDrop(details.data);
       },
       builder: (context, candidateData, rejectedData) {
         return Column(
@@ -347,7 +332,7 @@ class _DropZoneWrapperState extends State<_DropZoneWrapper> {
                 decoration: BoxDecoration(
                   color: Colors.blue,
                   borderRadius: BorderRadius.circular(2),
-                  boxShadow: [BoxShadow(color: Colors.blue.withAlpha(128), blurRadius: 8)],
+                  boxShadow: [BoxShadow(color: Colors.blue.withOpacity(0.5), blurRadius: 8)],
                 ),
               ),
             widget.child,

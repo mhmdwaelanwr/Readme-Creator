@@ -1,129 +1,70 @@
-import 'package:path/path.dart' as path;
-import 'github_service.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
+import 'auth_service.dart';
 
 class GitHubScannerService {
-  static const List<String> _ignoredDirectories = [
-    '.git',
-    '.idea',
-    '.vscode',
-    'build',
-    'dist',
-    'node_modules',
-    'android',
-    'ios',
-    'windows',
-    'linux',
-    'macos',
-    'web',
-    'coverage',
-    '__pycache__',
-    'venv',
-    'env',
-    '.dart_tool',
-  ];
+  final AuthService _authService = AuthService();
 
-  static const List<String> _ignoredExtensions = [
-    '.png', '.jpg', '.jpeg', '.gif', '.ico', '.svg', '.webp',
-    '.mp4', '.mov', '.avi',
-    '.mp3', '.wav',
-    '.pdf', '.doc', '.docx',
-    '.zip', '.tar', '.gz', '.rar',
-    '.exe', '.dll', '.so', '.dylib', '.bin',
-    '.class', '.o', '.obj',
-    '.lock', '.log',
-    '.ttf', '.otf', '.woff', '.woff2',
-    '.db', '.sqlite', '.sqlite3',
-  ];
-
-  final GitHubService _githubService = GitHubService();
-
-  Future<String> scanRepo(String repoUrl, {String? token}) async {
-    final (owner, repo) = _parseRepoUrl(repoUrl);
-    if (owner == null || repo == null) {
-      throw Exception('Invalid GitHub URL');
+  Future<String> scanRepo(String repoUrl) async {
+    // 1. Parse URL to get owner and repo name
+    final uri = Uri.tryParse(repoUrl);
+    if (uri == null || uri.pathSegments.length < 2) {
+      throw Exception("Invalid GitHub URL. Expected format: https://github.com/owner/repo");
     }
 
-    final tree = await _githubService.fetchRepoTree(owner, repo, token: token);
-    if (tree == null) {
-      throw Exception('Failed to fetch repository tree. Check URL or token permissions.');
+    final owner = uri.pathSegments[0];
+    final repo = uri.pathSegments[1];
+
+    final headers = <String, String>{
+      'Accept': 'application/vnd.github.v3+json',
+    };
+
+    // REAL INTEGRATION: Use Token if user is logged in via GitHub
+    if (_authService.githubToken != null) {
+      headers['Authorization'] = 'token ${_authService.githubToken}';
     }
 
+    // 2. Fetch the file tree recursively
+    // We'll fetch the default branch first to get the tree SHA
+    final repoApiUrl = Uri.parse('https://api.github.com/repos/$owner/$repo');
+    final repoResponse = await http.get(repoApiUrl, headers: headers);
+    
+    if (repoResponse.statusCode != 200) {
+      throw Exception("Failed to access repository: ${repoResponse.body}");
+    }
+
+    final repoData = jsonDecode(repoResponse.body);
+    final defaultBranch = repoData['default_branch'];
+
+    final treeUrl = Uri.parse('https://api.github.com/repos/$owner/$repo/git/trees/$defaultBranch?recursive=1');
+    final treeResponse = await http.get(treeUrl, headers: headers);
+
+    if (treeResponse.statusCode != 200) {
+      throw Exception("Failed to fetch project tree: ${treeResponse.body}");
+    }
+
+    final treeData = jsonDecode(treeResponse.body);
+    final List<dynamic> tree = treeData['tree'];
+
+    // 3. Filter and build a text representation of the structure
     final buffer = StringBuffer();
-    buffer.writeln('Project Codebase Context (GitHub: $owner/$repo):');
-    buffer.writeln('================================================\n');
+    buffer.writeln('GitHub Repository Structure for $owner/$repo:');
+    buffer.writeln('===========================================\n');
 
-    // Filter files
-    final filesToFetch = tree.where((node) {
-      if (node['type'] != 'blob') return false; // Only files
-      final filePath = node['path'] as String;
-      return !_shouldIgnore(filePath);
-    }).toList();
+    for (var item in tree) {
+      final type = item['type']; // 'blob' (file) or 'tree' (dir)
+      final path = item['path'];
+      
+      // Skip common binary/heavy folders
+      if (path.contains('.git/') || path.contains('node_modules/') || path.contains('build/')) continue;
 
-    // Limit to avoid hitting API limits or context window too hard
-    // Let's say max 50 files for now, prioritizing root and src
-    // Or just fetch all but handle errors.
-    // Better to fetch important ones.
-    // For now, let's try to fetch up to 30 files to be safe with rate limits if no token.
-
-    int fetchedCount = 0;
-    const int maxFiles = 40;
-
-    for (final node in filesToFetch) {
-      if (fetchedCount >= maxFiles) {
-        buffer.writeln('\n(Truncated: Max file limit reached)');
-        break;
-      }
-
-      final filePath = node['path'] as String;
-
-      // Skip lock files explicitly if missed by extension check
-      if (filePath.endsWith('lock.json') || filePath.endsWith('.lock')) continue;
-
-      try {
-        final content = await _githubService.fetchFileContent(owner, repo, filePath, token: token);
-        if (content != null) {
-          // Basic binary check (if content contains null bytes)
-          if (content.contains('\u0000')) continue;
-
-          buffer.writeln('File: $filePath');
-          buffer.writeln('---START---');
-          buffer.writeln(content);
-          buffer.writeln('---END---\n');
-          fetchedCount++;
-        }
-      } catch (e) {
-        // Ignore fetch errors
+      if (type == 'tree') {
+        buffer.writeln('[DIR]  $path');
+      } else {
+        buffer.writeln('[FILE] $path');
       }
     }
 
     return buffer.toString();
   }
-
-  (String?, String?) _parseRepoUrl(String url) {
-    final uri = Uri.tryParse(url);
-    if (uri == null) return (null, null);
-
-    final segments = uri.pathSegments;
-    if (segments.length >= 2) {
-      return (segments[0], segments[1]);
-    }
-    return (null, null);
-  }
-
-  bool _shouldIgnore(String filePath) {
-    final parts = path.split(filePath);
-
-    // Check directories
-    for (final part in parts) {
-      if (_ignoredDirectories.contains(part)) return true;
-      if (part.startsWith('.') && part != '.gitignore') return true; // Ignore hidden files/folders generally, except gitignore
-    }
-
-    // Check extension
-    final ext = path.extension(filePath).toLowerCase();
-    if (_ignoredExtensions.contains(ext)) return true;
-
-    return false;
-  }
 }
-

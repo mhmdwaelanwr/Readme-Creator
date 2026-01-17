@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:provider/provider.dart';
 import '../../services/auth_service.dart';
 import '../../utils/dialog_helper.dart';
 import '../../utils/toast_helper.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/constants/country_codes.dart';
 
 class LoginDialog extends StatefulWidget {
   const LoginDialog({super.key});
@@ -26,6 +28,7 @@ class _LoginDialogState extends State<LoginDialog> with SingleTickerProviderStat
   final _phoneController = TextEditingController();
   final _otpController = TextEditingController();
   String? _verificationId;
+  String _selectedCountryCode = '20'; // Default to Egypt
 
   @override
   void initState() {
@@ -146,7 +149,7 @@ class _LoginDialogState extends State<LoginDialog> with SingleTickerProviderStat
           dividerColor: Colors.transparent,
           labelStyle: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 13),
           tabs: const [
-            Tab(text: 'SOCIAl'),
+            Tab(text: 'SOCIAL'),
             Tab(text: 'EMAIL'),
             Tab(text: 'PHONE'),
           ],
@@ -236,7 +239,48 @@ class _LoginDialogState extends State<LoginDialog> with SingleTickerProviderStat
       child: Column(
         children: [
           if (_verificationId == null) ...[
-            _buildAuthField(controller: _phoneController, label: 'Phone Number', icon: Icons.phone_android_rounded, isDark: isDark, hint: '+1 234 567 890'),
+            Row(
+              children: [
+                // Country Code Picker - Same logic as Social Links
+                Container(
+                  width: 120, // Slightly wider to avoid overflow
+                  height: 54,
+                  decoration: BoxDecoration(
+                    color: isDark ? Colors.white.withAlpha(5) : Colors.black.withAlpha(3),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: Colors.grey.withAlpha(30)),
+                  ),
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  child: DropdownButtonHideUnderline(
+                    child: DropdownButton<String>(
+                      isExpanded: true,
+                      value: _selectedCountryCode,
+                      items: CountryCodes.list.map((c) => DropdownMenuItem(
+                        value: c.code,
+                        child: Text(
+                          '${c.emoji} +${c.code}', 
+                          style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w600),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      )).toList(),
+                      onChanged: (val) {
+                        if (val != null) setState(() => _selectedCountryCode = val);
+                      },
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _buildAuthField(
+                    controller: _phoneController, 
+                    label: 'Phone Number', 
+                    icon: Icons.phone_android_rounded, 
+                    isDark: isDark, 
+                    hint: '1012345678'
+                  ),
+                ),
+              ],
+            ),
             const SizedBox(height: 32),
             SizedBox(
               width: double.infinity,
@@ -245,13 +289,14 @@ class _LoginDialogState extends State<LoginDialog> with SingleTickerProviderStat
                 icon: const Icon(Icons.send_rounded, size: 18),
                 onPressed: () {
                   if (_phoneController.text.isEmpty) return;
+                  final fullNumber = '+${_selectedCountryCode}${_phoneController.text}';
                   _authService.verifyPhoneNumber(
-                    phoneNumber: _phoneController.text,
+                    phoneNumber: fullNumber,
                     verificationCompleted: (cred) => _handleSignIn(() => _authService.signInWithPhoneCredential(cred.verificationId!, cred.smsCode!), 'Phone'),
                     verificationFailed: (e) => ToastHelper.show(context, 'Error: ${e.message}', isError: true),
                     codeSent: (id, _) {
                       setState(() => _verificationId = id);
-                      ToastHelper.show(context, 'Verification code sent!');
+                      ToastHelper.show(context, 'Verification code sent to $fullNumber');
                     },
                     codeAutoRetrievalTimeout: (id) => _verificationId = id,
                   );

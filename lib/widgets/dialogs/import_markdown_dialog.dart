@@ -1,14 +1,15 @@
 import 'dart:convert';
-import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
 import '../../l10n/app_localizations.dart';
 import '../../providers/project_provider.dart';
+import '../../services/auth_service.dart';
 import '../../utils/dialog_helper.dart';
 import '../../utils/toast_helper.dart';
 import '../../core/constants/app_colors.dart';
+import 'login_dialog.dart';
 
 class ImportMarkdownDialog extends StatefulWidget {
   const ImportMarkdownDialog({super.key});
@@ -20,6 +21,7 @@ class ImportMarkdownDialog extends StatefulWidget {
 class _ImportMarkdownDialogState extends State<ImportMarkdownDialog> with SingleTickerProviderStateMixin {
   final _textController = TextEditingController();
   final _urlController = TextEditingController();
+  final AuthService _authService = AuthService();
   late TabController _tabController;
   bool _isLoading = false;
 
@@ -43,15 +45,16 @@ class _ImportMarkdownDialogState extends State<ImportMarkdownDialog> with Single
 
     return StyledDialog(
       width: 700,
-      height: 600,
+      height: 650,
       title: DialogHeader(
-        title: AppLocalizations.of(context)!.importMarkdown,
-        icon: Icons.upload_file_rounded,
+        title: 'Project Intelligence Import',
+        icon: Icons.auto_awesome_rounded,
         color: Colors.indigo,
       ),
       contentPadding: EdgeInsets.zero,
       content: Column(
         children: [
+          _buildAuthStatusBanner(isDark),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 8.0),
             child: Container(
@@ -66,16 +69,14 @@ class _ImportMarkdownDialogState extends State<ImportMarkdownDialog> with Single
                 unselectedLabelColor: isDark ? Colors.white60 : Colors.black54,
                 indicatorSize: TabBarIndicatorSize.tab,
                 indicator: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [Colors.indigo, Colors.indigoAccent],
-                  ),
+                  gradient: const LinearGradient(colors: [Colors.indigo, Colors.indigoAccent]),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 dividerColor: Colors.transparent,
                 labelStyle: GoogleFonts.inter(fontWeight: FontWeight.bold),
                 tabs: const [
-                  Tab(text: 'Text / File'),
-                  Tab(text: 'Fetch from URL'),
+                  Tab(text: 'Manual / File'),
+                  Tab(text: 'GitHub Integration'),
                 ],
               ),
             ),
@@ -85,7 +86,7 @@ class _ImportMarkdownDialogState extends State<ImportMarkdownDialog> with Single
               controller: _tabController,
               children: [
                 _buildTextTab(isDark),
-                _buildUrlTab(isDark),
+                _buildGithubTab(isDark),
               ],
             ),
           ),
@@ -99,8 +100,8 @@ class _ImportMarkdownDialogState extends State<ImportMarkdownDialog> with Single
         const SizedBox(width: 8),
         FilledButton.icon(
           onPressed: () => _importOrClose(context),
-          icon: const Icon(Icons.check_circle_rounded, size: 18),
-          label: Text(AppLocalizations.of(context)!.import, style: GoogleFonts.inter(fontWeight: FontWeight.bold)),
+          icon: const Icon(Icons.bolt_rounded, size: 18),
+          label: Text('Finalize Import', style: GoogleFonts.inter(fontWeight: FontWeight.bold)),
           style: FilledButton.styleFrom(
             backgroundColor: Colors.indigo,
             padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
@@ -111,24 +112,129 @@ class _ImportMarkdownDialogState extends State<ImportMarkdownDialog> with Single
     );
   }
 
+  Widget _buildAuthStatusBanner(bool isDark) {
+    final bool isGithubConnected = _authService.githubToken != null;
+    
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 24),
+      decoration: BoxDecoration(
+        color: isGithubConnected ? Colors.green.withAlpha(20) : Colors.amber.withAlpha(20),
+      ),
+      child: Row(
+        children: [
+          Icon(
+            isGithubConnected ? Icons.check_circle_rounded : Icons.info_outline_rounded,
+            size: 16,
+            color: isGithubConnected ? Colors.green : Colors.orange,
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              isGithubConnected 
+                ? 'Authenticated with GitHub. Full project access enabled.'
+                : 'Limited access. Connect GitHub for seamless project engineering.',
+              style: GoogleFonts.inter(
+                fontSize: 12, 
+                fontWeight: FontWeight.w600,
+                color: isGithubConnected ? Colors.green : Colors.orange[800],
+              ),
+            ),
+          ),
+          if (!isGithubConnected)
+            TextButton(
+              onPressed: () async {
+                Navigator.pop(context);
+                showSafeDialog(context, builder: (context) => const LoginDialog());
+              },
+              child: const Text('Connect Now', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildGithubTab(bool isDark) {
+    return Padding(
+      padding: const EdgeInsets.all(24.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildSectionTitle('FETCH FROM REPOSITORY'),
+          const SizedBox(height: 16),
+          TextField(
+            controller: _urlController,
+            decoration: InputDecoration(
+              labelText: 'Repository / File URL',
+              hintText: 'https://github.com/user/repo',
+              prefixIcon: const Icon(Icons.public_rounded),
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+          ),
+          const SizedBox(height: 24),
+          SizedBox(
+            width: double.infinity,
+            height: 54,
+            child: ElevatedButton.icon(
+              onPressed: _isLoading ? null : _fetchFromSource,
+              icon: _isLoading 
+                ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2)) 
+                : const Icon(Icons.cloud_download_rounded),
+              label: Text(_isLoading ? 'Analyzing Source...' : 'Execute Intelligent Import'),
+              style: ElevatedButton.styleFrom(
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+              ),
+            ),
+          ),
+          const Spacer(),
+          Text(
+            'Pro Tip: If you are logged in, we use your token to bypass GitHub API limits and access private files.',
+            style: GoogleFonts.inter(fontSize: 11, color: Colors.grey, height: 1.4),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _fetchFromSource() async {
+    if (_urlController.text.isEmpty) return;
+    setState(() => _isLoading = true);
+    
+    try {
+      String fetchUrl = _urlController.text;
+      if (fetchUrl.contains('github.com') && fetchUrl.contains('/blob/')) {
+        fetchUrl = fetchUrl.replaceFirst('/blob/', '/raw/');
+      }
+
+      final headers = <String, String>{};
+      // REAL INTEGRATION: Use the Token if available
+      if (_authService.githubToken != null) {
+        headers['Authorization'] = 'token ${_authService.githubToken}';
+      }
+
+      final response = await http.get(Uri.parse(fetchUrl), headers: headers);
+      
+      if (response.statusCode == 200) {
+        setState(() { 
+          _textController.text = response.body; 
+          _tabController.animateTo(0); 
+        });
+        if (mounted) ToastHelper.show(context, 'Content fetched using secure authentication');
+      } else {
+        if (mounted) ToastHelper.show(context, 'Access Denied: ${response.statusCode}. Try logging in.', isError: true);
+      }
+    } catch (e) {
+      if (mounted) ToastHelper.show(context, 'Network Error: $e', isError: true);
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
   Widget _buildTextTab(bool isDark) {
     return Padding(
       padding: const EdgeInsets.all(24.0),
       child: Column(
         children: [
-          Row(
-            children: [
-              const Icon(Icons.info_outline_rounded, size: 16, color: Colors.grey),
-              const SizedBox(width: 8),
-              Expanded(child: Text('Paste raw markdown or select a file.', style: GoogleFonts.inter(fontSize: 12, color: Colors.grey))),
-              TextButton.icon(
-                onPressed: _pickFile,
-                icon: const Icon(Icons.folder_open_rounded, size: 18),
-                label: const Text('Pick File'),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
           Expanded(
             child: TextField(
               controller: _textController,
@@ -136,8 +242,8 @@ class _ImportMarkdownDialogState extends State<ImportMarkdownDialog> with Single
               expands: true,
               textAlignVertical: TextAlignVertical.top,
               decoration: InputDecoration(
-                hintText: '# My Awesome Project\n\nStarting writing here...',
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                hintText: '# Project Context\n\nStarting writing or paste here...',
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
                 filled: true,
                 fillColor: isDark ? Colors.white.withAlpha(5) : Colors.black.withAlpha(2),
               ),
@@ -149,80 +255,11 @@ class _ImportMarkdownDialogState extends State<ImportMarkdownDialog> with Single
     );
   }
 
-  Widget _buildUrlTab(bool isDark) {
-    return Padding(
-      padding: const EdgeInsets.all(24.0),
-      child: Column(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: Colors.indigo.withAlpha(isDark ? 20 : 10),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Colors.indigo.withAlpha(30)),
-            ),
-            child: Row(
-              children: [
-                const Icon(Icons.link_rounded, color: Colors.indigo),
-                const SizedBox(width: 16),
-                Expanded(child: Text('Import directly from a raw GitHub or Pastebin URL.', style: GoogleFonts.inter(fontSize: 13))),
-              ],
-            ),
-          ),
-          const SizedBox(height: 32),
-          TextField(
-            controller: _urlController,
-            decoration: InputDecoration(
-              labelText: AppLocalizations.of(context)!.repoUrl,
-              hintText: 'https://raw.githubusercontent.com/...',
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-              prefixIcon: const Icon(Icons.public_rounded),
-            ),
-          ),
-          const SizedBox(height: 24),
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton.icon(
-              onPressed: _isLoading ? null : _fetchUrl,
-              icon: _isLoading ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2)) : const Icon(Icons.cloud_download_rounded),
-              label: Text(_isLoading ? 'Fetching...' : 'Download & Preview'),
-              style: ElevatedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              ),
-            ),
-          ),
-        ],
-      ),
+  Widget _buildSectionTitle(String title) {
+    return Text(
+      title,
+      style: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.w900, color: Colors.grey, letterSpacing: 1.5),
     );
-  }
-
-  Future<void> _pickFile() async {
-    final result = await FilePicker.platform.pickFiles(type: FileType.custom, allowedExtensions: ['md', 'txt'], withData: true);
-    if (result != null && result.files.isNotEmpty) {
-      final bytes = result.files.first.bytes;
-      if (bytes != null) setState(() { _textController.text = utf8.decode(bytes); });
-    }
-  }
-
-  Future<void> _fetchUrl() async {
-    if (_urlController.text.isEmpty) return;
-    setState(() => _isLoading = true);
-    try {
-      String fetchUrl = _urlController.text;
-      if (fetchUrl.contains('github.com') && fetchUrl.contains('/blob/')) fetchUrl = fetchUrl.replaceFirst('/blob/', '/raw/');
-      final response = await http.get(Uri.parse(fetchUrl));
-      if (response.statusCode == 200) {
-        setState(() { _textController.text = response.body; _tabController.animateTo(0); });
-        if (mounted) ToastHelper.show(context, AppLocalizations.of(context)!.contentFetched);
-      } else {
-        if (mounted) ToastHelper.show(context, 'Failed: ${response.statusCode}', isError: true);
-      }
-    } catch (e) {
-      if (mounted) ToastHelper.show(context, 'Error: $e', isError: true);
-    } finally {
-      if (mounted) setState(() => _isLoading = false);
-    }
   }
 
   void _importOrClose(BuildContext context) {
@@ -233,7 +270,7 @@ class _ImportMarkdownDialogState extends State<ImportMarkdownDialog> with Single
       WidgetsBinding.instance.addPostFrameCallback((_) {
         provider.importMarkdown(markdownText);
       });
-      ToastHelper.show(context, AppLocalizations.of(context)!.projectImported);
+      ToastHelper.show(context, 'Intelligence imported successfully!');
     }
   }
 }
