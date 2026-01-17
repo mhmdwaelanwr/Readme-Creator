@@ -16,6 +16,7 @@ dependencies:
   firebase_auth: ^5.5.0
   cloud_firestore: ^5.6.3
   firebase_analytics: ^11.4.1
+  google_sign_in: ^6.2.2
 
   # Common UI & Logic
   cupertino_icons: ^1.0.8

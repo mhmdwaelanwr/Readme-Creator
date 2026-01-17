@@ -27,6 +27,7 @@ import 'projects_library_screen.dart';
 import 'social_preview_screen.dart';
 import 'github_actions_generator.dart';
 import '../services/health_check_service.dart';
+import '../services/auth_service.dart';
 
 import '../utils/toast_helper.dart';
 
@@ -52,6 +53,8 @@ import '../widgets/dialogs/extra_files_dialog.dart';
 import '../widgets/dialogs/language_dialog.dart';
 import '../widgets/dialogs/confirm_dialog.dart';
 import '../widgets/dialogs/about_app_dialog.dart';
+import '../widgets/dialogs/login_dialog.dart';
+import 'admin_dashboard_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -67,6 +70,7 @@ class _HomeScreenState extends State<HomeScreen> {
   final GlobalKey _exportKey = GlobalKey();
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   final FocusNode _focusNode = FocusNode();
+  final AuthService _authService = AuthService();
   bool _showPreview = false;
   bool _isFocusMode = false;
 
@@ -214,6 +218,46 @@ class _HomeScreenState extends State<HomeScreen> {
 
   List<Widget> _buildDesktopActions(BuildContext context) {
     return [
+      StreamBuilder(
+        stream: _authService.user,
+        builder: (context, snapshot) {
+          final user = snapshot.data;
+          final isAdmin = user?.email == AuthService.adminEmail;
+
+          return Row(
+            children: [
+              if (isAdmin)
+                IconButton(
+                  icon: const Icon(Icons.dashboard_customize_rounded, color: Colors.purpleAccent),
+                  tooltip: 'Admin Dashboard',
+                  onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const AdminDashboardScreen())),
+                ),
+              if (user == null)
+                TextButton.icon(
+                  onPressed: () => _showLoginDialog(context),
+                  icon: const Icon(Icons.login_rounded),
+                  label: const Text('Login'),
+                )
+              else
+                PopupMenuButton<int>(
+                  offset: const Offset(0, 40),
+                  onSelected: (val) {
+                    if (val == 1) _authService.signOut();
+                  },
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    child: CircleAvatar(radius: 14, backgroundImage: NetworkImage(user.photoURL ?? '')),
+                  ),
+                  itemBuilder: (context) => [
+                    PopupMenuItem(enabled: false, child: Text(user.displayName ?? 'User', style: const TextStyle(fontWeight: FontWeight.bold))),
+                    const PopupMenuDivider(),
+                    const PopupMenuItem(value: 1, child: Text('Logout')),
+                  ],
+                ),
+            ],
+          );
+        },
+      ),
       Consumer<ProjectProvider>(
         builder: (context, provider, child) {
           return Row(
@@ -251,7 +295,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                   );
                 },
-                itemBuilder: (context) => Templates.all.map((t) {
+                itemBuilder: (context) => provider.allTemplates.map((t) {
                   return PopupMenuItem(
                     value: t,
                     child: Column(
@@ -852,6 +896,13 @@ $htmlContent
     showSafeDialog(
       context,
       builder: (context) => const AboutAppDialog(),
+    );
+  }
+
+  void _showLoginDialog(BuildContext context) {
+    showSafeDialog(
+      context,
+      builder: (context) => const LoginDialog(),
     );
   }
 

@@ -6,19 +6,26 @@ import '../models/readme_element.dart';
 import '../models/snippet.dart';
 import '../utils/templates.dart';
 import '../utils/markdown_importer.dart';
+import '../services/firestore_service.dart';
 
 enum DeviceMode { desktop, tablet, mobile }
 
 class ProjectProvider with ChangeNotifier {
   final PreferencesService _prefsService = PreferencesService();
+  final FirestoreService _firestoreService = FirestoreService();
+  
   final List<ReadmeElement> _elements = [];
+  List<ProjectTemplate> _cloudTemplates = [];
   String? _selectedElementId;
   ThemeMode _themeMode = ThemeMode.system;
+  
   final Map<String, String> _variables = {
     'PROJECT_NAME': 'My Project',
     'GITHUB_USERNAME': 'username',
     'CURRENT_YEAR': DateTime.now().year.toString(),
   };
+
+  // State variables
   String _licenseType = 'None';
   bool _includeContributing = false;
   bool _includeSecurity = false;
@@ -41,7 +48,9 @@ class ProjectProvider with ChangeNotifier {
   final List<String> _undoStack = [];
   final List<String> _redoStack = [];
 
+  // Getters
   List<ReadmeElement> get elements => _elements;
+  List<ProjectTemplate> get cloudTemplates => _cloudTemplates;
   String? get selectedElementId => _selectedElementId;
   ThemeMode get themeMode => _themeMode;
   Map<String, String> get variables => _variables;
@@ -64,6 +73,36 @@ class ProjectProvider with ChangeNotifier {
   Locale? get locale => _locale;
   String get targetLanguage => _targetLanguage;
 
+  ProjectProvider() {
+    _init();
+  }
+
+  Future<void> _init() async {
+    await _loadPreferences();
+    _listenToCloudTemplates();
+  }
+
+  // --- Cloud Logic ---
+  
+  void _listenToCloudTemplates() {
+    _firestoreService.getPublicTemplates().listen((data) {
+      _cloudTemplates = data.map((map) {
+        final List<dynamic> elementsJson = map['elements'] ?? [];
+        return ProjectTemplate(
+          name: map['name'] ?? 'Cloud Template',
+          description: map['description'] ?? '',
+          elements: elementsJson.map((e) => ReadmeElement.fromJson(e)).toList(),
+        );
+      }).toList();
+      notifyListeners();
+    });
+  }
+
+  // Combine local and cloud templates for UI
+  List<ProjectTemplate> get allTemplates => [...Templates.all, ..._cloudTemplates];
+
+  // --- Core Logic ---
+
   void _safeNotify() {
     try {
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -78,23 +117,15 @@ class ProjectProvider with ChangeNotifier {
     }
   }
 
-  ProjectProvider() {
-    _loadPreferences();
-  }
-
   Future<void> _loadPreferences() async {
     _themeMode = await _prefsService.loadThemeMode();
-
     final loadedElements = await _prefsService.loadElements();
     if (loadedElements.isNotEmpty) {
       _elements.clear();
       _elements.addAll(loadedElements);
     }
-
     final loadedVariables = await _prefsService.loadVariables();
-    if (loadedVariables.isNotEmpty) {
-      _variables.addAll(loadedVariables);
-    }
+    if (loadedVariables.isNotEmpty) _variables.addAll(loadedVariables);
 
     _licenseType = await _prefsService.loadString(PreferencesService.keyLicenseType) ?? 'None';
     _includeContributing = await _prefsService.loadBool(PreferencesService.keyIncludeContributing) ?? false;
@@ -104,24 +135,21 @@ class ProjectProvider with ChangeNotifier {
     _includeIssueTemplates = await _prefsService.loadBool(PreferencesService.keyIncludeIssueTemplates) ?? false;
 
     final pColor = await _prefsService.loadInt(PreferencesService.keyPrimaryColor);
-    _primaryColor = pColor != null ? Color(pColor) : Colors.blue;
+    if (pColor != null) _primaryColor = Color(pColor);
 
     final sColor = await _prefsService.loadInt(PreferencesService.keySecondaryColor);
-    _secondaryColor = sColor != null ? Color(sColor) : Colors.green;
+    if (sColor != null) _secondaryColor = Color(sColor);
 
     _showGrid = await _prefsService.loadBool(PreferencesService.keyShowGrid) ?? false;
     _snapshots = await _prefsService.loadStringList(PreferencesService.keySnapshots) ?? [];
     _listBullet = await _prefsService.loadString(PreferencesService.keyListBullet) ?? '*';
     _sectionSpacing = await _prefsService.loadInt(PreferencesService.keySectionSpacing) ?? 1;
     _exportHtml = await _prefsService.loadBool(PreferencesService.keyExportHtml) ?? false;
-
     _geminiApiKey = await _prefsService.loadString(PreferencesService.keyGeminiApiKey);
     _githubToken = await _prefsService.loadString(PreferencesService.keyGithubToken);
 
     final localeCode = await _prefsService.loadString(PreferencesService.keyLocale);
-    if (localeCode != null) {
-      _locale = Locale(localeCode);
-    }
+    if (localeCode != null) _locale = Locale(localeCode);
     _targetLanguage = await _prefsService.loadString(PreferencesService.keyTargetLanguage) ?? 'en';
 
     _safeNotify();
@@ -160,13 +188,8 @@ class ProjectProvider with ChangeNotifier {
     await _prefsService.saveString(PreferencesService.keyListBullet, _listBullet);
     await _prefsService.saveInt(PreferencesService.keySectionSpacing, _sectionSpacing);
     await _prefsService.saveBool(PreferencesService.keyExportHtml, _exportHtml);
-
-    if (_geminiApiKey != null) {
-      await _prefsService.saveString(PreferencesService.keyGeminiApiKey, _geminiApiKey!);
-    }
-    if (_githubToken != null) {
-      await _prefsService.saveString(PreferencesService.keyGithubToken, _githubToken!);
-    }
+    if (_geminiApiKey != null) await _prefsService.saveString(PreferencesService.keyGeminiApiKey, _geminiApiKey!);
+    if (_githubToken != null) await _prefsService.saveString(PreferencesService.keyGithubToken, _githubToken!);
     await _prefsService.saveString(PreferencesService.keyTargetLanguage, _targetLanguage);
   }
 
@@ -215,7 +238,6 @@ class ProjectProvider with ChangeNotifier {
       if (data['listBullet'] != null) _listBullet = data['listBullet'];
       if (data['sectionSpacing'] != null) _sectionSpacing = data['sectionSpacing'];
       if (data['exportHtml'] != null) _exportHtml = data['exportHtml'];
-
       _selectedElementId = null;
       _saveState();
       _safeNotify();
@@ -277,7 +299,9 @@ class ProjectProvider with ChangeNotifier {
     importFromJson(_redoStack.removeLast());
   }
 
-  void addElement(ReadmeElementType type) => insertElement(_elements.length, type);
+  void addElement(ReadmeElementType type) {
+    insertElement(_elements.length, type);
+  }
 
   void addElementObject(ReadmeElement element) {
     _recordHistory();
@@ -321,7 +345,9 @@ class ProjectProvider with ChangeNotifier {
     }
   }
 
-  void addSnippet(Snippet snippet) => insertSnippet(_elements.length, snippet);
+  void addSnippet(Snippet snippet) {
+    insertSnippet(_elements.length, snippet);
+  }
 
   void insertSnippet(int index, Snippet snippet) {
     _recordHistory();
@@ -383,12 +409,11 @@ class ProjectProvider with ChangeNotifier {
   }
 
   void duplicateElement(String id) {
+    _recordHistory();
     final index = _elements.indexWhere((e) => e.id == id);
     if (index != -1) {
-      _recordHistory();
-      final newElement = _elements[index].copy();
-      _elements.insert(index + 1, newElement);
-      _selectedElementId = newElement.id;
+      _elements.insert(index + 1, _elements[index].copy());
+      _selectedElementId = _elements[index + 1].id;
       _saveState();
       _safeNotify();
     }

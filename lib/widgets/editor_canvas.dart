@@ -17,6 +17,7 @@ class EditorCanvas extends StatelessWidget {
     final provider = Provider.of<ProjectProvider>(context);
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
+    // Responsive sizing logic
     double maxWidth = 850;
     double? deviceHeight;
     double borderRadius = 12;
@@ -72,7 +73,7 @@ class EditorCanvas extends StatelessWidget {
                               curve: Curves.easeInOut,
                               constraints: BoxConstraints(
                                 maxWidth: maxWidth,
-                                minHeight: deviceHeight ?? 0,
+                                minHeight: deviceHeight ?? 400,
                               ),
                               margin: const EdgeInsets.symmetric(horizontal: 24),
                               decoration: BoxDecoration(
@@ -82,7 +83,7 @@ class EditorCanvas extends StatelessWidget {
                                   BoxShadow(
                                     color: Colors.black.withAlpha(isDark ? 100 : 25),
                                     blurRadius: 30,
-                                    offset: const Offset(0, 15),
+                                    offset: const Offset(0, 10),
                                   ),
                                 ],
                                 border: Border.all(
@@ -93,7 +94,7 @@ class EditorCanvas extends StatelessWidget {
                               clipBehavior: Clip.antiAlias,
                               child: Stack(
                                 children: [
-                                  // NEW: Grid is now INSIDE the design canvas
+                                  // NEW: Grid is now INSIDE the design canvas correctly
                                   if (provider.showGrid)
                                     Positioned.fill(
                                       child: RepaintBoundary(
@@ -141,19 +142,18 @@ class EditorCanvas extends StatelessWidget {
       padding: padding,
       itemCount: provider.elements.length,
       onReorder: provider.reorderElements,
-      proxyDecorator: (child, index, animation) => _proxyDecorator(child, index, animation, isDark),
+      proxyDecorator: (child, index, animation) => Material(
+        elevation: 8,
+        color: isDark ? const Color(0xFF334155) : Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        child: child,
+      ),
       itemBuilder: (context, index) {
         final element = provider.elements[index];
         return KeyedSubtree(
           key: ValueKey(element.id),
-          child: DropZone(
-            onDrop: (data) {
-              if (data is ReadmeElementType) {
-                provider.insertElement(index, data);
-              } else if (data is Snippet) {
-                provider.insertSnippet(index, data);
-              }
-            },
+          child: _DropZoneWrapper(
+            index: index,
             child: CanvasItem(
               element: element,
               isSelected: element.id == provider.selectedElementId,
@@ -280,21 +280,6 @@ class EditorCanvas extends StatelessWidget {
       ),
     );
   }
-
-  Widget _proxyDecorator(Widget child, int index, Animation<double> animation, bool isDark) {
-    return AnimatedBuilder(
-      animation: animation,
-      builder: (context, child) {
-        return Material(
-          elevation: 8,
-          color: isDark ? const Color(0xFF334155) : Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          child: child,
-        );
-      },
-      child: child,
-    );
-  }
 }
 
 class DottedGridPainter extends CustomPainter {
@@ -307,43 +292,49 @@ class DottedGridPainter extends CustomPainter {
       ..color = isDark ? Colors.white.withAlpha(45) : Colors.black.withAlpha(25)
       ..style = PaintingStyle.fill;
 
-    const double gap = 25.0; // Slightly tighter gap for a cleaner look
+    const double gap = 25.0; 
+    final path = Path();
     
     for (double x = gap; x < size.width; x += gap) {
       for (double y = gap; y < size.height; y += gap) {
-        canvas.drawCircle(Offset(x, y), 1.0, paint);
+        path.addOval(Rect.fromCircle(center: Offset(x, y), radius: 1.0));
       }
     }
+    canvas.drawPath(path, paint);
   }
 
   @override
   bool shouldRepaint(covariant DottedGridPainter oldDelegate) => oldDelegate.isDark != isDark;
 }
 
-class DropZone extends StatefulWidget {
+class _DropZoneWrapper extends StatefulWidget {
   final Widget child;
-  final Function(Object data) onDrop;
-  const DropZone({super.key, required this.child, required this.onDrop});
+  final int index;
+  const _DropZoneWrapper({required this.child, required this.index});
+
   @override
-  State<DropZone> createState() => _DropZoneState();
+  State<_DropZoneWrapper> createState() => _DropZoneWrapperState();
 }
 
-class _DropZoneState extends State<DropZone> {
+class _DropZoneWrapperState extends State<_DropZoneWrapper> {
   bool _isHovered = false;
   @override
   Widget build(BuildContext context) {
+    final provider = Provider.of<ProjectProvider>(context, listen: false);
     return DragTarget<Object>(
       onWillAcceptWithDetails: (details) {
         final accepts = details.data is ReadmeElementType || details.data is Snippet;
-        if (accepts) {
-          setState(() => _isHovered = true);
-        }
+        if (accepts) setState(() => _isHovered = true);
         return accepts;
       },
       onLeave: (_) => setState(() => _isHovered = false),
       onAcceptWithDetails: (details) {
         setState(() => _isHovered = false);
-        widget.onDrop(details.data);
+        if (details.data is ReadmeElementType) {
+          provider.insertElement(widget.index, details.data as ReadmeElementType);
+        } else if (details.data is Snippet) {
+          provider.insertSnippet(widget.index, details.data as Snippet);
+        }
       },
       builder: (context, candidateData, rejectedData) {
         return Column(
