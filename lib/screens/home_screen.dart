@@ -1,5 +1,5 @@
 import 'dart:convert';
-import 'dart:ui'; // Add this import
+import 'dart:ui';
 import 'package:flutter/services.dart';
 import 'package:readme_creator/l10n/app_localizations.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -38,7 +38,7 @@ import 'gallery_screen.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import '../widgets/element_renderer.dart';
 import 'funding_generator_screen.dart';
-import '../generator/markdown_generator.dart'; // Added import
+import '../generator/markdown_generator.dart';
 import '../widgets/dialogs/project_settings_dialog.dart';
 import '../widgets/dialogs/import_markdown_dialog.dart';
 import '../widgets/dialogs/generate_codebase_dialog.dart';
@@ -51,6 +51,7 @@ import '../widgets/dialogs/ai_settings_dialog.dart';
 import '../widgets/dialogs/extra_files_dialog.dart';
 import '../widgets/dialogs/language_dialog.dart';
 import '../widgets/dialogs/confirm_dialog.dart';
+import '../widgets/dialogs/about_app_dialog.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -111,7 +112,6 @@ class _HomeScreenState extends State<HomeScreen> {
 
     return CallbackShortcuts(
       bindings: {
-        // File Operations
         const SingleActivator(LogicalKeyboardKey.keyS, control: true): () => _showSaveToLibraryDialog(context, provider),
         const SingleActivator(LogicalKeyboardKey.keyE, control: true): () {
            ProjectExporter.export(
@@ -125,19 +125,13 @@ class _HomeScreenState extends State<HomeScreen> {
           );
         },
         const SingleActivator(LogicalKeyboardKey.keyP, control: true): () => _printReadme(context, provider),
-
-        // Edit Operations
         const SingleActivator(LogicalKeyboardKey.keyZ, control: true): () => provider.undo(),
         const SingleActivator(LogicalKeyboardKey.keyY, control: true): () => provider.redo(),
-
-        // View Operations
         const SingleActivator(LogicalKeyboardKey.f11): () => setState(() => _isFocusMode = !_isFocusMode),
         const SingleActivator(LogicalKeyboardKey.keyH, control: true, shift: true): () => setState(() => _showPreview = !_showPreview),
         const SingleActivator(LogicalKeyboardKey.keyG, control: true): () => provider.toggleGrid(),
         const SingleActivator(LogicalKeyboardKey.keyT, control: true): () => provider.toggleTheme(),
         const SingleActivator(LogicalKeyboardKey.comma, control: true): () => _showProjectSettingsDialog(context, provider),
-
-        // Help
         const SingleActivator(LogicalKeyboardKey.f1): () => OnboardingHelper.restartOnboarding(
             context: context,
             componentsKey: _componentsKey,
@@ -145,14 +139,7 @@ class _HomeScreenState extends State<HomeScreen> {
             settingsKey: _settingsKey,
             exportKey: _exportKey,
           ),
-
-        // Element Shortcuts (Add)
         const SingleActivator(LogicalKeyboardKey.digit1, control: true, alt: true): () => provider.addElement(ReadmeElementType.heading),
-        const SingleActivator(LogicalKeyboardKey.digit2, control: true, alt: true): () {
-           provider.addElement(ReadmeElementType.heading);
-           // We can't easily set level here without refactoring addElement to take props or accessing the last element.
-           // For now, just adding heading is fine, user can change level.
-        },
         const SingleActivator(LogicalKeyboardKey.digit3, control: true, alt: true): () => provider.addElement(ReadmeElementType.paragraph),
         const SingleActivator(LogicalKeyboardKey.keyI, control: true, alt: true): () => provider.addElement(ReadmeElementType.image),
         const SingleActivator(LogicalKeyboardKey.keyT, control: true, alt: true): () => provider.addElement(ReadmeElementType.table),
@@ -163,11 +150,6 @@ class _HomeScreenState extends State<HomeScreen> {
       child: Focus(
         focusNode: _focusNode,
         autofocus: true,
-        onKeyEvent: (node, event) {
-          // Ensure keys bubble up if not handled, but CallbackShortcuts should handle them first.
-          // This is just to ensure the Focus node is active.
-          return KeyEventResult.ignored;
-        },
         child: Scaffold(
           key: _scaffoldKey,
           appBar: AppBar(
@@ -190,7 +172,6 @@ class _HomeScreenState extends State<HomeScreen> {
           endDrawer: isDesktop ? null : const Drawer(child: SettingsPanel()),
           body: Stack(
             children: [
-              // Background Gradients
               Positioned(
                 top: -100,
                 right: -100,
@@ -223,7 +204,6 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ),
               ),
-              // Main Content
               isDesktop ? _buildDesktopBody(context) : _buildMobileBody(context),
             ],
           ),
@@ -238,7 +218,6 @@ class _HomeScreenState extends State<HomeScreen> {
         builder: (context, provider, child) {
           return Row(
             children: [
-              // Device Mode Toggles
               IconButton(
                 icon: const Icon(Icons.desktop_mac),
                 color: provider.deviceMode == DeviceMode.desktop ? Colors.blue : null,
@@ -505,7 +484,7 @@ class _HomeScreenState extends State<HomeScreen> {
         } else if (value == 'about_dev') {
           _showDeveloperInfoDialog(context);
         } else if (value == 'about') {
-          _showAboutDialog(context);
+          _showAboutAppDialog(context);
         }
       },
     );
@@ -589,7 +568,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 Expanded(
                   flex: 4,
                   child: Container(
-                    color: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF0D1117) : Colors.white, // GitHub Dark/Light bg
+                    color: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF0D1117) : Colors.white,
                     child: Consumer<ProjectProvider>(
                       builder: (context, provider, _) {
                         final generator = MarkdownGenerator();
@@ -607,7 +586,6 @@ class _HomeScreenState extends State<HomeScreen> {
                           data: markdown,
                           selectable: true,
                           padding: const EdgeInsets.all(32),
-                          // Use builders instead of deprecated imageBuilder
                           builders: {
                              'img': BadgeImageBuilder(builder: (url, {width, height}) {
                                 if (url.contains('img.shields.io') || url.contains('contrib.rocks')) {
@@ -618,14 +596,9 @@ class _HomeScreenState extends State<HomeScreen> {
                                     placeholderBuilder: (_) => const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2)),
                                   );
                                 }
-                                // Fallback to network image if not shield/svg or let default handler work?
-                                // MarkdownBuilder returns Widget.
                                 return Image.network(url, width: width, height: height, errorBuilder: (ctx, err, stack) => const SizedBox());
                              }),
                           },
-                          // We need to enable HTML to support the <a><img ...></a> structure generated for some elements
-                          // But flutter_markdown has limited HTML support.
-                          // ExtensionSet.gitHubWeb enables common extensions including tables, strikethrough.
                           extensionSet: md.ExtensionSet.gitHubWeb,
                           styleSheet: MarkdownStyleSheet.fromTheme(Theme.of(context)).copyWith(
                             p: GoogleFonts.inter(fontSize: 16, height: 1.5, color: isDark ? const Color(0xFFC9D1D9) : const Color(0xFF24292F)),
@@ -700,7 +673,7 @@ class _HomeScreenState extends State<HomeScreen> {
       height: 32,
       padding: const EdgeInsets.symmetric(horizontal: 16),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF1F5F9), // Slate 900 / Slate 100
+        color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF1F5F9),
         border: Border(top: BorderSide(color: isDark ? Colors.white.withAlpha(10) : Colors.black.withAlpha(10))),
       ),
       child: Consumer<ProjectProvider>(
@@ -833,7 +806,6 @@ $htmlContent
 ''';
 
     await Printing.layoutPdf(
-      // ignore: deprecated_member_use
       onLayout: (PdfPageFormat format) async => await Printing.convertHtml(
         format: format,
         html: fullHtml,
@@ -876,35 +848,10 @@ $htmlContent
     );
   }
 
-  void _showAboutDialog(BuildContext context) {
-    showAboutDialog(
-      context: context,
-      applicationName: 'Readme Creator',
-      applicationVersion: '1.0.0',
-      applicationIcon: const Icon(Icons.description, size: 48),
-      children: [
-        Text(AppLocalizations.of(context)!.aboutDescription),
-        const SizedBox(height: 16),
-        const SizedBox(height: 12),
-        ListTile(
-          contentPadding: EdgeInsets.zero,
-          leading: const Icon(Icons.developer_mode),
-          title: const Text('Development By Mohamed Anwar'),
-          onTap: () {
-            Navigator.pop(context);
-            WidgetsBinding.instance.addPostFrameCallback((_) {
-              _showDeveloperInfoDialog(context);
-            });
-          },
-        ),
-        const SizedBox(height: 8),
-        ElevatedButton.icon(
-          onPressed: () => launchUrl(Uri.parse('https://github.com/mhmdwaelanwr/Readme-Creator.git')),
-          icon: const Icon(Icons.code),
-          label: const Text('View on GitHub'),
-          style: ElevatedButton.styleFrom(foregroundColor: Colors.white),
-        ),
-      ],
+  void _showAboutAppDialog(BuildContext context) {
+    showSafeDialog(
+      context,
+      builder: (context) => const AboutAppDialog(),
     );
   }
 
@@ -943,8 +890,3 @@ $htmlContent
     );
   }
 }
-
-
-
-
-
