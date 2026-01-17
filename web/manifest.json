@@ -1,12 +1,12 @@
 {
-    "name": "readme_creator",
-    "short_name": "readme_creator",
+    "name": "Readme Creator - Professional Documentation Tool",
+    "short_name": "Readme Creator",
     "start_url": ".",
     "display": "standalone",
-    "background_color": "#0175C2",
-    "theme_color": "#0175C2",
-    "description": "A tool to generate Markdown README files",
-    "orientation": "portrait-primary",
+    "background_color": "#0f172a",
+    "theme_color": "#3b82f6",
+    "description": "The ultimate developer tool to generate professional GitHub README files in minutes. Drag-and-drop elements, AI-powered descriptions, and multi-platform support.",
+    "orientation": "any",
     "prefer_related_applications": false,
     "icons": [
         {
@@ -30,6 +30,16 @@
             "sizes": "512x512",
             "type": "image/png",
             "purpose": "maskable"
+        }
+    ],
+    "categories": ["developer tools", "productivity", "utilities"],
+    "screenshots": [
+        {
+            "src": "icons/Icon-512.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "form_factor": "wide",
+            "label": "Desktop Editor"
         }
     ]
 }

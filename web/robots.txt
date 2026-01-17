@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /
+Allow: /app/
+Disallow: /app/data/
+
+Sitemap: https://www.readmecreator.studio/sitemap.xml
