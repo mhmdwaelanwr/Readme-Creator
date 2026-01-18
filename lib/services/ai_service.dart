@@ -1,95 +1,114 @@
-import 'dart:math';
+import 'dart:convert';
 import 'package:google_generative_ai/google_generative_ai.dart';
 import 'package:flutter/foundation.dart';
+import '../models/readme_element.dart';
 
 class AIService {
+  /// Improves existing text to be more professional.
   static Future<String> improveText(String text, {String? apiKey}) async {
-    if (apiKey != null && apiKey.isNotEmpty) {
-      try {
-        final model = GenerativeModel(model: 'gemini-1.5-flash', apiKey: apiKey);
-        final content = [Content.text('Improve the following text for a README file, making it more professional, concise, and engaging:\n\n$text')];
-        final response = await model.generateContent(content);
-        return response.text ?? text;
-      } catch (e) {
-        debugPrint('Gemini API Error: $e');
-        return '$text (Error: ${e.toString().replaceAll('GenerativeAIException: ', '')})';
-      }
+    if (apiKey == null || apiKey.isEmpty) return text;
+    try {
+      final model = GenerativeModel(model: 'gemini-1.5-flash', apiKey: apiKey);
+      final content = [Content.text('As a technical writer, improve this README section to be professional, concise, and engaging. Return only the improved text:\n\n$text')];
+      final response = await model.generateContent(content);
+      return response.text ?? text;
+    } catch (e) {
+      debugPrint('AI Error: $e');
+      return text;
     }
-
-    // Mock fallback
-    await Future.delayed(const Duration(milliseconds: 800));
-    if (text.isEmpty) return 'Generated content based on context...';
-    return '$text (AI Enhanced)';
-  }
-
-  static Future<String> generateDescription(String topic, {String? apiKey}) async {
-    if (apiKey != null && apiKey.isNotEmpty) {
-      try {
-        final model = GenerativeModel(model: 'gemini-1.5-flash', apiKey: apiKey);
-        final content = [Content.text('Generate a short, engaging project description for a project about: $topic. Include emojis where appropriate.')];
-        final response = await model.generateContent(content);
-        return response.text ?? 'Could not generate description.';
-      } catch (e) {
-        debugPrint('Gemini API Error: $e');
-        return 'Error: ${e.toString().replaceAll('GenerativeAIException: ', '')}';
-      }
-    }
-
-    await Future.delayed(const Duration(milliseconds: 800));
-    return 'A comprehensive solution for $topic built with modern technologies.';
   }
 
   static Future<String> fixGrammar(String text, {String? apiKey}) async {
-    if (apiKey != null && apiKey.isNotEmpty) {
-      try {
-        final model = GenerativeModel(model: 'gemini-1.5-flash', apiKey: apiKey);
-        final content = [Content.text('Fix grammar and spelling in the following text. Preserve markdown formatting:\n\n$text')];
-        final response = await model.generateContent(content);
-        return response.text ?? text;
-      } catch (e) {
-        debugPrint('Gemini API Error: $e');
-        return text;
-      }
+    if (apiKey == null || apiKey.isEmpty) return text;
+    try {
+      final model = GenerativeModel(model: 'gemini-1.5-flash', apiKey: apiKey);
+      final content = [Content.text('Fix grammar and spelling in this text, keeping the markdown structure:\n\n$text')];
+      final response = await model.generateContent(content);
+      return response.text ?? text;
+    } catch (e) {
+      return text;
     }
+  }
 
-    await Future.delayed(const Duration(milliseconds: 500));
-    String fixed = text.trim();
-    if (fixed.isNotEmpty) {
-      fixed = fixed[0].toUpperCase() + fixed.substring(1);
-      if (!fixed.endsWith('.') && !fixed.endsWith('!') && !fixed.endsWith('?')) fixed += '.';
+  static Future<String> generateDescription(String topic, {String? apiKey}) async {
+    if (apiKey == null || apiKey.isEmpty) return 'Generated description for $topic';
+    try {
+      final model = GenerativeModel(model: 'gemini-1.5-flash', apiKey: apiKey);
+      final content = [Content.text('Generate a short engaging description for: $topic')];
+      final response = await model.generateContent(content);
+      return response.text ?? 'A project about $topic';
+    } catch (e) {
+      return 'A project about $topic';
     }
-    return fixed;
   }
 
   static Future<String> generateReadmeFromStructure(String structure, {String? apiKey}) async {
-    if (apiKey != null && apiKey.isNotEmpty) {
-      try {
-        final model = GenerativeModel(model: 'gemini-1.5-flash', apiKey: apiKey);
-        final prompt = '''
-You are an expert developer tool designed to generate comprehensive README.md files.
-Analyze the following codebase structure and generate a professional, detailed README.md file in Markdown format.
-
-Include:
-1. Project Title and Description.
-2. Key Features.
-3. Tech Stack.
-4. Quick Start / Installation.
-5. Project Structure.
-6. How to Contribute.
-
-Output ONLY the raw Markdown content.
-
-Structure:
-$structure
-''';
-        final content = [Content.text(prompt)];
-        final response = await model.generateContent(content);
-        return response.text ?? '# Generated README';
-      } catch (e) {
-        debugPrint('Gemini API Error: $e');
-        return '# Error: ${e.toString()}';
-      }
+    if (apiKey == null || apiKey.isEmpty) return '# Generated README\n\n$structure';
+    try {
+      final model = GenerativeModel(model: 'gemini-1.5-flash', apiKey: apiKey);
+      final content = [Content.text('Generate a README.md based on this structure:\n\n$structure')];
+      final response = await model.generateContent(content);
+      return response.text ?? '# Generated README';
+    } catch (e) {
+      return '# Generated README';
     }
-    return '# Mock README\n\nProvide an API Key to use AI generation.';
+  }
+
+  /// Generates a full ReadmeElement list based on a prompt.
+  static Future<List<ReadmeElement>> magicCompose(String prompt, {String? apiKey}) async {
+    if (apiKey == null || apiKey.isEmpty) return [];
+    
+    try {
+      final model = GenerativeModel(model: 'gemini-1.5-flash', apiKey: apiKey);
+      final aiPrompt = '''
+      You are an expert GitHub README generator. Based on this description: "$prompt", 
+      generate a professional README structure.
+      Return the response ONLY as a JSON array of objects.
+      Each object must have a "type" field and data fields.
+      Supported types: 
+      - "heading" (text, level: 1-3)
+      - "paragraph" (text)
+      - "list" (items: list of strings, isOrdered: bool)
+      - "codeBlock" (code, language)
+      - "divider" (no extra fields)
+      
+      Example: [{"type": "heading", "text": "Project Name", "level": 1}, {"type": "divider"}]
+      Return ONLY the raw JSON. No markdown backticks.
+      ''';
+      
+      final content = [Content.text(aiPrompt)];
+      final response = await model.generateContent(content);
+      final cleanJson = response.text?.replaceAll('```json', '').replaceAll('```', '').trim() ?? '[]';
+      
+      final List<dynamic> decoded = jsonDecode(cleanJson);
+      return decoded.map((item) => ReadmeElement.fromJson(item as Map<String, dynamic>)).toList();
+    } catch (e) {
+      debugPrint('Magic Compose Error: $e');
+      return [
+        HeadingElement(text: 'Error in Generation', level: 1),
+        ParagraphElement(text: 'The AI could not process your request. Please try a simpler prompt.'),
+      ];
+    }
+  }
+
+  /// Analyzes project elements and provides a health score.
+  static double calculateHealthScore(List<ReadmeElement> elements) {
+    if (elements.isEmpty) return 0.0;
+    double score = 0.0;
+    
+    bool hasH1 = elements.any((e) => e is HeadingElement && e.level == 1);
+    bool hasImage = elements.any((e) => e is ImageElement);
+    bool hasCode = elements.any((e) => e is CodeBlockElement);
+    bool hasSocials = elements.any((e) => e is SocialsElement);
+    
+    if (hasH1) score += 30;
+    if (hasImage) score += 20;
+    if (hasCode) score += 20;
+    if (hasSocials) score += 10;
+    
+    // Add points for length
+    if (elements.length > 5) score += 20;
+    
+    return score.clamp(0, 100);
   }
 }
