@@ -4,7 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../providers/project_provider.dart';
-import '../models/readme_element.dart'; // FIXED: Missing import for ReadmeElementType
+import '../models/readme_element.dart';
 import '../generator/markdown_generator.dart';
 import 'element_settings_form.dart';
 import '../core/constants/app_colors.dart';
@@ -24,29 +24,36 @@ class SettingsPanel extends StatelessWidget {
           filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
           child: Container(
             decoration: BoxDecoration(
-              color: isDark ? AppColors.darkBackground.withOpacity(0.85) : colorScheme.surface.withOpacity(0.85),
-              border: Border(left: BorderSide(color: Theme.of(context).dividerColor.withOpacity(0.1))),
+              color: isDark ? AppColors.darkBackground.withOpacity(0.8) : colorScheme.surface.withOpacity(0.8),
+              border: Border(left: BorderSide(color: (isDark ? Colors.white : Colors.black).withOpacity(0.05))),
             ),
             child: Column(
               children: [
-                // Enhanced TabBar Section
+                // THE OLD DESIGN STRUCTURE WITH NEW PREMIUM COLORS & ICONS
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  margin: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+                  padding: const EdgeInsets.all(4),
                   decoration: BoxDecoration(
-                    color: isDark ? Colors.black.withOpacity(0.2) : Colors.black.withOpacity(0.02),
-                    border: Border(bottom: BorderSide(color: Theme.of(context).dividerColor.withOpacity(0.05))),
+                    color: (isDark ? Colors.white : Colors.black).withOpacity(0.05),
+                    borderRadius: BorderRadius.circular(14),
                   ),
                   child: TabBar(
-                    labelColor: AppColors.primary,
-                    unselectedLabelColor: Colors.grey.shade500,
+                    labelColor: Colors.white,
+                    unselectedLabelColor: isDark ? Colors.white60 : Colors.black54,
                     indicatorSize: TabBarIndicatorSize.tab,
-                    dividerColor: Colors.transparent,
+                    dividerColor: Colors.transparent, 
                     indicator: BoxDecoration(
-                      borderRadius: BorderRadius.circular(10),
-                      color: AppColors.primary.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(12),
+                      gradient: AppColors.primaryGradient,
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppColors.primary.withOpacity(0.3),
+                          blurRadius: 10,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
                     ),
                     labelStyle: GoogleFonts.poppins(fontWeight: FontWeight.bold, fontSize: 13),
-                    unselectedLabelStyle: GoogleFonts.poppins(fontWeight: FontWeight.w500, fontSize: 13),
                     tabs: const [
                       Tab(
                         child: Row(
@@ -102,7 +109,7 @@ class SettingsPanel extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(24),
                 decoration: BoxDecoration(
-                  color: colorScheme.primary.withOpacity(0.1),
+                  color: AppColors.primary.withOpacity(0.1),
                   shape: BoxShape.circle,
                 ),
                 child: Icon(Icons.touch_app_outlined, size: 64, color: AppColors.primary.withOpacity(0.8)),
@@ -118,7 +125,7 @@ class SettingsPanel extends StatelessWidget {
               ),
               const SizedBox(height: 12),
               Text(
-                'Select an element from the canvas to edit its properties and see the results instantly.',
+                'Select an element from the canvas to edit its properties.',
                 textAlign: TextAlign.center,
                 style: GoogleFonts.inter(color: colorScheme.onSurface.withOpacity(0.6), height: 1.5),
               ),
