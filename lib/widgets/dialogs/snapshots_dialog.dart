@@ -5,14 +5,13 @@ import '../../l10n/app_localizations.dart';
 import '../../providers/project_provider.dart';
 import '../../utils/dialog_helper.dart';
 import '../../core/constants/app_colors.dart';
+import 'confirm_dialog.dart';
 
 class SnapshotsDialog extends StatelessWidget {
   const SnapshotsDialog({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
     return StyledDialog(
       title: DialogHeader(
         title: AppLocalizations.of(context)!.localSnapshots,
@@ -23,7 +22,7 @@ class SnapshotsDialog extends StatelessWidget {
       height: 500,
       content: Column(
         children: [
-          _buildActionHeader(context, isDark),
+          _buildActionHeader(context),
           const SizedBox(height: 20),
           _buildSectionTitle('SAVED STATES'),
           const SizedBox(height: 12),
@@ -34,7 +33,7 @@ class SnapshotsDialog extends StatelessWidget {
                 return ListView.builder(
                   itemCount: provider.snapshots.length,
                   itemBuilder: (context, index) {
-                    return _buildSnapshotItem(context, provider, index, isDark);
+                    return _buildSnapshotItem(context, provider, index);
                   },
                 );
               },
@@ -51,14 +50,10 @@ class SnapshotsDialog extends StatelessWidget {
     );
   }
 
-  Widget _buildActionHeader(BuildContext context, bool isDark) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.blue.withAlpha(isDark ? 20 : 10),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.blue.withAlpha(30)),
-      ),
+  Widget _buildActionHeader(BuildContext context) {
+    return GlassCard(
+      opacity: 0.1,
+      color: Colors.blue,
       child: Row(
         children: [
           const Icon(Icons.manage_history_rounded, color: Colors.blue),
@@ -72,9 +67,9 @@ class SnapshotsDialog extends StatelessWidget {
               ],
             ),
           ),
-          ElevatedButton(
+          FilledButton(
             onPressed: () => Provider.of<ProjectProvider>(context, listen: false).saveSnapshot(),
-            style: ElevatedButton.styleFrom(
+            style: FilledButton.styleFrom(
               backgroundColor: Colors.blue,
               foregroundColor: Colors.white,
               elevation: 0,
@@ -87,16 +82,10 @@ class SnapshotsDialog extends StatelessWidget {
     );
   }
 
-  Widget _buildSnapshotItem(BuildContext context, ProjectProvider provider, int index, bool isDark) {
+  Widget _buildSnapshotItem(BuildContext context, ProjectProvider provider, int index) {
     final reverseIndex = provider.snapshots.length - index;
-    return Card(
-      margin: const EdgeInsets.only(bottom: 8),
-      elevation: 0,
-      color: isDark ? Colors.white.withAlpha(5) : Colors.black.withAlpha(2),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-        side: BorderSide(color: Colors.grey.withAlpha(30)),
-      ),
+    return GlassCard(
+      padding: EdgeInsets.zero,
       child: ListTile(
         leading: Container(
           padding: const EdgeInsets.all(8),
@@ -150,20 +139,12 @@ class SnapshotsDialog extends StatelessWidget {
   void _confirmRestore(BuildContext context, ProjectProvider provider, int index) {
     showSafeDialog(
       context,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Text('Restore Snapshot?'),
-        content: const Text('Your current work will be replaced with this saved state. This action cannot be undone.'),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
-          FilledButton(
-            onPressed: () {
-              provider.restoreSnapshot(index);
-              Navigator.pop(context);
-            },
-            child: const Text('Restore Now'),
-          ),
-        ],
+      builder: (context) => ConfirmDialog(
+        title: 'Restore Snapshot?',
+        content: 'Your current work will be replaced with this saved state. This action cannot be undone.',
+        confirmText: 'Restore Now',
+        onConfirm: () => provider.restoreSnapshot(index),
+        isDestructive: true,
       ),
     );
   }

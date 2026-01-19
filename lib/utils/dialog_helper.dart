@@ -1,10 +1,10 @@
 import 'dart:async';
+import 'dart:ui';
 import 'package:flutter/material.dart';
+import '../core/constants/app_colors.dart';
 
 /// Safe wrapper around showDialog that ensures the [context] is mounted and
-/// that a Navigator exists before opening the dialog. It schedules the
-/// dialog show to the next frame to avoid calling into the widget tree during
-/// a build scope which can cause "dirty widget in the wrong build scope" errors.
+/// that a Navigator exists before opening the dialog.
 Future<T?> showSafeDialog<T>(
   BuildContext context, {
   required WidgetBuilder builder,
@@ -28,6 +28,7 @@ Future<T?> showSafeDialog<T>(
         builder: builder,
         useRootNavigator: useRootNavigator,
         barrierDismissible: barrierDismissible,
+        barrierColor: Colors.black.withAlpha(100),
       ).then((value) {
         if (!completer.isCompleted) completer.complete(value);
       }).catchError((e) {
@@ -61,18 +62,73 @@ class StyledDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return AlertDialog(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      titlePadding: const EdgeInsets.fromLTRB(24, 24, 24, 16),
-      contentPadding: contentPadding,
-      actionsPadding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
-      title: title,
-      content: SizedBox(
-        width: width ?? 400,
-        height: height,
-        child: content,
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return Center(
+      child: Material(
+        color: Colors.transparent,
+        child: Container(
+          width: width ?? 500,
+          height: height,
+          constraints: BoxConstraints(
+            maxHeight: MediaQuery.of(context).size.height * 0.85,
+            maxWidth: MediaQuery.of(context).size.width * 0.9,
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(28),
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
+              child: Container(
+                decoration: BoxDecoration(
+                  color: isDark 
+                      ? Colors.black.withAlpha(150) 
+                      : Colors.white.withAlpha(180),
+                  borderRadius: BorderRadius.circular(28),
+                  border: Border.all(
+                    color: isDark 
+                        ? Colors.white.withAlpha(30) 
+                        : Colors.white.withAlpha(100),
+                    width: 1.5,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withAlpha(40),
+                      blurRadius: 30,
+                      spreadRadius: -5,
+                    ),
+                  ],
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(24, 24, 24, 16),
+                      child: title,
+                    ),
+                    Flexible(
+                      child: Padding(
+                        padding: contentPadding,
+                        child: SizedBox(
+                          width: double.infinity,
+                          child: content,
+                        ),
+                      ),
+                    ),
+                    if (actions != null)
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: actions!,
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
       ),
-      actions: actions,
     );
   }
 }
@@ -86,26 +142,91 @@ class DialogHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final primaryColor = color ?? AppColors.primary;
+
     return Row(
       children: [
         if (icon != null) ...[
           Container(
-            padding: const EdgeInsets.all(8),
+            padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: (color ?? Theme.of(context).primaryColor).withAlpha(30),
-              borderRadius: BorderRadius.circular(8),
+              gradient: LinearGradient(
+                colors: [
+                  primaryColor.withAlpha(60),
+                  primaryColor.withAlpha(20),
+                ],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(
+                color: primaryColor.withAlpha(40),
+              ),
             ),
-            child: Icon(icon, color: color ?? Theme.of(context).primaryColor, size: 24),
+            child: Icon(icon, color: primaryColor, size: 22),
           ),
           const SizedBox(width: 16),
         ],
         Expanded(
           child: Text(
             title,
-            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
+            style: TextStyle(
+              fontWeight: FontWeight.bold, 
+              fontSize: 22,
+              letterSpacing: -0.5,
+              color: isDark ? Colors.white : Colors.black87,
+            ),
           ),
         ),
       ],
+    );
+  }
+}
+
+class GlassCard extends StatelessWidget {
+  final Widget child;
+  final Color? color;
+  final double opacity;
+  final double borderRadius;
+  final EdgeInsetsGeometry? padding;
+  final VoidCallback? onTap;
+
+  const GlassCard({
+    super.key,
+    required this.child,
+    this.color,
+    this.opacity = 0.05,
+    this.borderRadius = 16,
+    this.padding,
+    this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final baseColor = color ?? (isDark ? Colors.white : Colors.black);
+    
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(borderRadius),
+          child: Container(
+            padding: padding ?? const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: baseColor.withAlpha((opacity * 255).toInt()),
+              borderRadius: BorderRadius.circular(borderRadius),
+              border: Border.all(
+                color: baseColor.withAlpha(20),
+              ),
+            ),
+            child: child,
+          ),
+        ),
+      ),
     );
   }
 }

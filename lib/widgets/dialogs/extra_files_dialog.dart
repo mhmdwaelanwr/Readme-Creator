@@ -14,7 +14,6 @@ class ExtraFilesDialog extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final provider = Provider.of<ProjectProvider>(context, listen: false);
-    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return StyledDialog(
       title: const DialogHeader(
@@ -28,7 +27,22 @@ class ExtraFilesDialog extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 4),
         child: Column(
           children: [
-            _buildInfoBox('Select standard documentation files to generate and download for your project repository.', isDark),
+            const GlassCard(
+              opacity: 0.1,
+              color: Colors.deepOrange,
+              child: Row(
+                children: [
+                  Icon(Icons.info_outline_rounded, color: Colors.deepOrange, size: 20),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      'Select standard documentation files to generate and download for your project repository.',
+                      style: TextStyle(fontSize: 13, color: Colors.grey),
+                    ),
+                  ),
+                ],
+              ),
+            ),
             const SizedBox(height: 24),
             _buildFileCard(
               context,
@@ -43,7 +57,6 @@ class ExtraFilesDialog extends StatelessWidget {
                 ToastHelper.show(context, 'LICENSE downloaded');
               },
             ),
-            const SizedBox(height: 12),
             _buildFileCard(
               context,
               title: 'CONTRIBUTING.md',
@@ -56,7 +69,6 @@ class ExtraFilesDialog extends StatelessWidget {
                 ToastHelper.show(context, 'CONTRIBUTING.md downloaded');
               },
             ),
-            const SizedBox(height: 12),
             _buildFileCard(
               context,
               title: 'SECURITY.md',
@@ -69,7 +81,6 @@ class ExtraFilesDialog extends StatelessWidget {
                 ToastHelper.show(context, 'SECURITY.md downloaded');
               },
             ),
-            const SizedBox(height: 12),
             _buildFileCard(
               context,
               title: 'CODE_OF_CONDUCT.md',
@@ -82,7 +93,6 @@ class ExtraFilesDialog extends StatelessWidget {
                 ToastHelper.show(context, 'CODE_OF_CONDUCT.md downloaded');
               },
             ),
-            const SizedBox(height: 12),
             _buildFileCard(
               context,
               title: 'Issue Templates',
@@ -109,24 +119,6 @@ class ExtraFilesDialog extends StatelessWidget {
     );
   }
 
-  Widget _buildInfoBox(String text, bool isDark) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.deepOrange.withAlpha(isDark ? 20 : 10),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.deepOrange.withAlpha(30)),
-      ),
-      child: Row(
-        children: [
-          const Icon(Icons.info_outline_rounded, color: Colors.deepOrange, size: 20),
-          const SizedBox(width: 12),
-          Expanded(child: Text(text, style: GoogleFonts.inter(fontSize: 13, color: isDark ? Colors.white70 : Colors.black87))),
-        ],
-      ),
-    );
-  }
-
   Widget _buildFileCard(BuildContext context, {
     required String title,
     required String subtitle,
@@ -134,51 +126,39 @@ class ExtraFilesDialog extends StatelessWidget {
     required Color color,
     required VoidCallback onTap,
   }) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    return Card(
-      elevation: 0,
-      margin: EdgeInsets.zero,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-        side: BorderSide(color: Colors.grey.withAlpha(isDark ? 40 : 30)),
-      ),
-      color: isDark ? Colors.white.withAlpha(5) : Colors.white,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(16),
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: color.withAlpha(20),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Icon(icon, color: color, size: 24),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      title,
-                      style: GoogleFonts.inter(fontSize: 15, fontWeight: FontWeight.bold),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      subtitle,
-                      style: GoogleFonts.inter(fontSize: 12, color: Colors.grey, height: 1.3),
-                    ),
-                  ],
-                ),
-              ),
-              const Icon(Icons.download_rounded, size: 20, color: Colors.grey),
-            ],
+    return GlassCard(
+      onTap: onTap,
+      padding: const EdgeInsets.all(16.0),
+      borderRadius: 16,
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: color.withAlpha(20),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(icon, color: color, size: 24),
           ),
-        ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: GoogleFonts.inter(fontSize: 15, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  subtitle,
+                  style: GoogleFonts.inter(fontSize: 12, color: Colors.grey, height: 1.3),
+                ),
+              ],
+            ),
+          ),
+          const Icon(Icons.download_rounded, size: 20, color: Colors.grey),
+        ],
       ),
     );
   }

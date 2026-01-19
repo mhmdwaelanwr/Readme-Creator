@@ -11,8 +11,6 @@ class AboutAppDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
     return StyledDialog(
       title: const DialogHeader(
         title: 'About App',
@@ -25,12 +23,8 @@ class AboutAppDialog extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             const SizedBox(height: 8),
-            // Hero App Section
-            _buildHeroSection(context, isDark),
-            
+            _buildHeroSection(context),
             const SizedBox(height: 24),
-            
-            // Description with better typography
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16.0),
               child: Text(
@@ -39,20 +33,14 @@ class AboutAppDialog extends StatelessWidget {
                 style: GoogleFonts.inter(
                   fontSize: 14,
                   height: 1.6,
-                  color: isDark ? Colors.white70 : Colors.black87,
+                  color: Colors.grey,
                   fontWeight: FontWeight.w500,
                 ),
               ),
             ),
-
             const SizedBox(height: 32),
-            
-            // Features Chips
-            _buildFeatureSection(context, isDark),
-
+            _buildFeatureSection(context),
             const SizedBox(height: 32),
-            
-            // Info Cards Grid-like layout
             _buildInfoCard(
               context,
               icon: Icons.face_retouching_natural_rounded,
@@ -67,19 +55,14 @@ class AboutAppDialog extends StatelessWidget {
                 );
               },
             ),
-            const SizedBox(height: 12),
             _buildInfoCard(
               context,
               icon: FontAwesomeIcons.github,
               title: 'Source Code & Contributions',
               subtitle: 'Open Source on GitHub',
               trailing: 'Explore',
-              color: isDark ? Colors.white : Colors.black,
               onTap: () => _launchUrl('https://github.com/mhmdwaelanwr/Readme-Creator'),
             ),
-            
-            const SizedBox(height: 12),
-            // NEW: License Card
             _buildInfoCard(
               context,
               icon: Icons.gavel_rounded,
@@ -91,18 +74,15 @@ class AboutAppDialog extends StatelessWidget {
                   context: context,
                   applicationName: 'Readme Creator',
                   applicationVersion: '1.0.0',
-                  applicationIcon: Padding(
-                    padding: const EdgeInsets.all(12.0),
+                  applicationIcon: const Padding(
+                    padding: EdgeInsets.all(12.0),
                     child: Icon(Icons.description_rounded, size: 48, color: AppColors.primary),
                   ),
                 );
               },
             ),
-            
             const SizedBox(height: 32),
-            
-            // Tech Stack Footer
-            _buildTechStackFooter(isDark),
+            _buildTechStackFooter(context),
           ],
         ),
       ),
@@ -125,24 +105,15 @@ class AboutAppDialog extends StatelessWidget {
     );
   }
 
-  Widget _buildHeroSection(BuildContext context, bool isDark) {
-    return Container(
-      width: double.infinity,
+  Widget _buildHeroSection(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return GlassCard(
+      opacity: 0.1,
+      color: AppColors.primary,
+      borderRadius: 28,
       padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 24),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: isDark 
-            ? [AppColors.primary.withAlpha(40), AppColors.primary.withAlpha(10)]
-            : [AppColors.primary.withAlpha(20), AppColors.primary.withAlpha(5)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(28),
-        border: Border.all(color: AppColors.primary.withAlpha(isDark ? 40 : 20)),
-      ),
       child: Column(
         children: [
-          // Squircle Logo
           Container(
             width: 80,
             height: 80,
@@ -189,7 +160,7 @@ class AboutAppDialog extends StatelessWidget {
     );
   }
 
-  Widget _buildFeatureSection(BuildContext context, bool isDark) {
+  Widget _buildFeatureSection(BuildContext context) {
     final features = [
       {'icon': Icons.bolt, 'label': 'Lightning Fast'},
       {'icon': Icons.devices, 'label': 'Multi-Platform'},
@@ -201,13 +172,9 @@ class AboutAppDialog extends StatelessWidget {
       spacing: 12,
       runSpacing: 12,
       alignment: WrapAlignment.center,
-      children: features.map((f) => Container(
+      children: features.map((f) => GlassCard(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-        decoration: BoxDecoration(
-          color: isDark ? Colors.white.withAlpha(5) : Colors.black.withAlpha(3),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.grey.withAlpha(30)),
-        ),
+        borderRadius: 12,
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -229,72 +196,61 @@ class AboutAppDialog extends StatelessWidget {
     required String title,
     required String subtitle,
     required String trailing,
-    Color? color,
     required VoidCallback onTap,
   }) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(20),
-        child: Container(
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: Colors.grey.withAlpha(isDark ? 40 : 30)),
-            color: isDark ? Colors.white.withAlpha(5) : Colors.white,
+    return GlassCard(
+      onTap: onTap,
+      padding: const EdgeInsets.all(20),
+      borderRadius: 20,
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: AppColors.primary.withAlpha(20),
+              borderRadius: BorderRadius.circular(14),
+            ),
+            child: Icon(icon, color: AppColors.primary, size: 24),
           ),
-          child: Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: (color ?? AppColors.primary).withAlpha(20),
-                  borderRadius: BorderRadius.circular(14),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.w800, color: Colors.grey, letterSpacing: 0.5),
                 ),
-                child: Icon(icon, color: color ?? AppColors.primary, size: 24),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      title,
-                      style: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.w800, color: Colors.grey, letterSpacing: 0.5),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      subtitle,
-                      style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.bold),
-                    ),
-                  ],
+                const SizedBox(height: 2),
+                Text(
+                  subtitle,
+                  style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.bold),
                 ),
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                decoration: BoxDecoration(
-                  color: AppColors.primary.withAlpha(20),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Text(
-                  trailing,
-                  style: GoogleFonts.inter(
-                    fontSize: 11,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.primary,
-                  ),
-                ),
-              ),
-            ],
+              ],
+            ),
           ),
-        ),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            decoration: BoxDecoration(
+              color: AppColors.primary.withAlpha(20),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Text(
+              trailing,
+              style: GoogleFonts.inter(
+                fontSize: 11,
+                fontWeight: FontWeight.bold,
+                color: AppColors.primary,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
 
-  Widget _buildTechStackFooter(bool isDark) {
+  Widget _buildTechStackFooter(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Column(
       children: [
         Text(

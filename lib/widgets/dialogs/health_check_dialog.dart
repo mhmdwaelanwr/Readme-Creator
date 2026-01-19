@@ -27,7 +27,6 @@ class _HealthCheckDialogState extends State<HealthCheckDialog> {
   @override
   void initState() {
     super.initState();
-    // CRITICAL: Only trigger if API Key is actually present and not empty
     if (widget.provider.geminiApiKey.trim().isNotEmpty) {
       _triggerAIAnalysis();
     }
@@ -35,11 +34,10 @@ class _HealthCheckDialogState extends State<HealthCheckDialog> {
 
   Future<void> _triggerAIAnalysis() async {
     final apiKey = widget.provider.geminiApiKey.trim();
-    if (apiKey.isEmpty) return; // double check
+    if (apiKey.isEmpty) return;
 
     setState(() => _isAnalyzingAI = true);
     try {
-      // We only call the AI service here
       final feedback = await AIService.improveText(
         "Audit this README structure and give 3 professional tips: ${widget.provider.elements.map((e) => e.description).join(', ')}",
         apiKey: apiKey
@@ -54,7 +52,6 @@ class _HealthCheckDialogState extends State<HealthCheckDialog> {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     final score = HealthCheckService.calculateDocumentationScore(widget.provider.elements);
     final hasAI = widget.provider.geminiApiKey.trim().isNotEmpty;
 
@@ -70,22 +67,18 @@ class _HealthCheckDialogState extends State<HealthCheckDialog> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildScoreHeader(score, isDark),
+            _buildScoreHeader(score),
             const SizedBox(height: 20),
-            
-            // 1. AI INSIGHTS - Only rendered if Key exists
             if (hasAI) ...[
-              _buildAIInsightsCard(isDark),
+              _buildAIInsightsCard(),
               const SizedBox(height: 24),
             ],
-
-            // 2. STANDARD STRUCTURAL AUDIT - Always visible
             _buildSectionTitle('STRUCTURAL AUDIT'),
             const SizedBox(height: 12),
             if (widget.issues.isEmpty) 
               _buildCleanState() 
             else 
-              ...widget.issues.map((i) => _buildIssueItem(context, i, isDark)),
+              ...widget.issues.map((i) => _buildIssueItem(context, i)),
           ],
         ),
       ),
@@ -98,15 +91,12 @@ class _HealthCheckDialogState extends State<HealthCheckDialog> {
     );
   }
 
-  Widget _buildScoreHeader(double score, bool isDark) {
+  Widget _buildScoreHeader(double score) {
     final color = score > 80 ? Colors.green : (score > 50 ? Colors.orange : Colors.redAccent);
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: color.withAlpha(isDark ? 25 : 10),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: color.withAlpha(40)),
-      ),
+    return GlassCard(
+      opacity: 0.1,
+      color: color,
+      borderRadius: 20,
       child: Row(
         children: [
           Stack(
@@ -134,14 +124,11 @@ class _HealthCheckDialogState extends State<HealthCheckDialog> {
     );
   }
 
-  Widget _buildAIInsightsCard(bool isDark) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(colors: [Colors.purple.withAlpha(50), Colors.indigo.withAlpha(20)]),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.purpleAccent.withAlpha(50)),
-      ),
+  Widget _buildAIInsightsCard() {
+    return GlassCard(
+      opacity: 0.1,
+      color: Colors.purple,
+      borderRadius: 20,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -156,7 +143,7 @@ class _HealthCheckDialogState extends State<HealthCheckDialog> {
           ),
           const SizedBox(height: 12),
           if (_aiFeedback != null)
-            Text(_aiFeedback!, style: GoogleFonts.inter(fontSize: 14, color: isDark ? Colors.white70 : Colors.black87, height: 1.6))
+            Text(_aiFeedback!, style: GoogleFonts.inter(fontSize: 14, color: Colors.grey, height: 1.6))
           else if (!_isAnalyzingAI)
             const Text('AI analysis failed or took too long.', style: TextStyle(color: Colors.grey, fontSize: 13)),
         ],
@@ -164,13 +151,11 @@ class _HealthCheckDialogState extends State<HealthCheckDialog> {
     );
   }
 
-  Widget _buildIssueItem(BuildContext context, HealthIssue issue, bool isDark) {
+  Widget _buildIssueItem(BuildContext context, HealthIssue issue) {
     final color = issue.severity == IssueSeverity.error ? Colors.redAccent : Colors.orange;
-    return Card(
-      margin: const EdgeInsets.only(bottom: 8),
-      color: isDark ? Colors.white.withAlpha(5) : Colors.black.withAlpha(2),
-      elevation: 0,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14), side: BorderSide(color: color.withAlpha(20))),
+    return GlassCard(
+      padding: EdgeInsets.zero,
+      color: color,
       child: ListTile(
         leading: Icon(issue.severity == IssueSeverity.error ? Icons.error_outline_rounded : Icons.info_outline_rounded, color: color),
         title: Text(issue.message, style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w600)),
@@ -184,14 +169,14 @@ class _HealthCheckDialogState extends State<HealthCheckDialog> {
   }
 
   Widget _buildCleanState() {
-    return Center(
+    return const Center(
       child: Padding(
-        padding: const EdgeInsets.all(40.0),
+        padding: EdgeInsets.all(40.0),
         child: Column(
           children: [
-            const Icon(Icons.check_circle_rounded, size: 48, color: Colors.green),
-            const SizedBox(height: 16),
-            const Text('All structural checks passed!', style: TextStyle(fontWeight: FontWeight.bold)),
+            Icon(Icons.check_circle_rounded, size: 48, color: Colors.green),
+            SizedBox(height: 16),
+            Text('All structural checks passed!', style: TextStyle(fontWeight: FontWeight.bold)),
           ],
         ),
       ),

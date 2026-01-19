@@ -9,8 +9,6 @@ class KeyboardShortcutsDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
     return StyledDialog(
       title: DialogHeader(
         title: AppLocalizations.of(context)!.keyboardShortcuts,
@@ -25,7 +23,7 @@ class KeyboardShortcutsDialog extends StatelessWidget {
           children: [
             _buildSectionHeader('SYSTEM & NAVIGATION'),
             const SizedBox(height: 12),
-            _buildShortcutGroup(context, isDark, [
+            _buildShortcutGroup(context, [
               {'label': AppLocalizations.of(context)!.saveProject, 'win': 'Ctrl + S', 'mac': '⌘ + S'},
               {'label': AppLocalizations.of(context)!.exportProject, 'win': 'Ctrl + E', 'mac': '⌘ + E'},
               {'label': AppLocalizations.of(context)!.undo, 'win': 'Ctrl + Z', 'mac': '⌘ + Z'},
@@ -36,7 +34,7 @@ class KeyboardShortcutsDialog extends StatelessWidget {
             const SizedBox(height: 24),
             _buildSectionHeader('CONTENT CREATION'),
             const SizedBox(height: 12),
-            _buildShortcutGroup(context, isDark, [
+            _buildShortcutGroup(context, [
               {'label': AppLocalizations.of(context)!.addHeading, 'win': 'Ctrl + Alt + 1', 'mac': '⌃ + ⌥ + 1'},
               {'label': AppLocalizations.of(context)!.addParagraph, 'win': 'Ctrl + Alt + 3', 'mac': '⌃ + ⌥ + 3'},
               {'label': AppLocalizations.of(context)!.addImage, 'win': 'Ctrl + Alt + I', 'mac': '⌃ + ⌥ + I'},
@@ -62,47 +60,43 @@ class KeyboardShortcutsDialog extends StatelessWidget {
     );
   }
 
-  Widget _buildShortcutGroup(BuildContext context, bool isDark, List<Map<String, String>> shortcuts) {
-    return Container(
-      decoration: BoxDecoration(
-        color: isDark ? Colors.white.withAlpha(5) : Colors.black.withAlpha(3),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.grey.withAlpha(30)),
-      ),
+  Widget _buildShortcutGroup(BuildContext context, List<Map<String, String>> shortcuts) {
+    return GlassCard(
+      padding: EdgeInsets.zero,
       child: Column(
-        children: shortcuts.map((s) => _buildShortcutRow(context, isDark, s['label']!, s['win']!, s['mac']!)).toList(),
+        children: shortcuts.map((s) => _buildShortcutRow(context, s['label']!, s['win']!, s['mac']!)).toList(),
       ),
     );
   }
 
-  Widget _buildShortcutRow(BuildContext context, bool isDark, String label, String windowsKey, String macKey) {
+  Widget _buildShortcutRow(BuildContext context, String label, String windowsKey, String macKey) {
     final isMac = Theme.of(context).platform == TargetPlatform.macOS;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
-        border: Border(bottom: BorderSide(color: Colors.grey.withAlpha(20))),
+        border: Border(bottom: BorderSide(color: Colors.white.withAlpha(10))),
       ),
       child: Row(
         children: [
           Expanded(child: Text(label, style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w500))),
-          _buildKeyBadge(isMac ? macKey : windowsKey, isDark),
+          _buildKeyBadge(context, isMac ? macKey : windowsKey),
         ],
       ),
     );
   }
 
-  Widget _buildKeyBadge(String keys, bool isDark) {
+  Widget _buildKeyBadge(BuildContext context, String keys) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: isDark ? Colors.black26 : Colors.white,
+        color: isDark ? Colors.black26 : Colors.white.withAlpha(150),
         borderRadius: BorderRadius.circular(8),
-        boxShadow: [BoxShadow(color: Colors.black.withAlpha(20), blurRadius: 4, offset: const Offset(0, 2))],
-        border: Border.all(color: Colors.grey.withAlpha(50)),
+        border: Border.all(color: Colors.white.withAlpha(30)),
       ),
       child: Text(
         keys,
-        style: GoogleFonts.firaCode(fontSize: 11, fontWeight: FontWeight.bold, color: isDark ? Colors.white70 : Colors.black87),
+        style: GoogleFonts.firaCode(fontSize: 11, fontWeight: FontWeight.bold),
       ),
     );
   }

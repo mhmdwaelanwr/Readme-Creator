@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
@@ -46,7 +45,7 @@ class _ImportMarkdownDialogState extends State<ImportMarkdownDialog> with Single
     return StyledDialog(
       width: 700,
       height: 650,
-      title: DialogHeader(
+      title: const DialogHeader(
         title: 'Project Intelligence Import',
         icon: Icons.auto_awesome_rounded,
         color: Colors.indigo,
@@ -54,19 +53,19 @@ class _ImportMarkdownDialogState extends State<ImportMarkdownDialog> with Single
       contentPadding: EdgeInsets.zero,
       content: Column(
         children: [
-          _buildAuthStatusBanner(isDark),
+          _buildAuthStatusBanner(),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 8.0),
             child: Container(
               padding: const EdgeInsets.all(4),
               decoration: BoxDecoration(
-                color: isDark ? Colors.white.withAlpha(10) : Colors.black.withAlpha(5),
+                color: isDark ? Colors.white.withAlpha(10) : Colors.black.withAlpha(10),
                 borderRadius: BorderRadius.circular(16),
               ),
               child: TabBar(
                 controller: _tabController,
                 labelColor: Colors.white,
-                unselectedLabelColor: isDark ? Colors.white60 : Colors.black54,
+                unselectedLabelColor: Colors.grey,
                 indicatorSize: TabBarIndicatorSize.tab,
                 indicator: BoxDecoration(
                   gradient: const LinearGradient(colors: [Colors.indigo, Colors.indigoAccent]),
@@ -85,8 +84,8 @@ class _ImportMarkdownDialogState extends State<ImportMarkdownDialog> with Single
             child: TabBarView(
               controller: _tabController,
               children: [
-                _buildTextTab(isDark),
-                _buildGithubTab(isDark),
+                _buildTextTab(),
+                _buildGithubTab(),
               ],
             ),
           ),
@@ -101,7 +100,7 @@ class _ImportMarkdownDialogState extends State<ImportMarkdownDialog> with Single
         FilledButton.icon(
           onPressed: () => _importOrClose(context),
           icon: const Icon(Icons.bolt_rounded, size: 18),
-          label: Text('Finalize Import', style: GoogleFonts.inter(fontWeight: FontWeight.bold)),
+          label: const Text('Finalize Import', style: TextStyle(fontWeight: FontWeight.bold)),
           style: FilledButton.styleFrom(
             backgroundColor: Colors.indigo,
             padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
@@ -112,15 +111,13 @@ class _ImportMarkdownDialogState extends State<ImportMarkdownDialog> with Single
     );
   }
 
-  Widget _buildAuthStatusBanner(bool isDark) {
+  Widget _buildAuthStatusBanner() {
     final bool isGithubConnected = _authService.githubToken != null;
     
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 24),
-      decoration: BoxDecoration(
-        color: isGithubConnected ? Colors.green.withAlpha(20) : Colors.amber.withAlpha(20),
-      ),
+    return GlassCard(
+      opacity: 0.1,
+      color: isGithubConnected ? Colors.green : Colors.amber,
+      borderRadius: 0,
       child: Row(
         children: [
           Icon(
@@ -137,7 +134,7 @@ class _ImportMarkdownDialogState extends State<ImportMarkdownDialog> with Single
               style: GoogleFonts.inter(
                 fontSize: 12, 
                 fontWeight: FontWeight.w600,
-                color: isGithubConnected ? Colors.green : Colors.orange[800],
+                color: isGithubConnected ? Colors.green : Colors.orange,
               ),
             ),
           ),
@@ -154,7 +151,7 @@ class _ImportMarkdownDialogState extends State<ImportMarkdownDialog> with Single
     );
   }
 
-  Widget _buildGithubTab(bool isDark) {
+  Widget _buildGithubTab() {
     return Padding(
       padding: const EdgeInsets.all(24.0),
       child: Column(
@@ -162,36 +159,63 @@ class _ImportMarkdownDialogState extends State<ImportMarkdownDialog> with Single
         children: [
           _buildSectionTitle('FETCH FROM REPOSITORY'),
           const SizedBox(height: 16),
-          TextField(
+          _buildTextField(
             controller: _urlController,
-            decoration: InputDecoration(
-              labelText: 'Repository / File URL',
-              hintText: 'https://github.com/user/repo',
-              prefixIcon: const Icon(Icons.public_rounded),
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-            ),
+            label: 'Repository / File URL',
+            hint: 'https://github.com/user/repo',
+            icon: Icons.public_rounded,
           ),
           const SizedBox(height: 24),
           SizedBox(
             width: double.infinity,
             height: 54,
-            child: ElevatedButton.icon(
+            child: FilledButton.icon(
               onPressed: _isLoading ? null : _fetchFromSource,
               icon: _isLoading 
                 ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2)) 
                 : const Icon(Icons.cloud_download_rounded),
               label: Text(_isLoading ? 'Analyzing Source...' : 'Execute Intelligent Import'),
-              style: ElevatedButton.styleFrom(
+              style: FilledButton.styleFrom(
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
               ),
             ),
           ),
           const Spacer(),
-          Text(
-            'Pro Tip: If you are logged in, we use your token to bypass GitHub API limits and access private files.',
-            style: GoogleFonts.inter(fontSize: 11, color: Colors.grey, height: 1.4),
+          const GlassCard(
+            opacity: 0.05,
+            child: Text(
+              'Pro Tip: If you are logged in, we use your token to bypass GitHub API limits and access private files.',
+              style: TextStyle(fontSize: 11, color: Colors.grey, height: 1.4),
+            ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildTextField({
+    required TextEditingController controller,
+    required String label,
+    required IconData icon,
+    String? hint,
+  }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return TextField(
+      controller: controller,
+      decoration: InputDecoration(
+        labelText: label,
+        hintText: hint,
+        prefixIcon: Icon(icon),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: Colors.white.withAlpha(20)),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: Colors.white.withAlpha(20)),
+        ),
+        filled: true,
+        fillColor: isDark ? Colors.white.withAlpha(10) : Colors.black.withAlpha(10),
       ),
     );
   }
@@ -207,7 +231,6 @@ class _ImportMarkdownDialogState extends State<ImportMarkdownDialog> with Single
       }
 
       final headers = <String, String>{};
-      // REAL INTEGRATION: Use the Token if available
       if (_authService.githubToken != null) {
         headers['Authorization'] = 'token ${_authService.githubToken}';
       }
@@ -230,7 +253,8 @@ class _ImportMarkdownDialogState extends State<ImportMarkdownDialog> with Single
     }
   }
 
-  Widget _buildTextTab(bool isDark) {
+  Widget _buildTextTab() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Padding(
       padding: const EdgeInsets.all(24.0),
       child: Column(
@@ -243,9 +267,16 @@ class _ImportMarkdownDialogState extends State<ImportMarkdownDialog> with Single
               textAlignVertical: TextAlignVertical.top,
               decoration: InputDecoration(
                 hintText: '# Project Context\n\nStarting writing or paste here...',
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(16),
+                  borderSide: BorderSide(color: Colors.white.withAlpha(20)),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(16),
+                  borderSide: BorderSide(color: Colors.white.withAlpha(20)),
+                ),
                 filled: true,
-                fillColor: isDark ? Colors.white.withAlpha(5) : Colors.black.withAlpha(2),
+                fillColor: isDark ? Colors.white.withAlpha(10) : Colors.black.withAlpha(10),
               ),
               style: GoogleFonts.firaCode(fontSize: 13),
             ),

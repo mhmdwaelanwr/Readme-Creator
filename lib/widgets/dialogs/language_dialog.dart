@@ -11,8 +11,6 @@ class LanguageDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
     return StyledDialog(
       title: DialogHeader(
         title: AppLocalizations.of(context)!.changeLanguage,
@@ -23,28 +21,36 @@ class LanguageDialog extends StatelessWidget {
       height: 600,
       content: Column(
         children: [
-          _buildInfoBox('Choose your preferred language for the application interface.', isDark),
+          const GlassCard(
+            opacity: 0.1,
+            color: Colors.orange,
+            child: Text(
+              'Choose your preferred language for the application interface.',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 13, color: Colors.grey),
+            ),
+          ),
           const SizedBox(height: 20),
           Expanded(
             child: Consumer<ProjectProvider>(
               builder: (context, provider, _) {
                 return ListView(
                   children: [
-                    _buildLanguageItem(context, provider, 'English', 'en', '🇺🇸', isDark),
-                    _buildLanguageItem(context, provider, 'العربية', 'ar', '🇪🇬', isDark),
-                    _buildLanguageItem(context, provider, 'Español', 'es', '🇪🇸', isDark),
-                    _buildLanguageItem(context, provider, 'Français', 'fr', '🇫🇷', isDark),
-                    _buildLanguageItem(context, provider, 'Deutsch', 'de', '🇩🇪', isDark),
-                    _buildLanguageItem(context, provider, 'हिन्दी', 'hi', '🇮🇳', isDark),
-                    _buildLanguageItem(context, provider, '日本語', 'ja', '🇯🇵', isDark),
-                    _buildLanguageItem(context, provider, 'Português', 'pt', '🇧🇷', isDark),
-                    _buildLanguageItem(context, provider, 'Русский', 'ru', '🇷🇺', isDark),
-                    _buildLanguageItem(context, provider, '中文', 'zh', '🇨🇳', isDark),
+                    _buildLanguageItem(context, provider, 'English', 'en', '🇺🇸'),
+                    _buildLanguageItem(context, provider, 'العربية', 'ar', '🇪🇬'),
+                    _buildLanguageItem(context, provider, 'Español', 'es', '🇪🇸'),
+                    _buildLanguageItem(context, provider, 'Français', 'fr', '🇫🇷'),
+                    _buildLanguageItem(context, provider, 'Deutsch', 'de', '🇩🇪'),
+                    _buildLanguageItem(context, provider, 'हिन्दी', 'hi', '🇮🇳'),
+                    _buildLanguageItem(context, provider, '日本語', 'ja', '🇯🇵'),
+                    _buildLanguageItem(context, provider, 'Português', 'pt', '🇧🇷'),
+                    _buildLanguageItem(context, provider, 'Русский', 'ru', '🇷🇺'),
+                    _buildLanguageItem(context, provider, '中文', 'zh', '🇨🇳'),
                     const Padding(
                       padding: EdgeInsets.symmetric(vertical: 8.0),
                       child: Divider(),
                     ),
-                    _buildSystemDefaultItem(context, provider, isDark),
+                    _buildSystemDefaultItem(context, provider),
                   ],
                 );
               },
@@ -55,65 +61,59 @@ class LanguageDialog extends StatelessWidget {
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context),
-          child: Text(AppLocalizations.of(context)!.close, style: GoogleFonts.inter(fontWeight: FontWeight.w600)),
+          child: Text(
+            AppLocalizations.of(context)!.close,
+            style: GoogleFonts.inter(fontWeight: FontWeight.w600),
+          ),
         ),
       ],
     );
   }
 
-  Widget _buildInfoBox(String text, bool isDark) {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Colors.orange.withAlpha(isDark ? 20 : 10),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.orange.withAlpha(30)),
-      ),
-      child: Text(text, textAlign: TextAlign.center, style: GoogleFonts.inter(fontSize: 13, color: Colors.grey[600])),
-    );
-  }
-
-  Widget _buildLanguageItem(BuildContext context, ProjectProvider provider, String name, String code, String flag, bool isDark) {
+  Widget _buildLanguageItem(BuildContext context, ProjectProvider provider, String name, String code, String flag) {
     final isSelected = provider.locale?.languageCode == code;
-    return Card(
-      elevation: 0,
-      margin: const EdgeInsets.only(bottom: 8),
-      color: isSelected ? AppColors.primary.withAlpha(isDark ? 30 : 10) : Colors.transparent,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-        side: BorderSide(color: isSelected ? AppColors.primary : Colors.grey.withAlpha(30)),
-      ),
+    return GlassCard(
+      opacity: isSelected ? 0.15 : 0.05,
+      color: isSelected ? AppColors.primary : null,
+      onTap: () {
+        provider.setLocale(Locale(code));
+        Navigator.pop(context);
+      },
+      padding: EdgeInsets.zero,
       child: ListTile(
         leading: Text(flag, style: const TextStyle(fontSize: 24)),
-        title: Text(name, style: GoogleFonts.inter(fontWeight: isSelected ? FontWeight.bold : FontWeight.normal)),
+        title: Text(
+          name,
+          style: GoogleFonts.inter(
+            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+            color: isSelected ? AppColors.primary : null,
+          ),
+        ),
         trailing: isSelected ? const Icon(Icons.check_circle_rounded, color: AppColors.primary) : null,
-        onTap: () {
-          provider.setLocale(Locale(code));
-          Navigator.pop(context);
-        },
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
     );
   }
 
-  Widget _buildSystemDefaultItem(BuildContext context, ProjectProvider provider, bool isDark) {
+  Widget _buildSystemDefaultItem(BuildContext context, ProjectProvider provider) {
     final isSelected = provider.locale == null;
-    return Card(
-      elevation: 0,
-      color: isSelected ? AppColors.primary.withAlpha(isDark ? 30 : 10) : Colors.transparent,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-        side: BorderSide(color: isSelected ? AppColors.primary : Colors.grey.withAlpha(30)),
-      ),
+    return GlassCard(
+      opacity: isSelected ? 0.15 : 0.05,
+      color: isSelected ? AppColors.primary : null,
+      onTap: () {
+        provider.setLocale(null);
+        Navigator.pop(context);
+      },
+      padding: EdgeInsets.zero,
       child: ListTile(
         leading: const Icon(Icons.settings_suggest_rounded),
-        title: Text('System Default', style: GoogleFonts.inter(fontWeight: isSelected ? FontWeight.bold : FontWeight.normal)),
+        title: Text(
+          'System Default',
+          style: GoogleFonts.inter(
+            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+            color: isSelected ? AppColors.primary : null,
+          ),
+        ),
         trailing: isSelected ? const Icon(Icons.check_circle_rounded, color: AppColors.primary) : null,
-        onTap: () {
-          provider.setLocale(null);
-          Navigator.pop(context);
-        },
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
     );
   }

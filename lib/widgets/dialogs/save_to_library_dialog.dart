@@ -37,8 +37,6 @@ class _SaveToLibraryDialogState extends State<SaveToLibraryDialog> {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
     return StyledDialog(
       title: DialogHeader(
         title: AppLocalizations.of(context)!.saveToLibrary,
@@ -50,7 +48,22 @@ class _SaveToLibraryDialogState extends State<SaveToLibraryDialog> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildInfoBox('Store your current progress in the local library. You can restore it anytime from the Projects screen.', isDark),
+            const GlassCard(
+              opacity: 0.1,
+              color: Colors.blue,
+              child: Row(
+                children: [
+                  Icon(Icons.info_outline_rounded, color: Colors.blue, size: 20),
+                  SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      'Store your current progress in the local library. You can restore it anytime from the Projects screen.',
+                      style: TextStyle(fontSize: 13, color: Colors.grey),
+                    ),
+                  ),
+                ],
+              ),
+            ),
             const SizedBox(height: 24),
             _buildSectionTitle('PROJECT DETAILS'),
             const SizedBox(height: 12),
@@ -58,14 +71,12 @@ class _SaveToLibraryDialogState extends State<SaveToLibraryDialog> {
               controller: _nameController,
               label: AppLocalizations.of(context)!.projectName,
               icon: Icons.title_rounded,
-              isDark: isDark,
             ),
             const SizedBox(height: 16),
             _buildTextField(
               controller: _descController,
               label: AppLocalizations.of(context)!.description,
               icon: Icons.description_rounded,
-              isDark: isDark,
               maxLines: 2,
             ),
             const SizedBox(height: 16),
@@ -73,7 +84,6 @@ class _SaveToLibraryDialogState extends State<SaveToLibraryDialog> {
               controller: _tagsController,
               label: AppLocalizations.of(context)!.tags,
               icon: Icons.label_rounded,
-              isDark: isDark,
               hint: 'flutter, readme, docs',
             ),
           ],
@@ -110,10 +120,10 @@ class _SaveToLibraryDialogState extends State<SaveToLibraryDialog> {
     required TextEditingController controller,
     required String label,
     required IconData icon,
-    required bool isDark,
     String? hint,
     int maxLines = 1,
   }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return TextField(
       controller: controller,
       maxLines: maxLines,
@@ -121,29 +131,18 @@ class _SaveToLibraryDialogState extends State<SaveToLibraryDialog> {
         labelText: label,
         hintText: hint,
         prefixIcon: Icon(icon, size: 20),
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: Colors.white.withAlpha(20)),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: Colors.white.withAlpha(20)),
+        ),
         filled: true,
-        fillColor: isDark ? Colors.white.withAlpha(5) : Colors.black.withAlpha(3),
+        fillColor: isDark ? Colors.white.withAlpha(10) : Colors.black.withAlpha(10),
       ),
       style: GoogleFonts.inter(fontSize: 14),
-    );
-  }
-
-  Widget _buildInfoBox(String text, bool isDark) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.blue.withAlpha(isDark ? 20 : 10),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.blue.withAlpha(30)),
-      ),
-      child: Row(
-        children: [
-          const Icon(Icons.info_outline_rounded, color: Colors.blue, size: 20),
-          const SizedBox(width: 12),
-          Expanded(child: Text(text, style: GoogleFonts.inter(fontSize: 13, color: isDark ? Colors.white70 : Colors.black87))),
-        ],
-      ),
     );
   }
 

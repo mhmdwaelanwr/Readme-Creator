@@ -7,6 +7,7 @@ import '../../providers/project_provider.dart';
 import '../../utils/debouncer.dart';
 import '../../utils/dialog_helper.dart';
 import '../../core/constants/app_colors.dart';
+import 'confirm_dialog.dart';
 
 class ProjectSettingsDialog extends StatefulWidget {
   const ProjectSettingsDialog({super.key});
@@ -47,26 +48,17 @@ class _ProjectSettingsDialogState extends State<ProjectSettingsDialog> {
               child: Container(
                 padding: const EdgeInsets.all(4),
                 decoration: BoxDecoration(
-                  color: isDark ? Colors.white.withAlpha(10) : Colors.black.withAlpha(5),
+                  color: isDark ? Colors.white.withAlpha(10) : Colors.black.withAlpha(10),
                   borderRadius: BorderRadius.circular(16),
                 ),
                 child: TabBar(
                   isScrollable: true,
                   labelColor: Colors.white,
-                  unselectedLabelColor: isDark ? Colors.white60 : Colors.black54,
+                  unselectedLabelColor: Colors.grey,
                   indicatorSize: TabBarIndicatorSize.tab,
                   indicator: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [AppColors.primary, AppColors.primary.withAlpha(180)],
-                    ),
+                    gradient: AppColors.primaryGradient,
                     borderRadius: BorderRadius.circular(12),
-                    boxShadow: [
-                      BoxShadow(
-                        color: AppColors.primary.withAlpha(60),
-                        blurRadius: 8,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
                   ),
                   dividerColor: Colors.transparent,
                   labelStyle: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 13),
@@ -83,11 +75,11 @@ class _ProjectSettingsDialogState extends State<ProjectSettingsDialog> {
             Expanded(
               child: TabBarView(
                 children: [
-                  _buildVariablesTab(context, provider, isDark),
-                  _buildLicenseTab(context, provider, isDark),
-                  _buildCommunityTab(context, provider, isDark),
-                  _buildColorsTab(context, provider, isDark),
-                  _buildFormattingTab(context, provider, isDark),
+                  _buildVariablesTab(provider),
+                  _buildLicenseTab(provider),
+                  _buildCommunityTab(provider),
+                  _buildColorsTab(provider),
+                  _buildFormattingTab(provider),
                 ],
               ),
             ),
@@ -103,7 +95,7 @@ class _ProjectSettingsDialogState extends State<ProjectSettingsDialog> {
     );
   }
 
-  Widget _buildVariablesTab(BuildContext context, ProjectProvider provider, bool isDark) {
+  Widget _buildVariablesTab(ProjectProvider provider) {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(24),
       child: Column(
@@ -114,16 +106,10 @@ class _ProjectSettingsDialogState extends State<ProjectSettingsDialog> {
           ...provider.variables.entries.map((entry) {
             return Padding(
               padding: const EdgeInsets.only(bottom: 16.0),
-              child: TextFormField(
+              child: _buildTextField(
+                label: entry.key,
                 initialValue: entry.value,
-                decoration: InputDecoration(
-                  labelText: entry.key,
-                  prefixIcon: const Icon(Icons.label_important_outline_rounded, size: 20),
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                  filled: true,
-                  fillColor: isDark ? Colors.white.withAlpha(5) : Colors.black.withAlpha(3),
-                ),
-                style: GoogleFonts.inter(),
+                icon: Icons.label_important_outline_rounded,
                 onChanged: (value) {
                   _debouncer.run(() {
                     provider.updateVariable(entry.key, value);
@@ -137,7 +123,7 @@ class _ProjectSettingsDialogState extends State<ProjectSettingsDialog> {
     );
   }
 
-  Widget _buildLicenseTab(BuildContext context, ProjectProvider provider, bool isDark) {
+  Widget _buildLicenseTab(ProjectProvider provider) {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(24),
       child: Column(
@@ -145,17 +131,12 @@ class _ProjectSettingsDialogState extends State<ProjectSettingsDialog> {
         children: [
           _buildSectionTitle('SOFTWARE LICENSE'),
           const SizedBox(height: 16),
-          Container(
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: isDark ? Colors.white.withAlpha(5) : Colors.black.withAlpha(3),
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: Colors.grey.withAlpha(30)),
-            ),
+          GlassCard(
+            opacity: 0.1,
             child: Column(
               children: [
                 DropdownButtonFormField<String>(
-                  initialValue: provider.licenseType,
+                  value: provider.licenseType,
                   decoration: InputDecoration(
                     labelText: 'Select License',
                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
@@ -168,14 +149,14 @@ class _ProjectSettingsDialogState extends State<ProjectSettingsDialog> {
                   },
                 ),
                 const SizedBox(height: 16),
-                Row(
+                const Row(
                   children: [
                     Icon(Icons.info_outline_rounded, size: 16, color: AppColors.primary),
-                    const SizedBox(width: 8),
+                    SizedBox(width: 8),
                     Expanded(
                       child: Text(
                         'A LICENSE file will be generated and included in the export.',
-                        style: GoogleFonts.inter(color: Colors.grey, fontSize: 13),
+                        style: TextStyle(color: Colors.grey, fontSize: 13),
                       ),
                     ),
                   ],
@@ -188,7 +169,7 @@ class _ProjectSettingsDialogState extends State<ProjectSettingsDialog> {
     );
   }
 
-  Widget _buildCommunityTab(BuildContext context, ProjectProvider provider, bool isDark) {
+  Widget _buildCommunityTab(ProjectProvider provider) {
     return ListView(
       padding: const EdgeInsets.all(24),
       children: [
@@ -203,19 +184,19 @@ class _ProjectSettingsDialogState extends State<ProjectSettingsDialog> {
     );
   }
 
-  Widget _buildColorsTab(BuildContext context, ProjectProvider provider, bool isDark) {
+  Widget _buildColorsTab(ProjectProvider provider) {
     return ListView(
       padding: const EdgeInsets.all(24),
       children: [
         _buildSectionTitle('BRANDING COLORS'),
         const SizedBox(height: 16),
-        _buildColorTile(context, AppLocalizations.of(context)!.primaryColor, provider.primaryColor, (c) => provider.setPrimaryColor(c)),
-        _buildColorTile(context, AppLocalizations.of(context)!.secondaryColor, provider.secondaryColor, (c) => provider.setSecondaryColor(c)),
+        _buildColorTile(AppLocalizations.of(context)!.primaryColor, provider.primaryColor, (c) => provider.setPrimaryColor(c)),
+        _buildColorTile(AppLocalizations.of(context)!.secondaryColor, provider.secondaryColor, (c) => provider.setSecondaryColor(c)),
       ],
     );
   }
 
-  Widget _buildFormattingTab(BuildContext context, ProjectProvider provider, bool isDark) {
+  Widget _buildFormattingTab(ProjectProvider provider) {
     return ListView(
       padding: const EdgeInsets.all(24),
       children: [
@@ -244,6 +225,29 @@ class _ProjectSettingsDialogState extends State<ProjectSettingsDialog> {
     );
   }
 
+  Widget _buildTextField({required String label, required String initialValue, required IconData icon, required ValueChanged<String> onChanged}) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return TextFormField(
+      initialValue: initialValue,
+      decoration: InputDecoration(
+        labelText: label,
+        prefixIcon: Icon(icon, size: 20),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: Colors.white.withAlpha(20)),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: Colors.white.withAlpha(20)),
+        ),
+        filled: true,
+        fillColor: isDark ? Colors.white.withAlpha(10) : Colors.black.withAlpha(10),
+      ),
+      style: GoogleFonts.inter(),
+      onChanged: onChanged,
+    );
+  }
+
   Widget _buildSectionTitle(String title) {
     return Text(
       title,
@@ -252,26 +256,22 @@ class _ProjectSettingsDialogState extends State<ProjectSettingsDialog> {
   }
 
   Widget _buildSwitchTile(String title, String subtitle, bool value, ValueChanged<bool> onChanged, IconData icon) {
-    return Card(
-      margin: const EdgeInsets.only(bottom: 12),
-      elevation: 0,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16), side: BorderSide(color: Colors.grey.withAlpha(30))),
+    return GlassCard(
+      padding: EdgeInsets.zero,
       child: SwitchListTile(
         secondary: Icon(icon, color: AppColors.primary),
         title: Text(title, style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 14)),
         subtitle: Text(subtitle, style: GoogleFonts.inter(fontSize: 12, color: Colors.grey)),
         value: value,
         onChanged: onChanged,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       ),
     );
   }
 
-  Widget _buildColorTile(BuildContext context, String title, Color color, ValueChanged<Color> onColorChanged) {
-    return Card(
-      margin: const EdgeInsets.only(bottom: 12),
-      elevation: 0,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16), side: BorderSide(color: Colors.grey.withAlpha(30))),
+  Widget _buildColorTile(String title, Color color, ValueChanged<Color> onColorChanged) {
+    return GlassCard(
+      padding: EdgeInsets.zero,
+      onTap: () => _showColorPicker(context, color, onColorChanged),
       child: ListTile(
         leading: Container(
           width: 40, height: 40,
@@ -280,8 +280,6 @@ class _ProjectSettingsDialogState extends State<ProjectSettingsDialog> {
         title: Text(title, style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 14)),
         subtitle: Text('#${color.toARGB32().toRadixString(16).toUpperCase().substring(2)}', style: GoogleFonts.firaCode(fontSize: 12)),
         trailing: const Icon(Icons.colorize_rounded, size: 18),
-        onTap: () => _showColorPicker(context, color, onColorChanged),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       ),
     );
   }
@@ -289,26 +287,32 @@ class _ProjectSettingsDialogState extends State<ProjectSettingsDialog> {
   void _showColorPicker(BuildContext context, Color initialColor, ValueChanged<Color> onColorChanged) {
     showSafeDialog(
       context,
-      builder: (context) => AlertDialog(
-        title: Text('Pick Color', style: GoogleFonts.inter(fontWeight: FontWeight.bold)),
-        content: SingleChildScrollView(
-          child: ColorPicker(
-            pickerColor: initialColor,
-            onColorChanged: onColorChanged,
-            labelTypes: const [],
-          ),
-        ),
-        actions: [TextButton(onPressed: () => Navigator.pop(context), child: const Text('Done'))],
+      builder: (context) => ConfirmDialog(
+        title: 'Pick Color',
+        onConfirm: () {},
+        confirmText: 'Done',
+        content: '',
+        icon: Icons.colorize_rounded,
       ),
     );
   }
 
   Widget _buildDropdownSetting<T>({required String label, required T value, required Map<T, String> items, required ValueChanged<T?> onChanged, required IconData icon}) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return InputDecorator(
       decoration: InputDecoration(
         labelText: label,
         prefixIcon: Icon(icon, color: AppColors.primary),
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: Colors.white.withAlpha(20)),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: Colors.white.withAlpha(20)),
+        ),
+        filled: true,
+        fillColor: isDark ? Colors.white.withAlpha(10) : Colors.black.withAlpha(10),
       ),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<T>(

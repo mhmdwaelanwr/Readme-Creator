@@ -24,34 +24,26 @@ class ConfirmDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final color = isDestructive ? Colors.red : Colors.blue;
 
     return StyledDialog(
       title: DialogHeader(
         title: title,
         icon: icon ?? (isDestructive ? Icons.warning_amber_rounded : Icons.help_outline_rounded),
-        color: isDestructive ? Colors.red : Colors.blue,
+        color: color,
       ),
       width: 450,
       content: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Container(
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: isDestructive 
-                ? Colors.red.withAlpha(isDark ? 20 : 10)
-                : Colors.blue.withAlpha(isDark ? 20 : 10),
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(
-                color: isDestructive ? Colors.red.withAlpha(30) : Colors.blue.withAlpha(30),
-              ),
-            ),
+          GlassCard(
+            opacity: 0.1,
+            color: color,
             child: Row(
               children: [
                 Icon(
                   isDestructive ? Icons.error_outline_rounded : Icons.info_outline_rounded,
-                  color: isDestructive ? Colors.red : Colors.blue,
+                  color: color,
                 ),
                 const SizedBox(width: 16),
                 Expanded(
@@ -81,7 +73,7 @@ class ConfirmDialog extends StatelessWidget {
             onConfirm();
           },
           style: FilledButton.styleFrom(
-            backgroundColor: isDestructive ? Colors.red : Colors.blue,
+            backgroundColor: color,
             foregroundColor: Colors.white,
             padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),

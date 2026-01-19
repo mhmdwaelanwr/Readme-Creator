@@ -34,8 +34,6 @@ class _AISettingsDialogState extends State<AISettingsDialog> {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
     return StyledDialog(
       title: DialogHeader(
         title: AppLocalizations.of(context)!.aiSettings,
@@ -47,13 +45,19 @@ class _AISettingsDialogState extends State<AISettingsDialog> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildHeaderCard(isDark),
+            _buildHeaderCard(),
             const SizedBox(height: 24),
             _buildSectionTitle('API CONFIGURATION'),
             const SizedBox(height: 12),
-            _buildApiKeyField(context, isDark),
+            _buildApiKeyField(context),
             const SizedBox(height: 16),
-            _buildInfoBox('Your API key is stored locally on your device and is only used to communicate with Google Gemini AI services.', isDark),
+            const GlassCard(
+              opacity: 0.1,
+              child: Text(
+                'Your API key is stored locally on your device and is only used to communicate with Google Gemini AI services.',
+                style: TextStyle(fontSize: 11, color: Colors.grey, height: 1.4),
+              ),
+            ),
           ],
         ),
       ),
@@ -77,16 +81,10 @@ class _AISettingsDialogState extends State<AISettingsDialog> {
     );
   }
 
-  Widget _buildHeaderCard(bool isDark) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [Colors.purple.withAlpha(40), Colors.deepPurple.withAlpha(10)],
-        ),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.purple.withAlpha(30)),
-      ),
+  Widget _buildHeaderCard() {
+    return GlassCard(
+      opacity: 0.1,
+      color: Colors.purple,
       child: Row(
         children: [
           const Icon(Icons.auto_fix_high_rounded, size: 40, color: Colors.purpleAccent),
@@ -115,7 +113,8 @@ class _AISettingsDialogState extends State<AISettingsDialog> {
     );
   }
 
-  Widget _buildApiKeyField(BuildContext context, bool isDark) {
+  Widget _buildApiKeyField(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -125,9 +124,16 @@ class _AISettingsDialogState extends State<AISettingsDialog> {
           decoration: InputDecoration(
             labelText: AppLocalizations.of(context)!.geminiApiKey,
             prefixIcon: const Icon(Icons.key_rounded, size: 20),
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(16),
+              borderSide: BorderSide(color: Colors.white.withAlpha(20)),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(16),
+              borderSide: BorderSide(color: Colors.white.withAlpha(20)),
+            ),
             filled: true,
-            fillColor: isDark ? Colors.white.withAlpha(5) : Colors.black.withAlpha(3),
+            fillColor: isDark ? Colors.white.withAlpha(10) : Colors.black.withAlpha(10),
             suffixIcon: IconButton(
               icon: Icon(_isObscured ? Icons.visibility_rounded : Icons.visibility_off_rounded, size: 20),
               onPressed: () => setState(() => _isObscured = !_isObscured),
@@ -155,20 +161,6 @@ class _AISettingsDialogState extends State<AISettingsDialog> {
           ),
         ),
       ],
-    );
-  }
-
-  Widget _buildInfoBox(String text, bool isDark) {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: isDark ? Colors.white.withAlpha(5) : Colors.black.withAlpha(3),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Text(
-        text,
-        style: GoogleFonts.inter(fontSize: 11, color: Colors.grey, height: 1.4),
-      ),
     );
   }
 

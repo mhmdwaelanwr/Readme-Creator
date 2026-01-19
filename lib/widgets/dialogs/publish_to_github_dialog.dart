@@ -8,6 +8,7 @@ import '../../generator/markdown_generator.dart';
 import '../../utils/dialog_helper.dart';
 import '../../utils/toast_helper.dart';
 import '../../core/constants/app_colors.dart';
+import 'confirm_dialog.dart';
 
 class PublishToGitHubDialog extends StatefulWidget {
   const PublishToGitHubDialog({super.key});
@@ -44,8 +45,6 @@ class _PublishToGitHubDialogState extends State<PublishToGitHubDialog> {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
     return StyledDialog(
       title: const DialogHeader(
         title: 'Publish to GitHub',
@@ -58,7 +57,22 @@ class _PublishToGitHubDialogState extends State<PublishToGitHubDialog> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildInfoBox('This will create a new branch and open a Pull Request with your generated README.md directly on GitHub.', isDark),
+            const GlassCard(
+              opacity: 0.1,
+              color: Colors.teal,
+              child: Row(
+                children: [
+                  Icon(Icons.info_outline_rounded, color: Colors.teal, size: 20),
+                  SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      'This will create a new branch and open a Pull Request with your generated README.md directly on GitHub.',
+                      style: TextStyle(fontSize: 13, color: Colors.grey),
+                    ),
+                  ),
+                ],
+              ),
+            ),
             const SizedBox(height: 24),
             _buildSectionTitle('AUTHENTICATION'),
             const SizedBox(height: 12),
@@ -66,7 +80,6 @@ class _PublishToGitHubDialogState extends State<PublishToGitHubDialog> {
               controller: _tokenController,
               label: 'Personal Access Token',
               icon: Icons.key_rounded,
-              isDark: isDark,
               obscureText: _isTokenObscured,
               suffix: IconButton(
                 icon: Icon(_isTokenObscured ? Icons.visibility_rounded : Icons.visibility_off_rounded, size: 20),
@@ -84,7 +97,6 @@ class _PublishToGitHubDialogState extends State<PublishToGitHubDialog> {
                     controller: _ownerController,
                     label: 'Owner',
                     icon: Icons.person_rounded,
-                    isDark: isDark,
                     hint: 'user or org',
                   ),
                 ),
@@ -94,7 +106,6 @@ class _PublishToGitHubDialogState extends State<PublishToGitHubDialog> {
                     controller: _repoController,
                     label: 'Repository',
                     icon: Icons.folder_rounded,
-                    isDark: isDark,
                     hint: 'repo-name',
                   ),
                 ),
@@ -105,18 +116,16 @@ class _PublishToGitHubDialogState extends State<PublishToGitHubDialog> {
               controller: _branchController,
               label: 'New Branch Name',
               icon: Icons.account_tree_rounded,
-              isDark: isDark,
             ),
             const SizedBox(height: 16),
             _buildTextField(
               controller: _messageController,
               label: 'Commit Message',
               icon: Icons.message_rounded,
-              isDark: isDark,
             ),
             if (_isLoading) ...[
               const SizedBox(height: 24),
-              _buildLoadingIndicator(isDark),
+              _buildLoadingIndicator(),
             ],
           ],
         ),
@@ -142,12 +151,12 @@ class _PublishToGitHubDialogState extends State<PublishToGitHubDialog> {
     required TextEditingController controller,
     required String label,
     required IconData icon,
-    required bool isDark,
     String? hint,
     String? helper,
     bool obscureText = false,
     Widget? suffix,
   }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -159,9 +168,16 @@ class _PublishToGitHubDialogState extends State<PublishToGitHubDialog> {
             hintText: hint,
             prefixIcon: Icon(icon, size: 20),
             suffixIcon: suffix,
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: Colors.white.withAlpha(20)),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: Colors.white.withAlpha(20)),
+            ),
             filled: true,
-            fillColor: isDark ? Colors.white.withAlpha(5) : Colors.black.withAlpha(3),
+            fillColor: isDark ? Colors.white.withAlpha(10) : Colors.black.withAlpha(10),
           ),
           style: GoogleFonts.inter(fontSize: 14),
         ),
@@ -171,24 +187,6 @@ class _PublishToGitHubDialogState extends State<PublishToGitHubDialog> {
             child: Text(helper, style: GoogleFonts.inter(fontSize: 11, color: Colors.grey)),
           ),
       ],
-    );
-  }
-
-  Widget _buildInfoBox(String text, bool isDark) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.teal.withAlpha(isDark ? 20 : 10),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.teal.withAlpha(30)),
-      ),
-      child: Row(
-        children: [
-          const Icon(Icons.info_outline_rounded, color: Colors.teal, size: 20),
-          const SizedBox(width: 12),
-          Expanded(child: Text(text, style: GoogleFonts.inter(fontSize: 13, color: isDark ? Colors.white70 : Colors.black87))),
-        ],
-      ),
     );
   }
 
@@ -206,7 +204,7 @@ class _PublishToGitHubDialogState extends State<PublishToGitHubDialog> {
     );
   }
 
-  Widget _buildLoadingIndicator(bool isDark) {
+  Widget _buildLoadingIndicator() {
     return Center(
       child: Column(
         children: [
@@ -264,30 +262,11 @@ class _PublishToGitHubDialogState extends State<PublishToGitHubDialog> {
   void _showSuccessDialog(BuildContext context) {
     showSafeDialog(
       context,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Row(
-          children: [
-            const Icon(Icons.check_circle_rounded, color: Colors.green, size: 28),
-            const SizedBox(width: 12),
-            const Text('Success!'),
-          ],
-        ),
-        content: const Text('Your Pull Request has been created successfully.'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Awesome'),
-          ),
-          FilledButton(
-            onPressed: () {
-              final owner = _ownerController.text.trim();
-              final repo = _repoController.text.trim();
-              launchUrl(Uri.parse('https://github.com/$owner/$repo/pulls'));
-            },
-            child: const Text('View PRs'),
-          ),
-        ],
+      builder: (context) => ConfirmDialog(
+        title: 'Success!',
+        content: 'Your Pull Request has been created successfully.',
+        confirmText: 'Awesome',
+        onConfirm: () {},
       ),
     );
   }

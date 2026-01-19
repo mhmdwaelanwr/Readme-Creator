@@ -59,13 +59,13 @@ class _GenerateCodebaseDialogState extends State<GenerateCodebaseDialog> with Si
             child: Container(
               padding: const EdgeInsets.all(4),
               decoration: BoxDecoration(
-                color: isDark ? Colors.white.withAlpha(10) : Colors.black.withAlpha(5),
+                color: isDark ? Colors.white.withAlpha(10) : Colors.black.withAlpha(10),
                 borderRadius: BorderRadius.circular(16),
               ),
               child: TabBar(
                 controller: _tabController,
                 labelColor: Colors.white,
-                unselectedLabelColor: isDark ? Colors.white60 : Colors.black54,
+                unselectedLabelColor: Colors.grey,
                 indicatorSize: TabBarIndicatorSize.tab,
                 indicator: BoxDecoration(
                   gradient: const LinearGradient(
@@ -86,8 +86,8 @@ class _GenerateCodebaseDialogState extends State<GenerateCodebaseDialog> with Si
             child: TabBarView(
               controller: _tabController,
               children: [
-                _buildLocalFolderTab(context, isDark),
-                _buildGitHubRepoTab(context, isDark),
+                _buildLocalFolderTab(context),
+                _buildGitHubRepoTab(context),
               ],
             ),
           ),
@@ -102,28 +102,40 @@ class _GenerateCodebaseDialogState extends State<GenerateCodebaseDialog> with Si
     );
   }
 
-  Widget _buildLocalFolderTab(BuildContext context, bool isDark) {
+  Widget _buildLocalFolderTab(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.all(24.0),
       child: Column(
         children: [
-          _buildInfoBox('Point to your project folder, and our AI will analyze the structure to generate a tailored README.', isDark),
+          const GlassCard(
+            opacity: 0.1,
+            color: Colors.blue,
+            child: Row(
+              children: [
+                Icon(Icons.info_outline_rounded, color: Colors.blue, size: 20),
+                SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    'Point to your project folder, and our AI will analyze the structure to generate a tailored README.',
+                    style: TextStyle(fontSize: 13, color: Colors.grey),
+                  ),
+                ),
+              ],
+            ),
+          ),
           const SizedBox(height: 24),
-          TextField(
+          _buildTextField(
             controller: _pathController,
-            decoration: InputDecoration(
-              labelText: 'Project Path',
-              prefixIcon: const Icon(Icons.folder_open_rounded),
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-              suffixIcon: IconButton(
-                icon: const Icon(Icons.search_rounded),
-                onPressed: () async {
-                  String? selectedDirectory = await FilePicker.platform.getDirectoryPath();
-                  if (selectedDirectory != null) {
-                    _pathController.text = selectedDirectory;
-                  }
-                },
-              ),
+            label: 'Project Path',
+            icon: Icons.folder_open_rounded,
+            suffix: IconButton(
+              icon: const Icon(Icons.search_rounded),
+              onPressed: () async {
+                String? selectedDirectory = await FilePicker.platform.getDirectoryPath();
+                if (selectedDirectory != null) {
+                  _pathController.text = selectedDirectory;
+                }
+              },
             ),
           ),
           const Spacer(),
@@ -137,21 +149,33 @@ class _GenerateCodebaseDialogState extends State<GenerateCodebaseDialog> with Si
     );
   }
 
-  Widget _buildGitHubRepoTab(BuildContext context, bool isDark) {
+  Widget _buildGitHubRepoTab(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.all(24.0),
       child: Column(
         children: [
-          _buildInfoBox('Paste a public GitHub URL to automatically fetch and document your repository.', isDark),
-          const SizedBox(height: 24),
-          TextField(
-            controller: _repoUrlController,
-            decoration: InputDecoration(
-              labelText: 'GitHub Repository URL',
-              hintText: 'https://github.com/user/repo',
-              prefixIcon: const Icon(Icons.link_rounded),
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+          const GlassCard(
+            opacity: 0.1,
+            color: Colors.blue,
+            child: Row(
+              children: [
+                Icon(Icons.info_outline_rounded, color: Colors.blue, size: 20),
+                SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    'Paste a public GitHub URL to automatically fetch and document your repository.',
+                    style: TextStyle(fontSize: 13, color: Colors.grey),
+                  ),
+                ),
+              ],
             ),
+          ),
+          const SizedBox(height: 24),
+          _buildTextField(
+            controller: _repoUrlController,
+            label: 'GitHub Repository URL',
+            hint: 'https://github.com/user/repo',
+            icon: Icons.link_rounded,
           ),
           const Spacer(),
           _buildActionButton(
@@ -164,20 +188,31 @@ class _GenerateCodebaseDialogState extends State<GenerateCodebaseDialog> with Si
     );
   }
 
-  Widget _buildInfoBox(String text, bool isDark) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.blue.withAlpha(isDark ? 20 : 10),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.blue.withAlpha(30)),
-      ),
-      child: Row(
-        children: [
-          const Icon(Icons.info_outline_rounded, color: Colors.blue, size: 20),
-          const SizedBox(width: 12),
-          Expanded(child: Text(text, style: GoogleFonts.inter(fontSize: 13, color: isDark ? Colors.white70 : Colors.black87))),
-        ],
+  Widget _buildTextField({
+    required TextEditingController controller,
+    required String label,
+    required IconData icon,
+    String? hint,
+    Widget? suffix,
+  }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return TextField(
+      controller: controller,
+      decoration: InputDecoration(
+        labelText: label,
+        hintText: hint,
+        prefixIcon: Icon(icon),
+        suffixIcon: suffix,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: Colors.white.withAlpha(20)),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: Colors.white.withAlpha(20)),
+        ),
+        filled: true,
+        fillColor: isDark ? Colors.white.withAlpha(10) : Colors.black.withAlpha(10),
       ),
     );
   }
@@ -186,13 +221,12 @@ class _GenerateCodebaseDialogState extends State<GenerateCodebaseDialog> with Si
     return SizedBox(
       width: double.infinity,
       height: 54,
-      child: ElevatedButton(
+      child: FilledButton(
         onPressed: onPressed,
-        style: ElevatedButton.styleFrom(
+        style: FilledButton.styleFrom(
           backgroundColor: Colors.purple,
           foregroundColor: Colors.white,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-          elevation: 0,
         ),
         child: isLoading 
           ? _buildLoadingState()

@@ -47,8 +47,6 @@ class _GiphyPickerDialogState extends State<GiphyPickerDialog> {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
     return StyledDialog(
       title: const DialogHeader(
         title: 'GIPHY Explorer',
@@ -59,7 +57,7 @@ class _GiphyPickerDialogState extends State<GiphyPickerDialog> {
       height: 600,
       content: Column(
         children: [
-          _buildSearchField(isDark),
+          _buildSearchField(),
           const SizedBox(height: 20),
           Expanded(
             child: _isLoading ? _buildLoading() : (_error != null ? _buildError() : _buildGrid()),
@@ -76,7 +74,8 @@ class _GiphyPickerDialogState extends State<GiphyPickerDialog> {
     );
   }
 
-  Widget _buildSearchField(bool isDark) {
+  Widget _buildSearchField() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return TextField(
       controller: _searchController,
       decoration: InputDecoration(
@@ -86,9 +85,16 @@ class _GiphyPickerDialogState extends State<GiphyPickerDialog> {
           icon: const Icon(Icons.close_rounded, size: 20),
           onPressed: () { _searchController.clear(); _loadTrending(); },
         ),
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: BorderSide(color: Colors.white.withAlpha(20)),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: BorderSide(color: Colors.white.withAlpha(20)),
+        ),
         filled: true,
-        fillColor: isDark ? Colors.white.withAlpha(5) : Colors.black.withAlpha(3),
+        fillColor: isDark ? Colors.white.withAlpha(10) : Colors.black.withAlpha(10),
       ),
       style: GoogleFonts.inter(),
       onSubmitted: _search,
@@ -111,11 +117,16 @@ class _GiphyPickerDialogState extends State<GiphyPickerDialog> {
           borderRadius: BorderRadius.circular(12),
           child: ClipRRect(
             borderRadius: BorderRadius.circular(12),
-            child: Container(
-              color: Colors.grey.withAlpha(20),
+            child: GlassCard(
+              padding: EdgeInsets.zero,
+              opacity: 0.1,
               child: Image.network(
                 _gifs[index],
                 fit: BoxFit.cover,
+                loadingBuilder: (context, child, loadingProgress) {
+                  if (loadingProgress == null) return child;
+                  return const Center(child: CircularProgressIndicator(strokeWidth: 2));
+                },
                 errorBuilder: (ctx, err, stack) => const Icon(Icons.broken_image_rounded, color: Colors.grey),
               ),
             ),

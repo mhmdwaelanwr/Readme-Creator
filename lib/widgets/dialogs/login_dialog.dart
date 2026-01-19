@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:provider/provider.dart';
 import '../../services/auth_service.dart';
 import '../../utils/dialog_helper.dart';
 import '../../utils/toast_helper.dart';
@@ -20,15 +19,12 @@ class _LoginDialogState extends State<LoginDialog> with SingleTickerProviderStat
   final AuthService _authService = AuthService();
   late TabController _tabController;
 
-  // Controllers for Email/Pass
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
-
-  // Controllers for Phone
   final _phoneController = TextEditingController();
   final _otpController = TextEditingController();
   String? _verificationId;
-  String _selectedCountryCode = '20'; // Default to Egypt
+  String _selectedCountryCode = '20';
 
   @override
   void initState() {
@@ -67,8 +63,6 @@ class _LoginDialogState extends State<LoginDialog> with SingleTickerProviderStat
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
     return StyledDialog(
       title: const DialogHeader(
         title: 'Account Access',
@@ -80,17 +74,17 @@ class _LoginDialogState extends State<LoginDialog> with SingleTickerProviderStat
       contentPadding: EdgeInsets.zero,
       content: Column(
         children: [
-          _buildInfoBanner(isDark),
-          _buildTabBar(isDark),
+          _buildInfoBanner(),
+          _buildTabBar(),
           Expanded(
             child: _isLoading 
-              ? _buildLoadingState(isDark)
+              ? _buildLoadingState()
               : TabBarView(
                   controller: _tabController,
                   children: [
-                    _buildSocialLoginTab(context, isDark),
-                    _buildEmailLoginTab(context, isDark),
-                    _buildPhoneLoginTab(context, isDark),
+                    _buildSocialLoginTab(),
+                    _buildEmailLoginTab(),
+                    _buildPhoneLoginTab(),
                   ],
                 ),
           ),
@@ -105,21 +99,19 @@ class _LoginDialogState extends State<LoginDialog> with SingleTickerProviderStat
     );
   }
 
-  Widget _buildInfoBanner(bool isDark) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 24),
-      decoration: BoxDecoration(
-        color: AppColors.primary.withAlpha(isDark ? 30 : 10),
-      ),
+  Widget _buildInfoBanner() {
+    return const GlassCard(
+      opacity: 0.1,
+      color: AppColors.primary,
+      borderRadius: 0,
       child: Row(
         children: [
-          Icon(Icons.cloud_done_rounded, size: 16, color: AppColors.primary.withAlpha(200)),
-          const SizedBox(width: 10),
+          Icon(Icons.cloud_done_rounded, size: 16, color: AppColors.primary),
+          SizedBox(width: 10),
           Expanded(
             child: Text(
               'Sign in to enable real-time cloud synchronization.',
-              style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w500, color: AppColors.primary.withAlpha(200)),
+              style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: AppColors.primary),
             ),
           ),
         ],
@@ -127,24 +119,24 @@ class _LoginDialogState extends State<LoginDialog> with SingleTickerProviderStat
     );
   }
 
-  Widget _buildTabBar(bool isDark) {
+  Widget _buildTabBar() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 20, 20, 10),
       child: Container(
         padding: const EdgeInsets.all(4),
         decoration: BoxDecoration(
-          color: isDark ? Colors.white.withAlpha(8) : Colors.black.withAlpha(4),
+          color: isDark ? Colors.white.withAlpha(10) : Colors.black.withAlpha(10),
           borderRadius: BorderRadius.circular(16),
         ),
         child: TabBar(
           controller: _tabController,
           labelColor: Colors.white,
-          unselectedLabelColor: isDark ? Colors.white60 : Colors.black54,
+          unselectedLabelColor: Colors.grey,
           indicatorSize: TabBarIndicatorSize.tab,
           indicator: BoxDecoration(
-            gradient: const LinearGradient(colors: [AppColors.primary, Color(0xFF6366F1)]),
+            gradient: AppColors.primaryGradient,
             borderRadius: BorderRadius.circular(12),
-            boxShadow: [BoxShadow(color: AppColors.primary.withAlpha(60), blurRadius: 8, offset: const Offset(0, 2))],
           ),
           dividerColor: Colors.transparent,
           labelStyle: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 13),
@@ -158,7 +150,7 @@ class _LoginDialogState extends State<LoginDialog> with SingleTickerProviderStat
     );
   }
 
-  Widget _buildSocialLoginTab(BuildContext context, bool isDark) {
+  Widget _buildSocialLoginTab() {
     return ListView(
       padding: const EdgeInsets.all(24),
       children: [
@@ -167,25 +159,20 @@ class _LoginDialogState extends State<LoginDialog> with SingleTickerProviderStat
           label: 'Continue with Google',
           color: Colors.redAccent,
           onTap: () => _handleSignIn(_authService.signInWithGoogle, 'Google'),
-          isDark: isDark,
         ),
-        const SizedBox(height: 12),
         _buildLoginButton(
           icon: FontAwesomeIcons.apple,
           label: 'Continue with Apple',
-          color: isDark ? Colors.white : Colors.black,
+          color: Colors.grey,
           onTap: () => _handleSignIn(_authService.signInWithApple, 'Apple'),
-          isDark: isDark,
         ),
-        const SizedBox(height: 12),
         _buildLoginButton(
           icon: FontAwesomeIcons.github,
           label: 'Continue with GitHub',
-          color: isDark ? Colors.white : const Color(0xFF24292E),
+          color: Colors.blueGrey,
           onTap: () => _handleSignIn(_authService.signInWithGitHub, 'GitHub'),
-          isDark: isDark,
         ),
-        const SizedBox(height: 24),
+        const SizedBox(height: 12),
         const Divider(),
         const SizedBox(height: 12),
         _buildLoginButton(
@@ -193,32 +180,29 @@ class _LoginDialogState extends State<LoginDialog> with SingleTickerProviderStat
           label: 'Continue as Guest',
           color: Colors.blueGrey,
           onTap: () => _handleSignIn(_authService.signInAnonymously, 'Guest Mode'),
-          isDark: isDark,
           isOutline: true,
         ),
       ],
     );
   }
 
-  Widget _buildEmailLoginTab(BuildContext context, bool isDark) {
+  Widget _buildEmailLoginTab() {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(24),
       child: Column(
         children: [
-          _buildAuthField(controller: _emailController, label: 'Email Address', icon: Icons.alternate_email_rounded, isDark: isDark),
+          _buildAuthField(controller: _emailController, label: 'Email Address', icon: Icons.alternate_email_rounded),
           const SizedBox(height: 16),
-          _buildAuthField(controller: _passwordController, label: 'Password', icon: Icons.lock_outline_rounded, isDark: isDark, isPassword: true),
+          _buildAuthField(controller: _passwordController, label: 'Password', icon: Icons.lock_outline_rounded, isPassword: true),
           const SizedBox(height: 32),
           SizedBox(
             width: double.infinity,
             height: 54,
-            child: ElevatedButton(
+            child: FilledButton(
               onPressed: () => _handleSignIn(() => _authService.signInWithEmail(_emailController.text, _passwordController.text), 'Email'),
-              style: ElevatedButton.styleFrom(
+              style: FilledButton.styleFrom(
                 backgroundColor: AppColors.primary,
-                foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                elevation: 0,
               ),
               child: Text('Log In', style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 16)),
             ),
@@ -233,7 +217,7 @@ class _LoginDialogState extends State<LoginDialog> with SingleTickerProviderStat
     );
   }
 
-  Widget _buildPhoneLoginTab(BuildContext context, bool isDark) {
+  Widget _buildPhoneLoginTab() {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(24),
       child: Column(
@@ -241,14 +225,13 @@ class _LoginDialogState extends State<LoginDialog> with SingleTickerProviderStat
           if (_verificationId == null) ...[
             Row(
               children: [
-                // Country Code Picker - Same logic as Social Links
                 Container(
-                  width: 120, // Slightly wider to avoid overflow
+                  width: 120,
                   height: 54,
                   decoration: BoxDecoration(
-                    color: isDark ? Colors.white.withAlpha(5) : Colors.black.withAlpha(3),
+                    color: Colors.white.withAlpha(10),
                     borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: Colors.grey.withAlpha(30)),
+                    border: Border.all(color: Colors.white.withAlpha(20)),
                   ),
                   padding: const EdgeInsets.symmetric(horizontal: 12),
                   child: DropdownButtonHideUnderline(
@@ -260,7 +243,6 @@ class _LoginDialogState extends State<LoginDialog> with SingleTickerProviderStat
                         child: Text(
                           '${c.emoji} +${c.code}', 
                           style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w600),
-                          overflow: TextOverflow.ellipsis,
                         ),
                       )).toList(),
                       onChanged: (val) {
@@ -275,7 +257,6 @@ class _LoginDialogState extends State<LoginDialog> with SingleTickerProviderStat
                     controller: _phoneController, 
                     label: 'Phone Number', 
                     icon: Icons.phone_android_rounded, 
-                    isDark: isDark, 
                     hint: '1012345678'
                   ),
                 ),
@@ -285,7 +266,7 @@ class _LoginDialogState extends State<LoginDialog> with SingleTickerProviderStat
             SizedBox(
               width: double.infinity,
               height: 54,
-              child: ElevatedButton.icon(
+              child: FilledButton.icon(
                 icon: const Icon(Icons.send_rounded, size: 18),
                 onPressed: () {
                   if (_phoneController.text.isEmpty) return;
@@ -301,28 +282,24 @@ class _LoginDialogState extends State<LoginDialog> with SingleTickerProviderStat
                     codeAutoRetrievalTimeout: (id) => _verificationId = id,
                   );
                 },
-                style: ElevatedButton.styleFrom(
+                style: FilledButton.styleFrom(
                   backgroundColor: AppColors.primary,
-                  foregroundColor: Colors.white,
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                  elevation: 0,
                 ),
                 label: const Text('Send Code'),
               ),
             ),
           ] else ...[
-            _buildAuthField(controller: _otpController, label: 'Verification Code', icon: Icons.mark_email_read_rounded, isDark: isDark, hint: '123456'),
+            _buildAuthField(controller: _otpController, label: 'Verification Code', icon: Icons.mark_email_read_rounded, hint: '123456'),
             const SizedBox(height: 32),
             SizedBox(
               width: double.infinity,
               height: 54,
-              child: ElevatedButton(
+              child: FilledButton(
                 onPressed: () => _handleSignIn(() => _authService.signInWithPhoneCredential(_verificationId!, _otpController.text), 'Phone'),
-                style: ElevatedButton.styleFrom(
+                style: FilledButton.styleFrom(
                   backgroundColor: Colors.green,
-                  foregroundColor: Colors.white,
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                  elevation: 0,
                 ),
                 child: const Text('Verify & Login'),
               ),
@@ -338,7 +315,8 @@ class _LoginDialogState extends State<LoginDialog> with SingleTickerProviderStat
     );
   }
 
-  Widget _buildAuthField({required TextEditingController controller, required String label, required IconData icon, required bool isDark, String? hint, bool isPassword = false}) {
+  Widget _buildAuthField({required TextEditingController controller, required String label, required IconData icon, String? hint, bool isPassword = false}) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return TextField(
       controller: controller,
       obscureText: isPassword,
@@ -346,43 +324,41 @@ class _LoginDialogState extends State<LoginDialog> with SingleTickerProviderStat
         labelText: label,
         hintText: hint,
         prefixIcon: Icon(icon, size: 20),
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: BorderSide(color: Colors.white.withAlpha(20)),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: BorderSide(color: Colors.white.withAlpha(20)),
+        ),
         filled: true,
-        fillColor: isDark ? Colors.white.withAlpha(5) : Colors.black.withAlpha(3),
+        fillColor: isDark ? Colors.white.withAlpha(10) : Colors.black.withAlpha(10),
       ),
       style: GoogleFonts.inter(fontSize: 14),
     );
   }
 
-  Widget _buildLoginButton({required IconData icon, required String label, required Color color, required VoidCallback onTap, required bool isDark, bool isOutline = false}) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(20),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: isOutline ? color.withAlpha(100) : Colors.grey.withAlpha(30)),
-            color: isOutline ? Colors.transparent : (isDark ? Colors.white.withAlpha(5) : Colors.white),
-            boxShadow: isOutline ? null : [BoxShadow(color: Colors.black.withAlpha(5), blurRadius: 10, offset: const Offset(0, 4))],
-          ),
-          child: Row(
-            children: [
-              Icon(icon, color: color, size: 22),
-              const SizedBox(width: 16),
-              Text(label, style: GoogleFonts.inter(fontWeight: FontWeight.w700, fontSize: 15)),
-              const Spacer(),
-              Icon(Icons.login_rounded, size: 16, color: Colors.grey.withAlpha(150)),
-            ],
-          ),
-        ),
+  Widget _buildLoginButton({required IconData icon, required String label, required Color color, required VoidCallback onTap, bool isOutline = false}) {
+    return GlassCard(
+      onTap: onTap,
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+      borderRadius: 20,
+      opacity: isOutline ? 0 : 0.05,
+      color: isOutline ? color : null,
+      child: Row(
+        children: [
+          Icon(icon, color: color, size: 22),
+          const SizedBox(width: 16),
+          Text(label, style: GoogleFonts.inter(fontWeight: FontWeight.w700, fontSize: 15)),
+          const Spacer(),
+          Icon(Icons.login_rounded, size: 16, color: Colors.grey.withAlpha(150)),
+        ],
       ),
     );
   }
 
-  Widget _buildLoadingState(bool isDark) {
+  Widget _buildLoadingState() {
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
