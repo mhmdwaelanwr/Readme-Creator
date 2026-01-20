@@ -8,23 +8,26 @@ class MarkdownGenerator {
     String listBullet = '*',
     int sectionSpacing = 1,
     String targetLanguage = 'en',
+    bool isPreview = false,
   }) {
     final buffer = StringBuffer();
     final spacing = '\n' * (sectionSpacing + 1);
 
     for (int i = 0; i < elements.length; i++) {
       final element = elements[i];
-      buffer.write(_generateElement(element, listBullet: listBullet, targetLanguage: targetLanguage, allElements: elements));
+      buffer.write(_generateElement(
+        element, 
+        listBullet: listBullet, 
+        targetLanguage: targetLanguage, 
+        allElements: elements,
+        isPreview: isPreview,
+      ));
       if (i < elements.length - 1) {
         buffer.write(spacing);
       }
     }
 
     var markdown = buffer.toString();
-
-    // The marker <!-- TOC --> is handled inside _generateElement if we want, 
-    // or we can do it here by scanning the generated markdown.
-    // However, the previous logic had a small bug: it replaced <!-- TOC --> with a hardcoded translation but didn't handle nested headings well.
     
     if (variables != null) {
       variables.forEach((key, value) {
@@ -38,6 +41,7 @@ class MarkdownGenerator {
     String listBullet = '*', 
     String targetLanguage = 'en',
     List<ReadmeElement>? allElements,
+    bool isPreview = false,
   }) {
     if (element is HeadingElement) {
       final translatedText = ReadmeTranslations.get(element.text, targetLanguage);
@@ -45,7 +49,7 @@ class MarkdownGenerator {
     } else if (element is ParagraphElement) {
       return element.text;
     } else if (element is ImageElement) {
-      if (element.width != null && element.width! > 0) {
+      if (!isPreview && element.width != null && element.width! > 0) {
         return '<img src="${element.url}" alt="${element.altText}" width="${element.width!.toInt()}" />';
       }
       return '![${element.altText}](${element.url})';
@@ -82,6 +86,9 @@ class MarkdownGenerator {
       }
       return buffer.toString().trim();
     } else if (element is IconElement) {
+      if (isPreview) {
+        return '![${element.name}](${element.url})';
+      }
       return '<img src="${element.url}" alt="${element.name}" width="${element.size.toInt()}" height="${element.size.toInt()}"/>';
     } else if (element is EmbedElement) {
       if (element.typeName == 'youtube') {
@@ -102,6 +109,9 @@ class MarkdownGenerator {
       return '[${element.typeName}](${element.url})';
     } else if (element is ContributorsElement) {
       if (element.repoName.isEmpty) return '';
+      if (isPreview) {
+        return '![Contributors](https://contrib.rocks/image?repo=${element.repoName})';
+      }
       if (element.style == 'grid') {
         return '<a href="https://github.com/${element.repoName}/graphs/contributors">\n  <img src="https://contrib.rocks/image?repo=${element.repoName}" alt="Contributors" />\n</a>';
       }
@@ -143,9 +153,11 @@ class MarkdownGenerator {
     } else if (element is DividerElement) {
       return '---';
     } else if (element is RawElement) {
+      if (isPreview) return '*[Raw HTML/CSS Hidden in Preview]*';
       if (element.css.isNotEmpty) return '<style>\n${element.css}\n</style>\n\n${element.content}';
       return element.content;
     } else if (element is CollapsibleElement) {
+      if (isPreview) return '### ${element.summary}\n${element.content}';
       return '<details>\n<summary>${element.summary}</summary>\n\n${element.content}\n</details>';
     } else if (element is DynamicWidgetElement) {
       switch (element.widgetType) {

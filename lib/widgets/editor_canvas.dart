@@ -50,32 +50,31 @@ class EditorCanvas extends StatelessWidget {
       child: Focus(
         autofocus: true,
         child: Container(
-          // Outer Screen Background
           color: isDark ? AppColors.editorBackgroundDark : AppColors.editorBackgroundLight,
           child: Stack(
             fit: StackFit.expand,
             children: [
               // Main Scrollable Area
-              DragTarget<Object>(
-                onWillAcceptWithDetails: (details) => details.data is ReadmeElementType || details.data is Snippet,
-                onAcceptWithDetails: (details) {
-                  if (details.data is ReadmeElementType) {
-                    provider.addElement(details.data as ReadmeElementType);
-                  } else if (details.data is Snippet) {
-                    provider.addSnippet(details.data as Snippet);
-                  }
-                },
-                builder: (context, candidateData, rejectedData) {
-                  return Positioned.fill(
-                    child: SingleChildScrollView(
+              // FIX: DragTarget must be wrapped in Positioned.fill if it's a child of Stack,
+              // but the Positioned itself shouldn't be inside the DragTarget builder.
+              Positioned.fill(
+                child: DragTarget<Object>(
+                  onWillAcceptWithDetails: (details) => details.data is ReadmeElementType || details.data is Snippet,
+                  onAcceptWithDetails: (details) {
+                    if (details.data is ReadmeElementType) {
+                      provider.addElement(details.data as ReadmeElementType);
+                    } else if (details.data is Snippet) {
+                      provider.addSnippet(details.data as Snippet);
+                    }
+                  },
+                  builder: (context, candidateData, rejectedData) {
+                    return SingleChildScrollView(
                       physics: const BouncingScrollPhysics(),
                       child: Column(
                         children: [
                           const SizedBox(height: 100),
                           _buildAuthContextBanner(context, authService, isDark),
                           const SizedBox(height: 20),
-                          
-                          // THE CANVAS (THE PAPER)
                           Center(
                             child: AnimatedContainer(
                               duration: const Duration(milliseconds: 300),
@@ -103,7 +102,6 @@ class EditorCanvas extends StatelessWidget {
                               clipBehavior: Clip.antiAlias,
                               child: Stack(
                                 children: [
-                                  // GRID PAINTED INSIDE THE PAPER (AS THE BASE LAYER)
                                   if (provider.showGrid)
                                     Positioned.fill(
                                       child: IgnorePointer(
@@ -112,8 +110,6 @@ class EditorCanvas extends StatelessWidget {
                                         ),
                                       ),
                                     ),
-
-                                  // CONTENT LAYER (ABOVE THE GRID)
                                   GestureDetector(
                                     onTap: () => provider.selectElement(''),
                                     behavior: HitTestBehavior.opaque,
@@ -128,9 +124,9 @@ class EditorCanvas extends StatelessWidget {
                           const SizedBox(height: 100),
                         ],
                       ),
-                    ),
-                  );
-                },
+                    );
+                  },
+                ),
               ),
 
               // Floating Toolbar
