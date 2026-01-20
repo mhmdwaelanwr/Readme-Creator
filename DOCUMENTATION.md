@@ -145,7 +145,11 @@ The editor supports a wide range of Markdown elements, each with specific config
    ```
    *Select Windows, macOS, or Linux as the target device for the best experience.*
 
-## 8. Contributing
+## 8. Project Maintenance
+- **Android application ID overrides**: set `appApplicationId` in `gradle.properties` or `app.properties` at the project root, or pass `-PappApplicationId=...` when invoking Gradle.
+- **Dependencies**: run `flutter pub get` after pulling changes to keep packages in sync.
+
+## 9. Contributing
 We welcome contributions! Please see `CONTRIBUTING.md` for guidelines.
 1. Fork the repo.
 2. Create a feature branch (`git checkout -b feature/amazing-feature`).
@@ -153,6 +157,5 @@ We welcome contributions! Please see `CONTRIBUTING.md` for guidelines.
 4. Push to the branch.
 5. Open a Pull Request.
 
-## 9. License
+## 10. License
 This project is licensed under the MIT License - see the `LICENSE` file for details.
-

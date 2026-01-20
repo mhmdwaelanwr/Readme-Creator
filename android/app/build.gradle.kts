@@ -15,6 +15,21 @@ if (keystorePropertiesFile.exists()) {
     keystoreProperties.load(FileInputStream(keystorePropertiesFile))
 }
 
+val appConfigProperties = Properties()
+val appConfigFile = rootProject.file("app.properties")
+if (appConfigFile.exists()) {
+    appConfigFile.inputStream().use { appConfigProperties.load(it) }
+}
+
+val applicationIdFromFile = appConfigProperties.getProperty("appApplicationId")
+    ?.takeIf { it.isNotBlank() }
+val applicationIdOverride = project.findProperty("appApplicationId")
+    ?.toString()
+    ?.takeIf { it.isNotBlank() }
+val resolvedApplicationId = applicationIdOverride
+    ?: applicationIdFromFile
+    ?: "anwar.readme.creator.readme_creator"
+
 android {
     namespace = "anwar.readme.creator.readme_creator"
     compileSdk = 34
@@ -30,8 +45,8 @@ android {
     }
 
     defaultConfig {
-        // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
-        applicationId = "anwar.readme.creator.readme_creator"
+        // Override with appApplicationId in gradle.properties, app.properties, or via -PappApplicationId=... at build time.
+        applicationId = resolvedApplicationId
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = 23

@@ -53,6 +53,17 @@ Access the latest stable version directly in your browser:
 ### Android Setup
 Download the latest APK from the releases and install it on your device to create documentation on the go.
 
+### Android Customization (Application ID)
+To change the Android `applicationId`, set `appApplicationId` in `gradle.properties` or `app.properties` (project root) or pass it at build time:
+
+```properties
+appApplicationId=com.example.readmecreator
+```
+
+```bash
+./gradlew assembleRelease -PappApplicationId=com.example.readmecreator
+```
+
 ---
 
 ## 🛠️ Technology Stack
