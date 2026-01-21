@@ -54,7 +54,7 @@ class _ComponentsPanelState extends State<ComponentsPanel> {
             crossAxisCount: 2,
             crossAxisSpacing: 8,
             mainAxisSpacing: 8,
-            childAspectRatio: 1.5,
+            childAspectRatio: 1.4, // Slightly adjusted for better fit
           ),
           itemCount: filteredItems.length,
           itemBuilder: (context, index) {
@@ -228,13 +228,24 @@ class _ComponentsPanelState extends State<ComponentsPanel> {
             ),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisSize: MainAxisSize.min, // Fix for vertical overflow
               children: [
-                Icon(icon, size: 20, color: AppColors.primary),
-                const SizedBox(height: 4),
-                Text(
-                  label,
-                  style: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.w600),
-                  textAlign: TextAlign.center,
+                Flexible(
+                  child: Icon(icon, size: 18, color: AppColors.primary),
+                ),
+                const SizedBox(height: 2),
+                Flexible(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 4),
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text(
+                        label,
+                        style: GoogleFonts.inter(fontSize: 10, fontWeight: FontWeight.w600),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                  ),
                 ),
               ],
             ),
@@ -263,7 +274,7 @@ class _ComponentsPanelState extends State<ComponentsPanel> {
     if (libraryProvider.snippets.isEmpty) {
       return Container(
         height: 200,
-        alignment: Alignment.center, // Fixed: Changed from Center() widget to Alignment.center
+        alignment: Alignment.center,
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [

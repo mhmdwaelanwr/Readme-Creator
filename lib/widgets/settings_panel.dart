@@ -29,7 +29,6 @@ class SettingsPanel extends StatelessWidget {
             ),
             child: Column(
               children: [
-                // THE OLD DESIGN STRUCTURE WITH NEW PREMIUM COLORS & ICONS
                 Container(
                   margin: const EdgeInsets.fromLTRB(16, 16, 16, 8),
                   padding: const EdgeInsets.all(4),
@@ -54,24 +53,26 @@ class SettingsPanel extends StatelessWidget {
                       ],
                     ),
                     labelStyle: GoogleFonts.poppins(fontWeight: FontWeight.bold, fontSize: 13),
-                    tabs: const [
+                    tabs: [
                       Tab(
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(Icons.tune_rounded, size: 18),
-                            SizedBox(width: 8),
-                            Text('Settings'),
+                          mainAxisSize: MainAxisSize.min, // Added to prevent overflow
+                          children: const [
+                            Icon(Icons.tune_rounded, size: 16), // Reduced size slightly
+                            SizedBox(width: 4), // Reduced spacing
+                            Flexible(child: Text('Settings', overflow: TextOverflow.ellipsis)),
                           ],
                         ),
                       ),
                       Tab(
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(Icons.code_rounded, size: 18),
-                            SizedBox(width: 8),
-                            Text('Preview'),
+                          mainAxisSize: MainAxisSize.min, // Added to prevent overflow
+                          children: const [
+                            Icon(Icons.code_rounded, size: 16), // Reduced size slightly
+                            SizedBox(width: 4), // Reduced spacing
+                            Flexible(child: Text('Preview', overflow: TextOverflow.ellipsis)),
                           ],
                         ),
                       ),
@@ -101,35 +102,37 @@ class SettingsPanel extends StatelessWidget {
 
     if (element == null) {
       return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(32.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(24),
-                decoration: BoxDecoration(
-                  color: AppColors.primary.withOpacity(0.1),
-                  shape: BoxShape.circle,
+        child: SingleChildScrollView( // Added ScrollView to prevent vertical overflow
+          child: Padding(
+            padding: const EdgeInsets.all(32.0),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(24),
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withOpacity(0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(Icons.touch_app_outlined, size: 64, color: AppColors.primary.withOpacity(0.8)),
                 ),
-                child: Icon(Icons.touch_app_outlined, size: 64, color: AppColors.primary.withOpacity(0.8)),
-              ),
-              const SizedBox(height: 24),
-              Text(
-                'No Element Selected',
-                style: GoogleFonts.poppins(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: colorScheme.onSurface,
+                const SizedBox(height: 24),
+                Text(
+                  'No Element Selected',
+                  style: GoogleFonts.poppins(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: colorScheme.onSurface,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 12),
-              Text(
-                'Select an element from the canvas to edit its properties.',
-                textAlign: TextAlign.center,
-                style: GoogleFonts.inter(color: colorScheme.onSurface.withOpacity(0.6), height: 1.5),
-              ),
-            ],
+                const SizedBox(height: 12),
+                Text(
+                  'Select an element from the canvas to edit its properties.',
+                  textAlign: TextAlign.center,
+                  style: GoogleFonts.inter(color: colorScheme.onSurface.withOpacity(0.6), height: 1.5),
+                ),
+              ],
+            ),
           ),
         ),
       );
@@ -142,7 +145,7 @@ class SettingsPanel extends StatelessWidget {
         padding: const EdgeInsets.all(16),
         children: [
           Container(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(12), // Reduced padding
             decoration: BoxDecoration(
               color: AppColors.primary.withOpacity(0.08),
               borderRadius: BorderRadius.circular(16),
@@ -152,14 +155,14 @@ class SettingsPanel extends StatelessWidget {
               children: [
                 CircleAvatar(
                   backgroundColor: AppColors.primary,
-                  radius: 16,
-                  child: Icon(_getElementIcon(element.type), size: 16, color: Colors.white),
+                  radius: 14, // Reduced radius
+                  child: Icon(_getElementIcon(element.type), size: 14, color: Colors.white),
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: 8),
                 Expanded(
                   child: Text(
                     element.description,
-                    style: GoogleFonts.poppins(fontWeight: FontWeight.bold, fontSize: 15, color: AppColors.primary),
+                    style: GoogleFonts.poppins(fontWeight: FontWeight.bold, fontSize: 14, color: AppColors.primary),
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
@@ -179,18 +182,23 @@ class SettingsPanel extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         IconButton(
-          icon: const Icon(Icons.keyboard_arrow_up_rounded, size: 20),
+          constraints: const BoxConstraints(), // To fit in tight spaces
+          padding: const EdgeInsets.all(4),
+          icon: const Icon(Icons.keyboard_arrow_up_rounded, size: 18),
           onPressed: () => provider.moveElementUp(elementId),
           visualDensity: VisualDensity.compact,
         ),
         IconButton(
-          icon: const Icon(Icons.keyboard_arrow_down_rounded, size: 20),
+          constraints: const BoxConstraints(),
+          padding: const EdgeInsets.all(4),
+          icon: const Icon(Icons.keyboard_arrow_down_rounded, size: 18),
           onPressed: () => provider.moveElementDown(elementId),
           visualDensity: VisualDensity.compact,
         ),
-        const SizedBox(width: 4),
         IconButton(
-          icon: const Icon(Icons.delete_sweep_outlined, color: Colors.redAccent, size: 20),
+          constraints: const BoxConstraints(),
+          padding: const EdgeInsets.all(4),
+          icon: const Icon(Icons.delete_sweep_outlined, color: Colors.redAccent, size: 18),
           onPressed: () => provider.removeElement(elementId),
           visualDensity: VisualDensity.compact,
         ),
@@ -241,13 +249,16 @@ class SettingsPanel extends StatelessWidget {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  'MARKDOWN SOURCE',
-                  style: GoogleFonts.inter(
-                    fontWeight: FontWeight.w800,
-                    fontSize: 10,
-                    color: Colors.grey.shade600,
-                    letterSpacing: 1.1,
+                Flexible( // Added Flexible to prevent text overflow
+                  child: Text(
+                    'MARKDOWN SOURCE',
+                    style: GoogleFonts.inter(
+                      fontWeight: FontWeight.w800,
+                      fontSize: 10,
+                      color: Colors.grey.shade600,
+                      letterSpacing: 1.1,
+                    ),
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
                 TextButton.icon(
