@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:readme_creator/generator/markdown_generator.dart';
-import 'package:readme_creator/models/readme_element.dart';
+import 'package:markdown_creator/generator/markdown_generator.dart';
+import 'package:markdown_creator/models/readme_element.dart';
 
 void main() {
   group('MarkdownGenerator', () {
@@ -106,4 +106,3 @@ void main() {
     });
   });
 }
-

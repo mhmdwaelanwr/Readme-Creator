@@ -11,9 +11,9 @@ if(POLICY CMP0000)
 endif()
 cmake_policy(VERSION 3.15...3.25)
 
-project(readme_creator LANGUAGES CXX)
+project(markdown_creator LANGUAGES CXX)
 
-set(BINARY_NAME "readme_creator")
+set(BINARY_NAME "markdown_creator")
 
 cmake_policy(SET CMP0048 NEW) 
 

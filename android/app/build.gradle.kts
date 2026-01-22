@@ -6,7 +6,7 @@ plugins {
     id("kotlin-android")
     // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
     id("dev.flutter.flutter-gradle-plugin")
-    id("com.google.gms.google-services")
+    // id("com.google.gms.google-services") // معطل حالياً بسبب فقدان الملف
 }
 
 val keystoreProperties = Properties()
@@ -18,11 +18,11 @@ if (keystorePropertiesFile.exists()) {
 val applicationIdOverride = project.findProperty("appApplicationId")
     ?.toString()
     ?.takeIf { it.isNotBlank() }
-val resolvedApplicationId = applicationIdOverride ?: "anwar.readme.creator.readme_creator"
+val resolvedApplicationId = applicationIdOverride ?: "com.anwar.markdown_creator"
 
 android {
-    namespace = "anwar.readme.creator.readme_creator"
-    compileSdk = 36 // تم التحديث إلى 36 بناءً على متطلبات الإضافات
+    namespace = "com.anwar.markdown_creator"
+    compileSdk = 36
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
@@ -36,8 +36,8 @@ android {
 
     defaultConfig {
         applicationId = resolvedApplicationId
-        minSdk = flutter.minSdkVersion // يفضل تحديده بدقة أو تركه كما هو
-        targetSdk = 36 // تم التحديث إلى 36
+        minSdk = 23
+        targetSdk = 36
         versionCode = flutter.versionCode
         versionName = flutter.versionName
     }

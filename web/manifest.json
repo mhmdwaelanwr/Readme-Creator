@@ -1,11 +1,11 @@
 {
-    "name": "Readme Creator - Professional Documentation Tool",
-    "short_name": "Readme Creator",
+    "name": "Markdown Creator - Professional Documentation Tool",
+    "short_name": "Markdown Creator",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0f172a",
     "theme_color": "#3b82f6",
-    "description": "The ultimate developer tool to generate professional GitHub README files in minutes. Drag-and-drop elements, AI-powered descriptions, and multi-platform support.",
+    "description": "The ultimate developer tool to generate professional Markdown documentation in minutes. Drag-and-drop elements, AI-powered descriptions, and multi-platform support.",
     "orientation": "any",
     "prefer_related_applications": false,
     "icons": [

@@ -117,7 +117,7 @@ abstract class AppLocalizations {
   /// No description provided for @appTitle.
   ///
   /// In en, this message translates to:
-  /// **'Readme Creator'**
+  /// **'Markdown Creator'**
   String get appTitle;
 
   /// No description provided for @saveToLibrary.
@@ -633,7 +633,7 @@ abstract class AppLocalizations {
   /// No description provided for @aboutDescription.
   ///
   /// In en, this message translates to:
-  /// **'Readme Creator is a powerful tool for generating professional README files for your projects. All features work across desktop, mobile and web.'**
+  /// **'Markdown Creator is a powerful tool for generating professional Markdown documentation for your projects. All features work across desktop, mobile and web.'**
   String get aboutDescription;
 
   /// No description provided for @enterGeminiKey.

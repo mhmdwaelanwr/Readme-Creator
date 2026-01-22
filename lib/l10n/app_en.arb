@@ -1,5 +1,5 @@
 {
-  "appTitle": "Readme Creator",
+  "appTitle": "Markdown Creator",
   "saveToLibrary": "Save to Library",
   "localSnapshots": "Local Snapshots",
   "clearWorkspace": "Clear Workspace",
@@ -61,7 +61,6 @@
   "viewOnGithub": "View on GitHub",
   "version": "Version",
   "rightsReserved": "All rights reserved.",
-  "changeLanguage": "Change Language",
   "systemDefault": "System Default",
   "settingsSaved": "Settings saved!",
   "commonShortcuts": "Common Shortcuts",
@@ -86,7 +85,7 @@
   "addList": "Add List",
   "addQuote": "Add Quote",
   "addLink": "Add Link",
-  "aboutDescription": "Readme Creator is a powerful tool for generating professional README files for your projects. All features work across desktop, mobile and web.",
+  "aboutDescription": "Markdown Creator is a powerful tool for generating professional Markdown documentation for your projects. All features work across desktop, mobile and web.",
   "enterGeminiKey": "Enter your Gemini API Key to enable real AI features.",
   "githubIntegration": "GitHub Integration",
   "enterGithubToken": "Optional: Enter GitHub Token for higher rate limits when scanning repos.",

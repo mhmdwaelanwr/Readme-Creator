@@ -10,9 +10,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import 'package:readme_creator/main.dart';
-import 'package:readme_creator/providers/project_provider.dart';
-import 'package:readme_creator/providers/library_provider.dart';
+import 'package:markdown_creator/main.dart';
+import 'package:markdown_creator/providers/project_provider.dart';
+import 'package:markdown_creator/providers/library_provider.dart';
 
 void main() {
   testWidgets('App loads and shows title', (WidgetTester tester) async {
@@ -37,7 +37,7 @@ void main() {
     await tester.pumpAndSettle();
 
     // Verify that our title is present.
-    expect(find.text('Readme Creator'), findsOneWidget);
+    expect(find.text('Markdown Creator'), findsOneWidget);
     // Components is now in a Tab, so it should still be found.
     expect(find.text('Components'), findsOneWidget);
 

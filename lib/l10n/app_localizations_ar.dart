@@ -9,7 +9,7 @@ class AppLocalizationsAr extends AppLocalizations {
   AppLocalizationsAr([String locale = 'ar']) : super(locale);
 
   @override
-  String get appTitle => 'منشئ ملفات Readme';
+  String get appTitle => 'Readme Creator';
 
   @override
   String get saveToLibrary => 'حفظ في المكتبة';
@@ -81,7 +81,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get description => 'الوصف';
 
   @override
-  String get tags => 'الوسوم (مفصولة بفواصل)';
+  String get tags => 'الوسوم (مفصولة بفاصلة)';
 
   @override
   String get projectSaved => 'تم حفظ المشروع في المكتبة';
@@ -103,7 +103,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get confirmClearWorkspaceContent =>
-      'سيؤدي هذا إلى إزالة جميع العناصر. لا يمكن التراجع عن هذا الإجراء (إلا إذا كان لديك لقطة محفوظة).';
+      'سيؤدي هذا إلى إزالة جميع العناصر. لا يمكن التراجع عن هذا الإجراء (إلا إذا كان لديك لقطة).';
 
   @override
   String get pickProjectFolder => 'اختر مجلد المشروع';
@@ -124,13 +124,13 @@ class AppLocalizationsAr extends AppLocalizations {
   String get getApiKey => 'احصل على مفتاح API من Google AI Studio';
 
   @override
-  String get generateToken => 'توليد رمز وصول شخصي';
+  String get generateToken => 'إنشاء رمز وصول شخصي';
 
   @override
-  String get elements => 'عناصر';
+  String get elements => 'العناصر';
 
   @override
-  String get words => 'كلمات';
+  String get words => 'الكلمات';
 
   @override
   String get healthy => 'سليم';
@@ -145,7 +145,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get focusMode => 'وضع التركيز';
 
   @override
-  String get autoSaved => 'تم الحفظ تلقائيًا';
+  String get autoSaved => 'تم الحفظ تلقائياً';
 
   @override
   String get projectSettings => 'إعدادات المشروع';
@@ -154,7 +154,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get variables => 'المتغيرات';
 
   @override
-  String get license => 'الرخصة';
+  String get license => 'الترخيص';
 
   @override
   String get contributing => 'المساهمة';
@@ -175,7 +175,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get exportHtml => 'تصدير HTML';
 
   @override
-  String get listBulletStyle => 'نمط تعداد القائمة';
+  String get listBulletStyle => 'نمط نقطة القائمة';
 
   @override
   String get sectionSpacing => 'تباعد الأقسام (أسطر جديدة)';
@@ -202,7 +202,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get settingsSaved => 'تم حفظ الإعدادات!';
 
   @override
-  String get commonShortcuts => 'اختصارات شائعة';
+  String get commonShortcuts => 'اختصارات عامة';
 
   @override
   String get elementShortcuts => 'اختصارات العناصر';
@@ -235,7 +235,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get toggleGrid => 'تبديل الشبكة';
 
   @override
-  String get toggleTheme => 'تبديل السمة';
+  String get toggleTheme => 'تبديل المظهر';
 
   @override
   String get openSettings => 'فتح الإعدادات';
@@ -280,7 +280,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get enterGithubToken =>
-      'اختياري: أدخل رمز GitHub للحصول على حدود معدل أعلى عند مسح المستودعات.';
+      'اختياري: أدخل رمز GitHub لزيادة حدود الطلبات عند مسح المستودعات.';
 
   @override
   String get localFolder => 'مجلد محلي';
@@ -298,7 +298,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get fetchingRepo => 'جاري جلب بيانات المستودع...';
 
   @override
-  String get analyzingAI => 'جاري التحليل باستخدام AI...';
+  String get analyzingAI => 'جاري التحليل بالذكاء الاصطناعي...';
 
   @override
   String get readmeGenerated => 'تم توليد README بنجاح!';
@@ -317,13 +317,14 @@ class AppLocalizationsAr extends AppLocalizations {
   String get generateExtraFiles => 'توليد ملفات إضافية';
 
   @override
-  String get publishToGithub => 'نشر على GitHub';
+  String get publishToGithub => 'النشر على GitHub';
 
   @override
-  String get contributionGuidelinesBuilder => 'منشئ إرشادات المساهمة';
+  String get contributionGuidelinesBuilder => 'بناء إرشادات المساهمة';
 
   @override
-  String get contributionGuidelinesDesc => 'توليد ملفات مجتمع قياسية لمشروعك.';
+  String get contributionGuidelinesDesc =>
+      'توليد ملفات المجتمع القياسية لمشروعك.';
 
   @override
   String get contributingMdDesc => 'إرشادات حول كيفية المساهمة في المشروع.';
@@ -332,14 +333,14 @@ class AppLocalizationsAr extends AppLocalizations {
   String get generate => 'توليد';
 
   @override
-  String get codeOfConductDesc => 'مدونة قواعد السلوك للمساهمين.';
+  String get codeOfConductDesc => 'ميثاق سلوك المساهمين.';
 
   @override
   String get githubTokenMissing =>
-      'رمز GitHub مفقود. يرجى تعيينه في إعدادات AI.';
+      'رمز GitHub مفقود. يرجى ضبطه في إعدادات الذكاء الاصطناعي.';
 
   @override
-  String get owner => 'المالك (اسم المستخدم/المنظمة)';
+  String get owner => 'المالك (مستخدم/منظمة)';
 
   @override
   String get repoName => 'اسم المستودع';
