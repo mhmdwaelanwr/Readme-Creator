@@ -5,6 +5,7 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import '../../core/constants/app_colors.dart';
 import '../../utils/dialog_helper.dart';
 import '../developer_info_dialog.dart';
+import 'feedback_dialog.dart';
 
 class AboutAppDialog extends StatelessWidget {
   const AboutAppDialog({super.key});
@@ -41,6 +42,23 @@ class AboutAppDialog extends StatelessWidget {
             const SizedBox(height: 32),
             _buildFeatureSection(context),
             const SizedBox(height: 32),
+            
+            // --- Support & Feedback Section (SaaS Improvement) ---
+            _buildInfoCard(
+              context,
+              icon: Icons.support_agent_rounded,
+              title: 'Need Help or Have a Suggestion?',
+              subtitle: 'Support & Feedback',
+              trailing: 'Contact',
+              onTap: () {
+                Navigator.pop(context);
+                showSafeDialog(
+                  context,
+                  builder: (context) => const FeedbackDialog(),
+                );
+              },
+            ),
+
             _buildInfoCard(
               context,
               icon: Icons.face_retouching_natural_rounded,
@@ -55,30 +73,15 @@ class AboutAppDialog extends StatelessWidget {
                 );
               },
             ),
-            _buildInfoCard(
-              context,
-              icon: FontAwesomeIcons.github,
-              title: 'Source Code & Contributions',
-              subtitle: 'Open Source on GitHub',
-              trailing: 'Explore',
-              onTap: () => _launchUrl('https://github.com/mhmdwaelanwr/Markdown-Creator'),
-            ),
+            
             _buildInfoCard(
               context,
               icon: Icons.gavel_rounded,
               title: 'Legal & Transparency',
-              subtitle: 'Third-Party Licenses',
+              subtitle: 'Privacy Policy & Licenses',
               trailing: 'View',
               onTap: () {
-                showLicensePage(
-                  context: context,
-                  applicationName: 'Markdown Creator',
-                  applicationVersion: '1.0.0',
-                  applicationIcon: const Padding(
-                    padding: EdgeInsets.all(12.0),
-                    child: Icon(Icons.description_rounded, size: 48, color: AppColors.primary),
-                  ),
-                );
+                _showLegalMenu(context);
               },
             ),
             const SizedBox(height: 32),
@@ -102,6 +105,48 @@ class AboutAppDialog extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+
+  void _showLegalMenu(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+      builder: (context) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.privacy_tip_rounded, color: AppColors.primary),
+              title: const Text('Privacy Policy'),
+              onTap: () {
+                Navigator.pop(context);
+                _launchUrl('https://your-domain.com/privacy'); // Replace with actual URL
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.description_rounded, color: AppColors.primary),
+              title: const Text('Terms of Service'),
+              onTap: () {
+                Navigator.pop(context);
+                _launchUrl('https://your-domain.com/terms'); // Replace with actual URL
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.list_alt_rounded, color: AppColors.primary),
+              title: const Text('Third-Party Licenses'),
+              onTap: () {
+                Navigator.pop(context);
+                showLicensePage(
+                  context: context,
+                  applicationName: 'Markdown Creator',
+                  applicationVersion: '1.0.0',
+                );
+              },
+            ),
+          ],
+        ),
+      ),
     );
   }
 

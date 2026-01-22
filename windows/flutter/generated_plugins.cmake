@@ -4,8 +4,11 @@
 
 list(APPEND FLUTTER_PLUGIN_LIST
   cloud_firestore
+  desktop_drop
   firebase_auth
   firebase_core
+  firebase_storage
+  pasteboard
   printing
   share_plus
   url_launcher_windows

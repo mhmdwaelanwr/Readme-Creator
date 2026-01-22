@@ -50,12 +50,12 @@ class _GenerateCodebaseDialogState extends State<GenerateCodebaseDialog> with Si
         color: Colors.purple,
       ),
       width: 600,
-      height: 450,
+      height: 500, // Slightly increased height for comfort
       contentPadding: EdgeInsets.zero,
       content: Column(
         children: [
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 8.0),
+            padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
             child: Container(
               padding: const EdgeInsets.all(4),
               decoration: BoxDecoration(
@@ -86,8 +86,8 @@ class _GenerateCodebaseDialogState extends State<GenerateCodebaseDialog> with Si
             child: TabBarView(
               controller: _tabController,
               children: [
-                _buildLocalFolderTab(context),
-                _buildGitHubRepoTab(context),
+                _buildTabWrapper(_buildLocalFolderTab(context)),
+                _buildTabWrapper(_buildGitHubRepoTab(context)),
               ],
             ),
           ),
@@ -102,89 +102,92 @@ class _GenerateCodebaseDialogState extends State<GenerateCodebaseDialog> with Si
     );
   }
 
-  Widget _buildLocalFolderTab(BuildContext context) {
-    return Padding(
+  Widget _buildTabWrapper(Widget child) {
+    return SingleChildScrollView(
       padding: const EdgeInsets.all(24.0),
-      child: Column(
-        children: [
-          const GlassCard(
-            opacity: 0.1,
-            color: Colors.blue,
-            child: Row(
-              children: [
-                Icon(Icons.info_outline_rounded, color: Colors.blue, size: 20),
-                SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    'Point to your project folder, and our AI will analyze the structure to generate a tailored README.',
-                    style: TextStyle(fontSize: 13, color: Colors.grey),
-                  ),
+      child: child,
+    );
+  }
+
+  Widget _buildLocalFolderTab(BuildContext context) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        const GlassCard(
+          opacity: 0.1,
+          color: Colors.blue,
+          child: Row(
+            children: [
+              Icon(Icons.info_outline_rounded, color: Colors.blue, size: 20),
+              SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  'Point to your project folder, and our AI will analyze the structure to generate a tailored README.',
+                  style: TextStyle(fontSize: 13, color: Colors.grey),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
-          const SizedBox(height: 24),
-          _buildTextField(
-            controller: _pathController,
-            label: 'Project Path',
-            icon: Icons.folder_open_rounded,
-            suffix: IconButton(
-              icon: const Icon(Icons.search_rounded),
-              onPressed: () async {
-                String? selectedDirectory = await FilePicker.platform.getDirectoryPath();
-                if (selectedDirectory != null) {
-                  _pathController.text = selectedDirectory;
-                }
-              },
-            ),
+        ),
+        const SizedBox(height: 24),
+        _buildTextField(
+          controller: _pathController,
+          label: 'Project Path',
+          icon: Icons.folder_open_rounded,
+          suffix: IconButton(
+            icon: const Icon(Icons.search_rounded),
+            onPressed: () async {
+              String? selectedDirectory = await FilePicker.platform.getDirectoryPath();
+              if (selectedDirectory != null) {
+                _pathController.text = selectedDirectory;
+              }
+            },
           ),
-          const Spacer(),
-          _buildActionButton(
-            label: 'Analyze & Generate',
-            onPressed: _isLoading ? null : () => _generateFromLocal(context),
-            isLoading: _isLoading,
-          ),
-        ],
-      ),
+        ),
+        const SizedBox(height: 32),
+        _buildActionButton(
+          label: 'Analyze & Generate',
+          onPressed: _isLoading ? null : () => _generateFromLocal(context),
+          isLoading: _isLoading,
+        ),
+      ],
     );
   }
 
   Widget _buildGitHubRepoTab(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(24.0),
-      child: Column(
-        children: [
-          const GlassCard(
-            opacity: 0.1,
-            color: Colors.blue,
-            child: Row(
-              children: [
-                Icon(Icons.info_outline_rounded, color: Colors.blue, size: 20),
-                SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    'Paste a public GitHub URL to automatically fetch and document your repository.',
-                    style: TextStyle(fontSize: 13, color: Colors.grey),
-                  ),
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        const GlassCard(
+          opacity: 0.1,
+          color: Colors.blue,
+          child: Row(
+            children: [
+              Icon(Icons.info_outline_rounded, color: Colors.blue, size: 20),
+              SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  'Paste a public GitHub URL to automatically fetch and document your repository.',
+                  style: TextStyle(fontSize: 13, color: Colors.grey),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
-          const SizedBox(height: 24),
-          _buildTextField(
-            controller: _repoUrlController,
-            label: 'GitHub Repository URL',
-            hint: 'https://github.com/user/repo',
-            icon: Icons.link_rounded,
-          ),
-          const Spacer(),
-          _buildActionButton(
-            label: 'Fetch & Generate',
-            onPressed: _isLoading ? null : () => _generateFromGitHub(context),
-            isLoading: _isLoading,
-          ),
-        ],
-      ),
+        ),
+        const SizedBox(height: 24),
+        _buildTextField(
+          controller: _repoUrlController,
+          label: 'GitHub Repository URL',
+          hint: 'https://github.com/user/repo',
+          icon: Icons.link_rounded,
+        ),
+        const SizedBox(height: 32),
+        _buildActionButton(
+          label: 'Fetch & Generate',
+          onPressed: _isLoading ? null : () => _generateFromGitHub(context),
+          isLoading: _isLoading,
+        ),
+      ],
     );
   }
 
@@ -205,14 +208,14 @@ class _GenerateCodebaseDialogState extends State<GenerateCodebaseDialog> with Si
         suffixIcon: suffix,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: Colors.white.withAlpha(20)),
+          borderSide: BorderSide(color: isDark ? Colors.white.withAlpha(20) : Colors.black.withAlpha(20)),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: Colors.white.withAlpha(20)),
+          borderSide: BorderSide(color: isDark ? Colors.white.withAlpha(20) : Colors.black.withAlpha(20)),
         ),
         filled: true,
-        fillColor: isDark ? Colors.white.withAlpha(10) : Colors.black.withAlpha(10),
+        fillColor: isDark ? Colors.white.withAlpha(10) : Colors.black.withAlpha(5),
       ),
     );
   }

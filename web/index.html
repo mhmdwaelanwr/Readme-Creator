@@ -1,89 +1,35 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <base href="$FLUTTER_BASE_HREF">
-
+  <base href="/">
   <meta charset="UTF-8">
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
-  <meta name="description" content="Markdown Creator - The ultimate tool to generate professional GitHub README files in minutes.">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Markdown Studio Pro - The ultimate SaaS tool to generate professional README files.">
 
-  <!-- iOS meta tags & icons -->
-  <meta name="mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black">
-  <meta name="apple-mobile-web-app-title" content="Markdown Creator">
-  <link rel="apple-touch-icon" href="icons/Icon-192.png">
-
-  <!-- Favicon -->
+  <!-- Favicon & PWA -->
   <link rel="icon" type="image/png" href="favicon.png"/>
-
-  <title>Markdown Creator | Professional Markdown Generator</title>
   <link rel="manifest" href="manifest.json">
+  <title>Markdown Studio Pro</title>
+
+  <!-- External Resources -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+  <!-- Jaspr Entry Point -->
+  <script defer src="main.dart.js"></script>
 
   <style>
-    body {
-      background-color: #0f172a;
-      margin: 0;
-      width: 100vw;
-      height: 100vh;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      overflow: hidden;
-    }
-    .loading-container {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      transition: opacity 0.3s ease;
-    }
-    .spinner {
-      width: 50px;
-      height: 50px;
-      border: 3px solid rgba(255, 255, 255, 0.1);
-      border-radius: 50%;
-      border-top-color: #3b82f6;
-      animation: spin 1s ease-in-out infinite;
-    }
-    .loading-text {
-      margin-top: 20px;
-      color: #94a3b8;
-      font-family: 'Inter', sans-serif;
-      font-size: 14px;
-      letter-spacing: 0.05em;
-    }
-    @keyframes spin {
-      to { transform: rotate(360deg); }
-    }
+    /* Global Styles */
+    body { background-color: #0f172a; margin: 0; color: white; font-family: 'Inter', sans-serif; }
+    #output { min-height: 100vh; }
   </style>
 </head>
 <body>
-  <div class="loading-container" id="loading-indicator">
-    <div class="spinner"></div>
-    <div class="loading-text">Initializing Markdown Creator...</div>
+  <div id="output">
+    <!-- Jaspr will render here -->
   </div>
 
-  <script>
-    {{flutter_js}}
-    {{flutter_build_config}}
-
-    _flutter.loader.load({
-      serviceWorkerSettings: {
-        serviceWorkerVersion: {{flutter_service_worker_version}},
-      },
-      onEntrypointLoaded: function(engineInitializer) {
-        engineInitializer.initializeEngine().then(function(appRunner) {
-          appRunner.runApp();
-        });
-      }
-    });
-
-    window.addEventListener('flutter-first-frame', function () {
-      var loader = document.querySelector('#loading-indicator');
-      if (loader) {
-        loader.style.opacity = '0';
-        setTimeout(() => loader.remove(), 300);
-      }
-    });
-  </script>
+  <!-- Flutter Loader (Hidden initially, called by Jaspr when needed) -->
+  <script src="flutter.js" defer></script>
 </body>
 </html>

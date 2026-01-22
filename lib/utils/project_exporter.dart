@@ -139,8 +139,6 @@ $htmlContent
       final archive = Archive();
       files.forEach((filename, content) {
         if (content is String) {
-          // Add UTF-8 BOM for Windows compatibility if needed, though modern editors don't need it.
-          // But to be safe against "corrupted" claims which might mean encoding issues:
           final bytes = utf8.encode(content);
           archive.addFile(ArchiveFile(filename, bytes.length, bytes));
         } else if (content is List<int>) {
@@ -149,7 +147,9 @@ $htmlContent
       });
       final zipEncoder = ZipEncoder();
       final zipBytes = zipEncoder.encode(archive);
-      downloadZipFile(zipBytes, 'project_files.zip');
+      if (zipBytes != null) {
+        downloadZipFile(zipBytes, 'project_files.zip');
+      }
     }
   }
 }

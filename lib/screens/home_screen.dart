@@ -1,11 +1,13 @@
 import 'dart:convert';
 import 'dart:ui';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:markdown_creator/l10n/app_localizations.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
 
 import 'package:provider/provider.dart';
 import 'package:pdf/pdf.dart';
@@ -30,6 +32,7 @@ import 'github_actions_generator.dart';
 import '../services/health_check_service.dart';
 import '../services/auth_service.dart';
 import '../services/ai_service.dart';
+import '../services/subscription_service.dart';
 import '../core/constants/app_colors.dart';
 
 import '../utils/toast_helper.dart';
@@ -56,6 +59,7 @@ import '../widgets/dialogs/language_dialog.dart';
 import '../widgets/dialogs/confirm_dialog.dart';
 import '../widgets/dialogs/about_app_dialog.dart';
 import '../widgets/dialogs/login_dialog.dart';
+import '../widgets/dialogs/paywall_dialog.dart';
 import 'admin_dashboard_screen.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -73,6 +77,9 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
   bool _showPreview = false;
   bool _isFocusMode = false;
 
+  BannerAd? _bannerAd;
+  bool _isAdLoaded = false;
+
   @override
   void initState() {
     super.initState();
@@ -82,11 +89,31 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     );
     _fadeAnimation = CurvedAnimation(parent: _mainController, curve: Curves.easeOutQuart);
     _mainController.forward();
+    
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _initBannerAd();
+    });
+  }
+
+  void _initBannerAd() {
+    final subService = Provider.of<SubscriptionService>(context, listen: false);
+    if (!subService.isPro && (defaultTargetPlatform == TargetPlatform.android || defaultTargetPlatform == TargetPlatform.iOS)) {
+      _bannerAd = BannerAd(
+        adUnitId: 'ca-app-pub-3940256099942544/6300978111', 
+        size: AdSize.banner,
+        request: const AdRequest(),
+        listener: BannerAdListener(
+          onAdLoaded: (_) => setState(() => _isAdLoaded = true),
+          onAdFailedToLoad: (ad, error) { ad.dispose(); },
+        ),
+      )..load();
+    }
   }
 
   @override
   void dispose() {
     _mainController.dispose();
+    _bannerAd?.dispose();
     super.dispose();
   }
 
@@ -94,6 +121,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
   Widget build(BuildContext context) {
     final isDesktop = MediaQuery.of(context).size.width > 1200;
     final provider = Provider.of<ProjectProvider>(context);
+    final subService = Provider.of<SubscriptionService>(context);
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return FadeTransition(
@@ -102,7 +130,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
         key: _scaffoldKey,
         extendBodyBehindAppBar: true,
         backgroundColor: isDark ? AppColors.darkBackground : AppColors.lightBackground,
-        appBar: _buildFutureAppBar(context, isDesktop, provider),
+        appBar: _buildFutureAppBar(context, isDesktop, provider, subService),
         drawer: isDesktop ? null : const Drawer(child: ComponentsPanel()),
         endDrawer: isDesktop ? null : const Drawer(child: SettingsPanel()),
         body: Stack(
@@ -142,7 +170,16 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                     ),
                   ),
                 ),
-                _buildModernStatusBar(context, provider, isDark),
+                
+                if (!subService.isPro && _isAdLoaded && _bannerAd != null)
+                  Container(
+                    height: _bannerAd!.size.height.toDouble(),
+                    width: double.infinity,
+                    alignment: Alignment.center,
+                    child: AdWidget(ad: _bannerAd!),
+                  ),
+
+                _buildModernStatusBar(context, provider, subService, isDark),
               ],
             ),
           ],
@@ -151,7 +188,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     );
   }
 
-  PreferredSizeWidget _buildFutureAppBar(BuildContext context, bool isDesktop, ProjectProvider provider) {
+  PreferredSizeWidget _buildFutureAppBar(BuildContext context, bool isDesktop, ProjectProvider provider, SubscriptionService subService) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     
     return PreferredSize(
@@ -169,31 +206,17 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                 color: (isDark ? Colors.black : Colors.white).withOpacity(0.5),
                 borderRadius: BorderRadius.circular(24),
                 border: Border.all(color: (isDark ? Colors.white : Colors.black).withOpacity(0.12)),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
-                    blurRadius: 20,
-                    offset: const Offset(0, 10),
-                  )
-                ],
               ),
               child: Row(
                 children: [
                   _studioIcon(),
                   const SizedBox(width: 14),
-                  Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text('MARKDOWN', style: GoogleFonts.poppins(fontWeight: FontWeight.w900, fontSize: 14, letterSpacing: 0.5, color: isDark ? Colors.white : AppColors.primary)),
-                      Text('STUDIO PRO', style: GoogleFonts.inter(fontWeight: FontWeight.w500, fontSize: 10, letterSpacing: 2, color: Colors.grey)),
-                    ],
-                  ),
+                  _buildBrandName(isDark, subService.isPro),
                   const Spacer(),
-                  if (isDesktop) ..._buildFullAppBarActions(context, provider),
+                  if (isDesktop) ..._buildFullAppBarActions(context, provider, subService),
                   if (!isDesktop) IconButton(icon: const Icon(Icons.tune_rounded), onPressed: () => _scaffoldKey.currentState?.openEndDrawer()),
                   const SizedBox(width: 8),
-                  _buildMoreOptionsButton(context),
+                  _buildMoreOptionsButton(context, subService),
                 ],
               ),
             ),
@@ -203,20 +226,37 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     );
   }
 
-  List<Widget> _buildFullAppBarActions(BuildContext context, ProjectProvider provider) {
+  Widget _buildBrandName(bool isDark, bool isPro) {
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Text('MARKDOWN', style: GoogleFonts.poppins(fontWeight: FontWeight.w900, fontSize: 14, letterSpacing: 0.5, color: isDark ? Colors.white : AppColors.primary)),
+            if (isPro)
+              Container(
+                margin: const EdgeInsets.only(left: 8),
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                decoration: BoxDecoration(color: Colors.amber, borderRadius: BorderRadius.circular(4)),
+                child: const Text('PRO', style: TextStyle(fontSize: 8, fontWeight: FontWeight.w900, color: Colors.black)),
+              ),
+          ],
+        ),
+        Text('STUDIO PRO', style: GoogleFonts.inter(fontWeight: FontWeight.w500, fontSize: 10, letterSpacing: 2, color: Colors.grey)),
+      ],
+    );
+  }
+
+  List<Widget> _buildFullAppBarActions(BuildContext context, ProjectProvider provider, SubscriptionService subService) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return [
-      // --- Group 1: Workspace History ---
       _actionBtn(Icons.undo_rounded, provider.undo, tooltip: 'Undo'),
       _actionBtn(Icons.redo_rounded, provider.redo, tooltip: 'Redo'),
       _divider(),
-
-      // --- Group 2: Content & Assets ---
       _actionBtn(Icons.file_copy_outlined, () => _showTemplatesMenu(context, provider), tooltip: 'Templates'),
       _actionBtn(Icons.library_books_outlined, () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ProjectsLibraryScreen())), tooltip: 'Projects Library'),
       _divider(),
-
-      // --- Group 3: View & Experience ---
       _deviceBtn(Icons.desktop_mac, DeviceMode.desktop, provider),
       _deviceBtn(Icons.tablet_mac, DeviceMode.tablet, provider),
       _deviceBtn(Icons.phone_iphone, DeviceMode.mobile, provider),
@@ -224,58 +264,56 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
       _actionBtn(_showPreview ? Icons.visibility : Icons.visibility_off, () => setState(() => _showPreview = !_showPreview), active: _showPreview, tooltip: 'Live Preview'),
       _actionBtn(_isFocusMode ? Icons.fullscreen_exit : Icons.fullscreen, () => setState(() => _isFocusMode = !_isFocusMode), active: _isFocusMode, tooltip: 'Focus Mode'),
       _divider(),
-
-      // --- Group 4: Analysis & Tools ---
       _actionBtn(Icons.health_and_safety_outlined, () {
         final issues = HealthCheckService.analyze(provider.elements);
         _showHealthCheckDialog(context, issues, provider);
       }, tooltip: 'Health Check'),
-      _actionBtn(Icons.print_rounded, () => _handlePrint(provider), tooltip: 'Print / Export to PDF'),
+      _actionBtn(Icons.print_rounded, () => _handleProtectedAction(context, subService, () => _handlePrint(provider)), tooltip: 'Print / Export to PDF'),
       _divider(),
-
-      // --- Group 5: Configuration & Account ---
       _actionBtn(isDark ? Icons.light_mode_rounded : Icons.dark_mode_rounded, provider.toggleTheme, color: isDark ? Colors.amber : Colors.blueGrey, tooltip: 'Appearance'),
       _actionBtn(Icons.settings_outlined, () => _showProjectSettingsDialog(context, provider), tooltip: 'Project Settings'),
-      
       const SizedBox(width: 8),
-      StreamBuilder<User?>(
-        stream: _authService.user,
-        builder: (context, snapshot) {
-          final user = snapshot.data;
-          return _actionBtn(
-            user != null ? Icons.account_circle : Icons.login_rounded,
-            () {
-              if (user != null) {
-                _authService.signOut();
-              } else {
-                showSafeDialog(context, builder: (_) => const LoginDialog());
-              }
-            },
-            tooltip: user != null ? 'Account: ${user.email}' : 'Sign In & Sync',
-            color: user != null ? Colors.teal : null,
-          );
-        }
-      ),
-      
+      _buildAccountButton(context),
       const SizedBox(width: 16),
-      // --- Group 6: CTA (Primary Action) ---
       ElevatedButton.icon(
         onPressed: () => _handleExport(provider),
         icon: const Icon(Icons.rocket_launch_rounded, size: 16),
         label: const Text('EXPORT', style: TextStyle(fontWeight: FontWeight.w800, letterSpacing: 1.1, fontSize: 12)),
-        style: ElevatedButton.styleFrom(
-          backgroundColor: AppColors.primary, 
-          foregroundColor: Colors.white, 
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 18),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)), 
-          elevation: 4,
-          shadowColor: AppColors.primary.withOpacity(0.4),
-        ),
+        style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary, foregroundColor: Colors.white, padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 18), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14))),
       ),
     ];
   }
 
-  Widget _buildMoreOptionsButton(BuildContext context) {
+  Widget _buildAccountButton(BuildContext context) {
+    return StreamBuilder<User?>(
+      stream: _authService.user,
+      builder: (context, snapshot) {
+        final user = snapshot.data;
+        return _actionBtn(
+          user != null ? Icons.account_circle : Icons.login_rounded,
+          () {
+            if (user != null) {
+              _authService.signOut();
+            } else {
+              showSafeDialog(context, builder: (_) => const LoginDialog());
+            }
+          },
+          tooltip: user != null ? 'Account: ${user.email}' : 'Sign In & Sync',
+          color: user != null ? Colors.teal : null,
+        );
+      }
+    );
+  }
+
+  void _handleProtectedAction(BuildContext context, SubscriptionService subService, VoidCallback action) {
+    if (subService.isPro) {
+      action();
+    } else {
+      showSafeDialog(context, builder: (_) => const PaywallDialog());
+    }
+  }
+
+  Widget _buildMoreOptionsButton(BuildContext context, SubscriptionService subService) {
     final provider = Provider.of<ProjectProvider>(context, listen: false);
     return PopupMenuButton<String>(
       icon: const Icon(Icons.grid_view_rounded, size: 20),
@@ -303,6 +341,8 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
         _menuItem('publish', Icons.cloud_upload_rounded, 'Publish to GitHub', Colors.teal),
         const PopupMenuDivider(),
         _menuHeader('Application'),
+        if (_authService.isAdmin) _menuItem('admin', Icons.admin_panel_settings_rounded, 'Admin Dashboard', Colors.purpleAccent),
+        _menuItem('upgrade', Icons.star_rounded, 'Upgrade to Pro', Colors.amber),
         _menuItem('lang', Icons.translate_rounded, 'Change Language', Colors.grey),
         _menuItem('shortcuts', Icons.keyboard_rounded, 'Shortcuts', Colors.grey),
         _menuItem('about_dev', Icons.person_rounded, 'About Developer', Colors.grey),
@@ -320,9 +360,11 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
         else if (val == 'actions') Navigator.push(context, MaterialPageRoute(builder: (_) => const GitHubActionsGenerator()));
         else if (val == 'funding') Navigator.push(context, MaterialPageRoute(builder: (_) => const FundingGeneratorScreen()));
         else if (val == 'extra') _showExtraFilesDialog(context, provider);
-        else if (val == 'ai') _showAISettingsDialog(context, provider);
-        else if (val == 'codebase') _showGenerateFromCodebaseDialog(context, provider);
+        else if (val == 'ai') _handleProtectedAction(context, subService, () => _showAISettingsDialog(context, provider));
+        else if (val == 'codebase') _handleProtectedAction(context, subService, () => _showGenerateFromCodebaseDialog(context, provider));
         else if (val == 'publish') _showPublishToGitHubDialog(context, provider);
+        else if (val == 'admin') Navigator.push(context, MaterialPageRoute(builder: (_) => const AdminDashboardScreen()));
+        else if (val == 'upgrade') showSafeDialog(context, builder: (_) => const PaywallDialog());
         else if (val == 'lang') _showLanguageDialog(context, provider);
         else if (val == 'shortcuts') _showKeyboardShortcutsDialog(context);
         else if (val == 'about_dev') _showDeveloperInfoDialog(context);
@@ -355,7 +397,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
   Widget _actionBtn(IconData icon, VoidCallback onTap, {bool active = false, String? tooltip, Color? color}) => Tooltip(message: tooltip ?? '', child: IconButton(icon: Icon(icon, size: 19, color: active ? AppColors.primary : color), onPressed: onTap, splashRadius: 22));
   Widget _deviceBtn(IconData icon, DeviceMode mode, ProjectProvider provider) => IconButton(icon: Icon(icon, size: 19, color: provider.deviceMode == mode ? AppColors.primary : Colors.grey), onPressed: () => provider.setDeviceMode(mode));
   Widget _divider() => const VerticalDivider(width: 24, indent: 22, endIndent: 22, thickness: 1);
-  Widget _studioIcon() => Container(padding: const EdgeInsets.all(10), decoration: BoxDecoration(gradient: AppColors.primaryGradient, borderRadius: BorderRadius.circular(14), boxShadow: [BoxShadow(color: AppColors.primary.withOpacity(0.3), blurRadius: 10, offset: const Offset(0, 4))]), child: const Icon(Icons.auto_awesome_rounded, color: Colors.white, size: 20));
+  Widget _studioIcon() => Container(padding: const EdgeInsets.all(10), decoration: BoxDecoration(gradient: AppColors.primaryGradient, borderRadius: BorderRadius.circular(14)), child: const Icon(Icons.auto_awesome_rounded, color: Colors.white, size: 20));
   PopupMenuItem<String> _menuHeader(String title) => PopupMenuItem(enabled: false, height: 30, child: Text(title.toUpperCase(), style: GoogleFonts.inter(fontSize: 9, fontWeight: FontWeight.w900, color: Colors.grey, letterSpacing: 1.2)));
   PopupMenuItem<String> _menuItem(String val, IconData icon, String text, Color color, {bool isDestructive = false}) => PopupMenuItem(value: val, child: Row(children: [Icon(icon, color: isDestructive ? Colors.red : color, size: 18), const SizedBox(width: 12), Text(text, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: isDestructive ? Colors.red : null))]));
 
@@ -369,9 +411,27 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     return Padding(padding: const EdgeInsets.all(24), child: Markdown(data: markdown, styleSheet: MarkdownStyleSheet.fromTheme(Theme.of(context))));
   }
 
-  Widget _buildModernStatusBar(BuildContext context, ProjectProvider provider, bool isDark) {
+  Widget _buildModernStatusBar(BuildContext context, ProjectProvider provider, SubscriptionService subService, bool isDark) {
     final score = HealthCheckService.calculateDocumentationScore(provider.elements);
-    return Container(height: 36, padding: const EdgeInsets.symmetric(horizontal: 24), decoration: BoxDecoration(color: isDark ? Colors.black38 : Colors.white70, border: Border(top: BorderSide(color: (isDark ? Colors.white : Colors.black).withOpacity(0.05)))), child: Row(children: [_statusItem(Icons.widgets_outlined, '${provider.elements.length} Elements'), const SizedBox(width: 24), _statusItem(Icons.analytics_outlined, 'Doc Quality: ${score.toInt()}%', color: score > 70 ? Colors.greenAccent : Colors.orangeAccent), const Spacer(), if (provider.isSaving) const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.primary)) else _statusItem(Icons.cloud_done_rounded, 'Studio Synced', color: AppColors.primary)]));
+    return Container(
+      height: 36, 
+      padding: const EdgeInsets.symmetric(horizontal: 24), 
+      decoration: BoxDecoration(color: isDark ? Colors.black38 : Colors.white70, border: Border(top: BorderSide(color: (isDark ? Colors.white : Colors.black).withOpacity(0.05)))), 
+      child: Row(
+        children: [
+          _statusItem(Icons.widgets_outlined, '${provider.elements.length} Elements'), 
+          const SizedBox(width: 24), 
+          _statusItem(Icons.analytics_outlined, 'Doc Quality: ${score.toInt()}%', color: score > 70 ? Colors.greenAccent : Colors.orangeAccent), 
+          const Spacer(),
+          if (subService.isPro)
+            _statusItem(Icons.verified_rounded, 'PRO ACTIVE', color: Colors.amber)
+          else
+            _statusItem(Icons.ads_click_rounded, 'FREE PLAN', color: Colors.grey),
+          const SizedBox(width: 16),
+          if (provider.isSaving) const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.primary)) else _statusItem(Icons.cloud_done_rounded, 'Synced', color: AppColors.primary)
+        ]
+      )
+    );
   }
   Widget _statusItem(IconData icon, String label, {Color? color}) => Row(children: [Icon(icon, size: 14, color: color ?? Colors.grey), const SizedBox(width: 6), Text(label, style: GoogleFonts.inter(fontSize: 10, fontWeight: FontWeight.w700, color: color ?? Colors.grey))]);
 

@@ -2,10 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../providers/project_provider.dart';
 import '../services/firestore_service.dart';
 import '../services/auth_service.dart';
-import '../models/readme_element.dart';
+import '../services/subscription_service.dart';
 import '../core/constants/app_colors.dart';
 import '../utils/dialog_helper.dart';
 import '../utils/toast_helper.dart';
@@ -22,35 +23,37 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Single
   final AuthService _authService = AuthService();
   late TabController _tabController;
   final TextEditingController _adminEmailController = TextEditingController();
+  final TextEditingController _searchController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
-    // Owner gets 3 tabs, regular Admin gets 2
-    _tabController = TabController(length: _authService.isAdmin ? 3 : 2, vsync: this);
+    _tabController = TabController(length: 4, vsync: this);
   }
 
   @override
   void dispose() {
     _tabController.dispose();
     _adminEmailController.dispose();
+    _searchController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final provider = Provider.of<ProjectProvider>(context);
     final bool isOwner = _authService.currentUser?.email == AuthService.adminEmail;
 
     return Scaffold(
-      backgroundColor: isDark ? AppColors.editorBackgroundDark : AppColors.editorBackgroundLight,
+      backgroundColor: isDark ? AppColors.darkBackground : AppColors.lightBackground,
       appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
         title: Row(
           children: [
             const Icon(Icons.admin_panel_settings_rounded, color: Colors.purpleAccent),
             const SizedBox(width: 12),
-            Text('Admin Dashboard', style: GoogleFonts.poppins(fontWeight: FontWeight.w800, fontSize: 20)),
+            Text('SaaS Control Center', style: GoogleFonts.poppins(fontWeight: FontWeight.w800, fontSize: 20)),
           ],
         ),
         actions: [
@@ -60,12 +63,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Single
       ),
       body: Row(
         children: [
-          // Sidebar Stats
-          _buildSidebar(provider, isDark),
-          
+          _buildSidebar(isDark),
           const VerticalDivider(width: 1, thickness: 1),
-          
-          // Main Dynamic Content
           Expanded(
             child: Column(
               children: [
@@ -74,9 +73,10 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Single
                   child: TabBarView(
                     controller: _tabController,
                     children: [
-                      _buildTemplatesManager(context, provider, isDark),
-                      _buildSnippetsManager(context, isDark),
-                      if (isOwner) _buildAccessControlTab(context, isDark),
+                      _buildUsersTab(isDark),
+                      _buildFeedbackTab(isDark),
+                      _buildTemplatesManager(isDark),
+                      _buildAccessControlTab(isDark),
                     ],
                   ),
                 ),
@@ -85,196 +85,193 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Single
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => _showAddTemplateDialog(context, provider),
-        label: const Text('New Cloud Template', style: TextStyle(fontWeight: FontWeight.bold)),
-        icon: const Icon(Icons.add_to_photos_rounded),
-        backgroundColor: AppColors.primary,
-      ),
     );
   }
 
-  Widget _buildSidebar(ProjectProvider provider, bool isDark) {
+  Widget _buildSidebar(bool isDark) {
     return Container(
-      width: 300,
+      width: 280,
       padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: isDark ? Colors.white.withAlpha(5) : Colors.black.withAlpha(3),
-      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildStatCard('CLOUD TEMPLATES', provider.cloudTemplates.length.toString(), Icons.auto_awesome_mosaic_rounded, Colors.blue),
-          const SizedBox(height: 16),
-          _buildStatCard('PUBLIC SNIPPETS', '12', Icons.bookmark_rounded, Colors.purple),
-          const SizedBox(height: 16),
-          _buildStatCard('TOTAL USERS', '---', Icons.people_alt_rounded, Colors.green),
+          StreamBuilder<QuerySnapshot>(
+            stream: FirebaseFirestore.instance.collection('users').snapshots(),
+            builder: (context, snapshot) {
+              final count = snapshot.data?.docs.length ?? 0;
+              final proCount = snapshot.data?.docs.where((d) => d['isPro'] == true).length ?? 0;
+              return Column(
+                children: [
+                  _buildStatCard('TOTAL USERS', count.toString(), Icons.people_rounded, Colors.blue),
+                  const SizedBox(height: 16),
+                  _buildStatCard('PRO MEMBERS', proCount.toString(), Icons.star_rounded, Colors.amber),
+                ],
+              );
+            },
+          ),
           const Spacer(),
-          _buildInfoBox('Any template you publish here will be instantly available to all users globally.', isDark),
+          _buildInfoBox('PRO Tip: Check "Feedback" tab daily for Sponsorship Proofs.', isDark),
         ],
       ),
     );
   }
 
   Widget _buildModernTabBar(bool isDark, bool isOwner) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
-      decoration: BoxDecoration(
-        border: Border(bottom: BorderSide(color: Colors.grey.withAlpha(30))),
-      ),
-      child: Align(
-        alignment: Alignment.centerLeft,
-        child: TabBar(
-          controller: _tabController,
-          isScrollable: true,
-          labelColor: AppColors.primary,
-          unselectedLabelColor: Colors.grey,
-          indicatorSize: TabBarIndicatorSize.label,
-          labelStyle: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 14),
-          tabs: [
-            const Tab(text: 'Cloud Templates'),
-            const Tab(text: 'Public Snippets'),
-            if (isOwner) const Tab(text: 'Access Control'),
-          ],
+    return TabBar(
+      controller: _tabController,
+      labelColor: AppColors.primary,
+      unselectedLabelColor: Colors.grey,
+      indicatorColor: AppColors.primary,
+      labelStyle: GoogleFonts.inter(fontWeight: FontWeight.bold),
+      tabs: const [
+        Tab(icon: Icon(Icons.group_rounded), text: 'Users'),
+        Tab(icon: Icon(Icons.message_rounded), text: 'Feedback'),
+        Tab(icon: Icon(Icons.cloud_done_rounded), text: 'Templates'),
+        Tab(icon: Icon(Icons.security_rounded), text: 'Admins'),
+      ],
+    );
+  }
+
+  Widget _buildUsersTab(bool isDark) {
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: TextField(
+            controller: _searchController,
+            onChanged: (v) => setState(() {}),
+            decoration: InputDecoration(
+              hintText: 'Search by email...',
+              prefixIcon: const Icon(Icons.search_rounded),
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+          ),
         ),
-      ),
-    );
-  }
+        Expanded(
+          child: StreamBuilder<QuerySnapshot>(
+            stream: FirebaseFirestore.instance.collection('users').snapshots(),
+            builder: (context, snapshot) {
+              if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
+              var users = snapshot.data!.docs;
+              if (_searchController.text.isNotEmpty) {
+                users = users.where((u) => u['email'].toString().contains(_searchController.text)).toList();
+              }
 
-  Widget _buildAccessControlTab(BuildContext context, bool isDark) {
-    return Padding(
-      padding: const EdgeInsets.all(32.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text('Privileged Access', style: GoogleFonts.poppins(fontSize: 24, fontWeight: FontWeight.bold)),
-          Text('As the Owner, you can grant Admin access to other developers.', style: GoogleFonts.inter(color: Colors.grey)),
-          const SizedBox(height: 32),
-          
-          // Add Admin Form
-          Row(
-            children: [
-              Expanded(
-                child: TextField(
-                  controller: _adminEmailController,
-                  decoration: InputDecoration(
-                    hintText: 'Enter developer email...',
-                    prefixIcon: const Icon(Icons.alternate_email_rounded),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 16),
-              ElevatedButton.icon(
-                onPressed: _addAdmin,
-                icon: const Icon(Icons.person_add_rounded),
-                label: const Text('Grant Access'),
-                style: ElevatedButton.styleFrom(padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20)),
-              ),
-            ],
-          ),
-          
-          const SizedBox(height: 40),
-          Text('Current Administrators', style: GoogleFonts.inter(fontWeight: FontWeight.w900, fontSize: 12, color: Colors.grey, letterSpacing: 1.5)),
-          const SizedBox(height: 16),
-          
-          Expanded(
-            child: StreamBuilder<QuerySnapshot>(
-              stream: FirebaseFirestore.instance.collection('admins').snapshots(),
-              builder: (context, snapshot) {
-                if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
-                final admins = snapshot.data!.docs;
-                return ListView.builder(
-                  itemCount: admins.length,
-                  itemBuilder: (context, index) {
-                    final admin = admins[index];
-                    return Card(
-                      margin: const EdgeInsets.only(bottom: 12),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                      child: ListTile(
-                        leading: const CircleAvatar(child: Icon(Icons.security_rounded)),
-                        title: Text(admin['email']),
-                        subtitle: Text('Granted on: ${admin['grantedAt']?.toDate().toString().split(' ')[0] ?? '---'}'),
-                        trailing: IconButton(
-                          icon: const Icon(Icons.remove_circle_outline_rounded, color: Colors.red),
-                          onPressed: () => _removeAdmin(admin.id),
-                        ),
+              return ListView.builder(
+                padding: const EdgeInsets.all(16),
+                itemCount: users.length,
+                itemBuilder: (context, index) {
+                  final user = users[index];
+                  final bool isPro = user['isPro'] ?? false;
+                  return Card(
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                    child: ListTile(
+                      title: Text(user['email'], style: const TextStyle(fontWeight: FontWeight.bold)),
+                      subtitle: Text('Joined: ${user['joinDate']?.toDate().toString().split(' ')[0] ?? '---'}'),
+                      trailing: Switch(
+                        value: isPro,
+                        activeColor: Colors.amber,
+                        onChanged: (val) => _togglePro(user.id, val),
                       ),
-                    );
-                  },
-                );
-              },
-            ),
+                      leading: Icon(isPro ? Icons.stars_rounded : Icons.person_outline_rounded, color: isPro ? Colors.amber : Colors.grey),
+                    ),
+                  );
+                },
+              );
+            },
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
-  Widget _buildTemplatesManager(BuildContext context, ProjectProvider provider, bool isDark) {
-    if (provider.cloudTemplates.isEmpty) return _buildEmptyContent('No cloud templates found.');
+  Widget _buildFeedbackTab(bool isDark) {
+    return StreamBuilder<QuerySnapshot>(
+      stream: FirebaseFirestore.instance.collection('feedback').orderBy('timestamp', descending: true).snapshots(),
+      builder: (context, snapshot) {
+        if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
+        final messages = snapshot.data!.docs;
 
-    return ListView.builder(
-      padding: const EdgeInsets.all(24),
-      itemCount: provider.cloudTemplates.length,
-      itemBuilder: (context, index) {
-        final template = provider.cloudTemplates[index];
-        return Container(
-          margin: const EdgeInsets.only(bottom: 12),
-          decoration: BoxDecoration(
-            color: isDark ? Colors.white.withAlpha(5) : Colors.white,
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: Colors.grey.withAlpha(30)),
-          ),
-          child: ListTile(
-            contentPadding: const EdgeInsets.all(16),
-            leading: Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(color: Colors.blue.withAlpha(20), borderRadius: BorderRadius.circular(12)),
-              child: const Icon(Icons.article_rounded, color: Colors.blue),
-            ),
-            title: Text(template.name, style: GoogleFonts.inter(fontWeight: FontWeight.bold)),
-            subtitle: Text(template.description, maxLines: 1),
-            trailing: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                _actionBtn(Icons.edit_rounded, Colors.blue, () {}),
-                _actionBtn(Icons.delete_outline_rounded, Colors.redAccent, () => _deleteTemplate(template.name)), // Simple ID logic for now
-              ],
-            ),
-          ),
+        return ListView.builder(
+          padding: const EdgeInsets.all(16),
+          itemCount: messages.length,
+          itemBuilder: (context, index) {
+            final msg = messages[index];
+            final String? url = msg['attachmentUrl'];
+            final String type = msg['type'] ?? 'general';
+
+            return Card(
+              margin: const EdgeInsets.only(bottom: 12),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              child: ExpansionTile(
+                leading: _getTypeIcon(type),
+                title: Text(msg['userEmail']),
+                subtitle: Text(msg['message'], maxLines: 1, overflow: TextOverflow.ellipsis),
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('Message:', style: GoogleFonts.inter(fontWeight: FontWeight.bold)),
+                        const SizedBox(height: 4),
+                        Text(msg['message']),
+                        const SizedBox(height: 16),
+                        if (url != null)
+                          ElevatedButton.icon(
+                            onPressed: () => _launchUrl(url),
+                            icon: const Icon(Icons.attach_file_rounded),
+                            label: const Text('View Attachment (Proof)'),
+                          ),
+                        const SizedBox(height: 8),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: [
+                            TextButton(onPressed: () => _deleteFeedback(msg.id), child: const Text('Delete', style: TextStyle(color: Colors.red))),
+                          ],
+                        )
+                      ],
+                    ),
+                  )
+                ],
+              ),
+            );
+          },
         );
       },
     );
   }
 
-  Widget _buildSnippetsManager(BuildContext context, bool isDark) {
-    return _buildEmptyContent('Coming Soon: Global Snippet Library');
+  Widget _buildTemplatesManager(bool isDark) {
+    return const Center(child: Text('Template Manager Content Here'));
   }
 
-  Widget _buildEmptyContent(String message) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const Icon(Icons.layers_clear_rounded, size: 64, color: Colors.grey),
-          const SizedBox(height: 16),
-          Text(message, style: GoogleFonts.inter(color: Colors.grey)),
-        ],
-      ),
-    );
+  Widget _buildAccessControlTab(bool isDark) {
+    return const Center(child: Text('Admin Management Content Here'));
+  }
+
+  Widget _getTypeIcon(String type) {
+    switch (type) {
+      case 'bug': return const Icon(Icons.bug_report_rounded, color: Colors.red);
+      case 'feature': return const Icon(Icons.add_chart_rounded, color: Colors.blue);
+      default: return const Icon(Icons.message_rounded, color: Colors.green);
+    }
+  }
+
+  void _togglePro(String uid, bool status) async {
+    await FirebaseFirestore.instance.collection('users').doc(uid).update({'isPro': status});
+    if (mounted) ToastHelper.show(context, 'User Pro status updated');
+  }
+
+  void _deleteFeedback(String id) async {
+    await FirebaseFirestore.instance.collection('feedback').doc(id).delete();
   }
 
   Widget _buildStatCard(String title, String value, IconData icon, Color color) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: color.withAlpha(15),
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: color.withAlpha(30)),
-      ),
+      decoration: BoxDecoration(color: color.withAlpha(15), borderRadius: BorderRadius.circular(24), border: Border.all(color: color.withAlpha(30))),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -288,88 +285,19 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Single
   }
 
   Widget _buildUserBadge(bool isDark) {
-    final user = _authService.currentUser;
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-      decoration: BoxDecoration(
-        color: isDark ? Colors.white.withAlpha(10) : Colors.black.withAlpha(5),
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Row(
-        children: [
-          CircleAvatar(radius: 12, backgroundImage: NetworkImage(user?.photoURL ?? '')),
-          const SizedBox(width: 8),
-          Text('OWNER', style: GoogleFonts.inter(fontSize: 10, fontWeight: FontWeight.w900, color: Colors.purpleAccent)),
-        ],
-      ),
-    );
+    return const CircleAvatar(backgroundColor: Colors.purpleAccent, child: Icon(Icons.person, color: Colors.white));
   }
 
   Widget _buildInfoBox(String text, bool isDark) {
     return Container(
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(color: Colors.blue.withAlpha(10), borderRadius: BorderRadius.circular(16), border: Border.all(color: Colors.blue.withAlpha(20))),
-      child: Text(text, style: GoogleFonts.inter(fontSize: 12, color: Colors.grey[600], height: 1.5)),
+      decoration: BoxDecoration(color: Colors.blue.withAlpha(10), borderRadius: BorderRadius.circular(16)),
+      child: Text(text, style: GoogleFonts.inter(fontSize: 12, color: Colors.grey[600])),
     );
   }
 
-  Widget _actionBtn(IconData icon, Color color, VoidCallback onTap) {
-    return IconButton(icon: Icon(icon, size: 20, color: color), onPressed: onTap);
-  }
-
-  void _addAdmin() async {
-    final email = _adminEmailController.text.trim();
-    if (email.isEmpty) return;
-    await FirebaseFirestore.instance.collection('admins').add({
-      'email': email,
-      'grantedAt': FieldValue.serverTimestamp(),
-    });
-    _adminEmailController.clear();
-    if (mounted) ToastHelper.show(context, 'Admin access granted to $email');
-  }
-
-  void _removeAdmin(String id) async {
-    await FirebaseFirestore.instance.collection('admins').doc(id).delete();
-    if (mounted) ToastHelper.show(context, 'Admin access revoked');
-  }
-
-  void _deleteTemplate(String name) {
-    // Logic to search and delete by name or ID in Firestore
-  }
-
-  void _showAddTemplateDialog(BuildContext context, ProjectProvider provider) {
-    final nameController = TextEditingController();
-    final descController = TextEditingController();
-
-    showSafeDialog(
-      context,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-        title: Text('Sync to Cloud', style: GoogleFonts.poppins(fontWeight: FontWeight.bold)),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Text('Publish your current project as an official public template.'),
-            const SizedBox(height: 24),
-            TextField(controller: nameController, decoration: const InputDecoration(labelText: 'Template Name', border: OutlineInputBorder())),
-            const SizedBox(height: 12),
-            TextField(controller: descController, decoration: const InputDecoration(labelText: 'Short Description', border: OutlineInputBorder()), maxLines: 2),
-          ],
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
-          ElevatedButton(
-            onPressed: () async {
-              if (nameController.text.isNotEmpty) {
-                final elementsJson = provider.elements.map((e) => e.toJson()).toList();
-                await _firestoreService.savePublicTemplate(name: nameController.text, description: descController.text, elements: elementsJson);
-                if (context.mounted) { Navigator.pop(context); ToastHelper.show(context, 'Live Globally!'); }
-              }
-            },
-            child: const Text('Publish Now'),
-          ),
-        ],
-      ),
-    );
+  Future<void> _launchUrl(String url) async {
+    final uri = Uri.parse(url);
+    if (await canLaunchUrl(uri)) await launchUrl(uri);
   }
 }
