@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:ui';
 import 'package:flutter/services.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:markdown_creator/l10n/app_localizations.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:file_picker/file_picker.dart';
@@ -204,6 +205,26 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
         _showHealthCheckDialog(context, issues, provider);
       }, tooltip: 'Health Check'),
       _divider(),
+      StreamBuilder<User?>(
+        stream: _authService.user,
+        builder: (context, snapshot) {
+          final user = snapshot.data;
+          return _actionBtn(
+            user != null ? Icons.logout_rounded : Icons.login_rounded,
+            () {
+              if (user != null) {
+                _authService.signOut();
+              } else {
+                showSafeDialog(context, builder: (_) => const LoginDialog());
+              }
+            },
+            tooltip: user != null ? 'Logout' : 'Login',
+            color: user != null ? Colors.teal : null,
+          );
+        }
+      ),
+      _actionBtn(Icons.print_rounded, () => _handlePrint(provider), tooltip: 'Print / PDF'),
+      _divider(),
       _actionBtn(isDark ? Icons.light_mode_rounded : Icons.dark_mode_rounded, provider.toggleTheme, color: isDark ? Colors.amber : Colors.blueGrey, tooltip: 'Toggle Theme'),
       _actionBtn(Icons.settings_outlined, () => _showProjectSettingsDialog(context, provider), tooltip: 'Settings'),
       _divider(),
@@ -342,6 +363,16 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     } catch (e) {
       if (context.mounted) ToastHelper.show(context, 'Error: $e', isError: true);
     }
+  }
+
+  void _handlePrint(ProjectProvider provider) async {
+    final markdown = MarkdownGenerator().generate(provider.elements, variables: provider.variables);
+    await Printing.layoutPdf(
+      onLayout: (PdfPageFormat format) async => await Printing.convertHtml(
+        format: format,
+        html: '<html><body>${md.markdownToHtml(markdown)}</body></html>',
+      ),
+    );
   }
 
   void _handleExport(ProjectProvider provider) => ProjectExporter.export(elements: provider.elements, variables: provider.variables, licenseType: provider.licenseType, includeContributing: provider.includeContributing);
