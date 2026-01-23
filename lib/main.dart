@@ -18,6 +18,7 @@ import 'package:markdown_creator/screens/home_screen.dart';
 import 'package:markdown_creator/core/theme/app_theme.dart';
 import 'package:markdown_creator/services/auth_service.dart';
 import 'package:markdown_creator/services/subscription_service.dart';
+import 'package:markdown_creator/services/notification_service.dart';
 
 void main() {
   runZonedGuarded(() async {
@@ -45,6 +46,11 @@ void main() {
     try {
       await Firebase.initializeApp(); 
       
+      // Initialize Notifications
+      if (!kIsWeb) {
+        await NotificationService.initialize();
+      }
+
       FlutterError.onError = (errorDetails) {
         FirebaseCrashlytics.instance.recordFlutterFatalError(errorDetails);
       };

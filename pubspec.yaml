@@ -18,6 +18,7 @@ dependencies:
   firebase_storage: ^12.3.0
   firebase_analytics: ^11.3.0
   firebase_crashlytics: ^4.1.0
+  firebase_messaging: ^15.3.0
   google_sign_in: ^6.2.1
   sign_in_with_apple: ^6.1.0
 
@@ -56,6 +57,7 @@ dependencies:
   package_info_plus: ^8.1.0
   desktop_drop: ^0.5.0
   pasteboard: ^0.3.0
+  flutter_local_notifications: ^18.0.1
   flutter_localizations:
     sdk: flutter
   intl: ^0.20.2
@@ -74,3 +76,4 @@ dependency_overrides:
 flutter:
   generate: true
   uses-material-design: true
+

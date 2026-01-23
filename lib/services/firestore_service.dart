@@ -1,12 +1,10 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:flutter/foundation.dart';
 import '../models/saved_project.dart';
 import '../models/snippet.dart';
 
 class FirestoreService {
-  // Safe access to Firebase instances
   bool get isReady {
     try {
       return Firebase.apps.isNotEmpty;
@@ -18,6 +16,27 @@ class FirestoreService {
   FirebaseFirestore? get _db => isReady ? FirebaseFirestore.instance : null;
   FirebaseAuth? get _auth => isReady ? FirebaseAuth.instance : null;
 
+  // --- App Configuration (Admin) ---
+  Stream<DocumentSnapshot> getAppConfig() {
+    final db = _db;
+    if (db == null) return const Stream.empty();
+    return db.collection('settings').doc('app_config').snapshots();
+  }
+
+  Future<void> updateAppConfig(Map<String, dynamic> data) async {
+    final db = _db;
+    if (db == null) return;
+    await db.collection('settings').doc('app_config').set(data, SetOptions(merge: true));
+  }
+
+  // --- User Management (Admin) ---
+  Future<void> updateUserStatus(String uid, Map<String, dynamic> updates) async {
+    final db = _db;
+    if (db == null) return;
+    await db.collection('users').doc(uid).update(updates);
+  }
+
+  // --- Templates (Admin & Public) ---
   Stream<List<Map<String, dynamic>>> getPublicTemplates() {
     final db = _db;
     if (db == null) return Stream.value([]);
@@ -31,11 +50,11 @@ class FirestoreService {
     });
   }
 
-  // Missing method required by Admin Dashboard
   Future<void> savePublicTemplate({
     required String name,
     required String description,
     required List<Map<String, dynamic>> elements,
+    String? category,
   }) async {
     final db = _db;
     if (db == null) return;
@@ -43,11 +62,18 @@ class FirestoreService {
       'name': name,
       'description': description,
       'elements': elements,
+      'category': category ?? 'General',
       'createdAt': FieldValue.serverTimestamp(),
     });
   }
 
-  // Personal Collections
+  Future<void> deleteTemplate(String id) async {
+    final db = _db;
+    if (db == null) return;
+    await db.collection('public_templates').doc(id).delete();
+  }
+
+  // --- Personal Collections ---
   DocumentReference? get _userDoc {
     final auth = _auth;
     final db = _db;
