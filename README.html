@@ -1,138 +1,35 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>README</title>
-<style>
-body {
-  font-family: -apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif,"Apple Color Emoji","Segoe UI Emoji";
-  line-height: 1.5;
-  max-width: 850px;
-  margin: 0 auto;
-  padding: 20px;
-  color: #24292f;
-}
-h1, h2, h3, h4, h5, h6 { margin-top: 24px; margin-bottom: 16px; font-weight: 600; line-height: 1.25; }
-h1 { font-size: 2em; border-bottom: 1px solid #eaecef; padding-bottom: .3em; }
-h2 { font-size: 1.5em; border-bottom: 1px solid #eaecef; padding-bottom: .3em; }
-code { background-color: #afb8c133; padding: .2em .4em; border-radius: 6px; font-family: ui-monospace,SFMono-Regular,SF Mono,Menlo,Consolas,Liberation Mono,monospace; }
-pre { background-color: #f6f8fa; padding: 16px; border-radius: 6px; overflow: auto; }
-pre code { background-color: transparent; padding: 0; }
-blockquote { border-left: .25em solid #d0d7de; color: #656d76; padding: 0 1em; margin: 0; }
-table { border-spacing: 0; border-collapse: collapse; width: 100%; }
-table th, table td { padding: 6px 13px; border: 1px solid #d0d7de; }
-table tr:nth-child(2n) { background-color: #f6f8fa; }
-img { max-width: 100%; }
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>README Creator — Project Overview</title>
+  <style>
+    body { max-width: 880px; margin: 48px auto; padding: 0 24px; font: 16px/1.65 system-ui, sans-serif; color: #1f2937; }
+    h1, h2 { line-height: 1.2; }
+    code { background: #f3f4f6; padding: 2px 5px; border-radius: 4px; }
+    a { color: #0969da; }
+  </style>
 </head>
 <body>
-<h1 id="advanced-readme-creator">Advanced Readme Creator</h1>
-<p><a href="mailto:"><img src="https://img.shields.io/badge/Email-D14836?style=for-the-badge&logo=gmail&logoColor=white" alt="Email" /></a> <a href="mailto:MIT"><img src="https://img.shields.io/badge/Email-D14836?style=for-the-badge&logo=gmail&logoColor=white" alt="Email" /></a></p>
-<p>Advanced Readme Creator is a powerful and intuitive desktop, web, and mobile application designed to simplify the creation of professional <code>README.md</code> files for your projects. With its visual drag-and-drop editor, AI-powered generation capabilities, and extensive customization options, you can craft comprehensive and engaging READMEs in minutes.</p>
-<h2 id="features">Features</h2>
-<ul>
-<li><strong>Visual Drag-and-Drop Editor</strong>: Build your README by dragging and dropping various elements like headings, paragraphs, images, code blocks, lists, tables, badges, and more directly onto a live canvas.</li>
-<li><strong>Live Markdown Preview</strong>: Instantly see how your Markdown will render with a side-by-side live preview.</li>
-<li><strong>AI-Powered Generation</strong>:  <strong>Generate from Codebase (AI)</strong>: Automatically create an initial README by scanning your local project folder or a public GitHub repository using the Google Gemini AI.  <strong>AI Assistant for Text</strong>: Improve, fix grammar, or generate descriptions for text elements using AI.</li>
-<li><strong>Comprehensive Element Library</strong>: Includes specialized elements such as:  <strong>GitHub Stats</strong>: Display dynamic badges for stars, forks, issues, and licenses of your repository.  <strong>Contributors</strong>: Generate a grid or list of project contributors.  <strong>Social Links</strong>: Easily add customizable social media badges (GitHub, LinkedIn, Twitter/X, YouTube, etc.).  <strong>Dev Icons</strong>: Include popular technology and language icons from DevIcons.  <strong>Embeds</strong>: Integrate content from GitHub Gists, CodePen, and YouTube.  <strong>Mermaid Diagrams</strong>: Create flowcharts, sequence diagrams, and more with Mermaid.js syntax.  <strong>Table of Contents</strong>: Automatically generate a clickable table of contents based on your headings.  <strong>Collapsible Sections</strong>: Organize content with expandable/collapsible <code>&lt;details&gt;</code> sections.</li>
-<li><strong>Theming &amp; Customization</strong>: Supports light/dark themes and allows customization of project-wide colors, list bullet styles, and section spacing.</li>
-<li><strong>Social Preview Designer</strong>: Craft and export visually appealing social media preview images (Open Graph/Twitter Card) for your project.</li>
-<li><strong>GitHub Actions Generator</strong>: Automate your README updates with pre-configured GitHub Actions workflows.</li>
-<li><strong>Project Management</strong>:  Save and load projects to a local library.  Create and restore local snapshots of your workspace.  Import existing Markdown files or raw Markdown content from URLs.  Export projects as JSON, Markdown, HTML, or a ZIP archive containing all generated files (including <code>LICENSE</code> and <code>CONTRIBUTING.md</code>).</li>
-<li><strong>Keyboard Shortcuts</strong>: Accelerate your workflow with a wide array of keyboard shortcuts for common actions and element insertion.</li>
-<li><strong>Health Check</strong>: Analyze your README for potential issues like missing alt text, broken links, or incorrect heading hierarchy.</li>
-<li><strong>Internationalization</strong>: Available in multiple languages (Arabic, German, English, Spanish, French, Hindi, Japanese, Portuguese, Russian, Chinese).</li>
-</ul>
-<h2 id="tech-stack">Tech Stack</h2>
-<p>This application is built with <strong>Flutter</strong> using <strong>Dart</strong>. Key libraries and tools include:</p>
-<ul>
-<li><strong>Frontend Framework</strong>: Flutter</li>
-<li><strong>State Management</strong>: Provider</li>
-<li><strong>AI Integration</strong>: Google Generative AI (<code>google_generative_ai</code>)</li>
-<li><strong>Markdown Parsing/Generation</strong>: <code>markdown</code> library, custom <code>MarkdownGenerator</code></li>
-<li><strong>Code Highlighting</strong>: <code>flutter_highlight</code> (with Dracula and GitHub themes)</li>
-<li><strong>File Operations</strong>: <code>file_picker</code>, <code>path_provider</code>, <code>archive</code>, <code>share_plus</code></li>
-<li><strong>UI/UX Enhancements</strong>: <code>tutorial_coach_mark</code> (for onboarding), <code>google_fonts</code>, <code>flutter_colorpicker</code>, <code>font_awesome_flutter</code>, <code>flutter_svg</code>, <code>cached_network_image</code></li>
-<li><strong>Networking</strong>: <code>http</code>, <code>url_launcher</code></li>
-<li><strong>Local Storage</strong>: <code>shared_preferences</code></li>
-<li><strong>Utility</strong>: <code>uuid</code>, <code>path</code>, <code>printing</code> (for PDF export)</li>
-<li><strong>Linting</strong>: <code>flutter_lints</code></li>
-</ul>
-<h2 id="installation-instructions">Installation Instructions</h2>
-<p>To get a local copy up and running, follow these simple steps.</p>
-<h3 id="prerequisites">Prerequisites</h3>
-<ul>
-<li><strong>Flutter SDK</strong>: Ensure you have Flutter installed and configured. You can find instructions <a href="https://flutter.dev/docs/get-started/install">here</a>.</li>
-<li><strong>Dart SDK</strong>: Included with Flutter.</li>
-</ul>
-<h3 id="clone-the-repository">Clone the repository</h3>
-<pre><code class="language-bash">git clone https://github.com/mhmdwaelanwr/Readme-Creator.git
-cd Readme-Creator
+  <h1>README Creator</h1>
+  <p>A Flutter documentation workspace for creating, structuring, previewing, and improving GitHub <code>README.md</code> files.</p>
 
-</code></pre>
-<h3 id="install-dependencies">Install Dependencies</h3>
-<pre><code class="language-bash">flutter pub get
+  <h2>Source</h2>
+  <p><a href="https://github.com/mhmdwaelanwr/Markdown-Creator-Dart">github.com/mhmdwaelanwr/Markdown-Creator-Dart</a></p>
 
-</code></pre>
-<h3 id="setup-assets-optional-for-native-apps">Setup Assets (Optional, for Native Apps)</h3>
-<p>If you plan to run the application on native platforms (Android, iOS, Windows, Linux, macOS), you might want to set up application icons and splash screens.</p>
-<ol>
-<li>Place your desired app icon at <code>assets/icon/icon.png</code>.</li>
-<li>Place your desired splash screen image at <code>assets/splash/splash.png</code>.</li>
-<li>Run the following commands to generate platform-specific icons and splash screens:<code>dart run flutter_launcher_icons dart run flutter_native_splash:create </code></li>
-</ol>
-<h3 id="run-the-application">Run the Application</h3>
-<pre><code class="language-bash">flutter run
+  <h2>Web distribution</h2>
+  <p><a href="https://github.com/mhmdwaelanwr/Readme-Creator-Web">github.com/mhmdwaelanwr/Readme-Creator-Web</a></p>
 
-</code></pre>
-<p>This will launch the application on your default configured device (e.g., Chrome for web, or a desktop app).</p>
-<h3 id="ai-and-github-integration-setup-optional">AI and GitHub Integration Setup (Optional)</h3>
-<p>To enable AI features and enhance GitHub API rate limits:</p>
-<ol>
-<li><strong>Gemini API Key</strong>: For AI generation from codebase and text improvement features, obtain a Gemini API key from <a href="https://aistudio.google.com/app/apikey">Google AI Studio</a> and enter it in the app's AI Settings.</li>
-<li><strong>GitHub Personal Access Token</strong>: For higher rate limits when scanning public GitHub repositories, generate a <a href="https://github.com/settings/tokens">Personal Access Token</a> (with <code>repo</code> scope for private repos, or no specific scope for public repos) and enter it in the app's AI Settings.</li>
-</ol>
-<h2 id="usage-guide">Usage Guide</h2>
-<ol>
-<li><strong>Start a New Project</strong>: Upon opening, you can either start with a blank canvas or load a pre-built template from the &quot;Templates&quot; dropdown in the top action bar.</li>
-<li><strong>Add Elements</strong>: Use the <strong>Components Panel</strong> on the left (or accessible via drawer on mobile) to drag and drop various Markdown elements onto the central <strong>Editor Canvas</strong>.</li>
-<li><strong>Edit Elements</strong>: Click on any element in the <strong>Editor Canvas</strong> to select it. Its properties will appear in the <strong>Settings Panel</strong> on the right (or accessible via drawer on mobile). Here, you can modify text, URLs, levels, lists, and other specific attributes for the selected element.</li>
-<li><strong>Reorder Elements</strong>: Drag and drop elements within the <strong>Editor Canvas</strong> to reorder them, or use the &quot;Move Up&quot; / &quot;Move Down&quot; buttons in the element settings.</li>
-<li><strong>Live Preview</strong>: The <strong>Settings Panel</strong> also includes a &quot;Preview&quot; tab to show the raw Markdown output for the currently selected element. For a full README preview, enable &quot;Show Live Preview&quot; from the top action bar.</li>
-<li><strong>AI Features</strong>: Utilize the AI Assistant button (purple magic wand icon) on text-based elements or the &quot;Generate from Codebase (AI)&quot; option in the &quot;More Options&quot; menu for advanced generation.</li>
-<li><strong>Customize Project Settings</strong>: Access project-wide settings (variables, license, contributing guide, colors, formatting) via the settings icon in the action bar.</li>
-<li><strong>Export Your README</strong>: Once your README is complete, click the &quot;Download&quot; icon in the top right corner. You can export as <code>.md</code>, <code>.html</code>, or a <code>.zip</code> file that includes <code>README.md</code>, <code>LICENSE</code>, <code>CONTRIBUTING.md</code>, and any local images.</li>
-<li><strong>Keyboard Shortcuts</strong>: Press <code>F1</code> or <code>Ctrl + H</code> ( + H on Mac) to view a list of available keyboard shortcuts.</li>
-</ol>
-<h2 id="project-structure">Project Structure</h2>
-<p>The project follows a standard Flutter application structure:</p>
-<pre><code>.
-   lib/
-      core/                  # Core application components (constants, theme)
-      generator/             # Logic for generating Markdown, Licenses
-      l10n/                  # Localization (internationalization) files
-      models/                # Data models for README elements, projects, snippets
-      providers/             # State management using Provider
-      screens/               # Main screens and navigation
-      services/              # API services (AI, GitHub, GIPHY) and local scanning
-      utils/                 # Utility functions (templates, exporter, downloader, onboarding, dialogs)
-      widgets/               # Reusable UI components (panels, canvas items, forms)
-   assets/                    # Application assets (icons, splash screens)
-   test/                      # Unit and widget tests
-   analysis_options.yaml      # Dart/Flutter linting rules
-   CONTRIBUTING.md            # Guidelines for contributing to this project
-   devtools_options.yaml      # DevTools settings
-   l10n.yaml                  # Localization configuration
-   pubspec.yaml               # Project dependencies and metadata
-   README.md                  # Project overview (this file)
+  <h2>Live web app</h2>
+  <p><a href="https://www.readmecreator.studio/">readmecreator.studio</a></p>
 
-</code></pre>
-<h2 id="contributing-guidelines">Contributing Guidelines</h2>
-<p>We welcome contributions to the Advanced Readme Creator! Please see our <a href="CONTRIBUTING.md">CONTRIBUTING.md</a> file for details on how to contribute, including guidelines for setting up your development environment, coding standards, and the pull request process.</p>
-<h2 id="license">License</h2>
-<p>This project is licensed under the <strong>MIT License</strong>. See the <a href="LICENSE">LICENSE</a> file for more details.</p>
-<p>Copyright (c) 2026 Mohamed Anwar</p>
+  <h2>Local development</h2>
+  <pre><code>git clone https://github.com/mhmdwaelanwr/Markdown-Creator-Dart.git
+cd Markdown-Creator-Dart
+flutter pub get
+flutter run</code></pre>
 
+  <p>For current feature and architecture details, read <a href="README.md">README.md</a> and <a href="DOCUMENTATION.md">DOCUMENTATION.md</a>.</p>
 </body>
 </html>
