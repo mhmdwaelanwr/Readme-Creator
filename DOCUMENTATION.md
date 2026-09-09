@@ -133,7 +133,8 @@ The editor supports a wide range of Markdown elements, each with specific config
 ### Steps
 1. **Clone the repository**:
    ```bash
-   git clone https://github.com/mhmdwaelanwr/Readme-Creator.git
+   git clone https://github.com/mhmdwaelanwr/Markdown-Creator-Dart.git
+   cd Markdown-Creator-Dart
    ```
 2. **Install dependencies**:
    ```bash
@@ -143,7 +144,7 @@ The editor supports a wide range of Markdown elements, each with specific config
    ```bash
    flutter run
    ```
-   *Select Windows, macOS, or Linux as the target device for the best experience.*
+   *Select a supported Flutter target for the build you want to test.*
 
 ## 8. Contributing
 We welcome contributions! Please see `CONTRIBUTING.md` for guidelines.
@@ -155,4 +156,3 @@ We welcome contributions! Please see `CONTRIBUTING.md` for guidelines.
 
 ## 9. License
 This project is licensed under the MIT License - see the `LICENSE` file for details.
-
