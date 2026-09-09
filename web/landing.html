@@ -1,429 +1,103 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Readme Creator | The Ultimate README Generator</title>
-
-    <!-- Meta Tags -->
-    <meta name="description" content="Generate professional, high-quality README.md files for your GitHub projects in minutes. Drag-and-drop elements, AI-powered descriptions, and multi-platform support.">
-    <meta property="og:title" content="Readme Creator - Craft Your Project's Story">
-    <meta property="og:description" content="The easiest way to create stunning README files. Free, open-source, and available on all platforms.">
-    <meta property="og:image" content="icons/Icon-512.png">
-    <meta property="og:url" content="https://www.readmecreator.studio/">
-    <meta name="twitter:card" content="summary_large_image">
-
-    <!-- Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@600;700;800&display=swap" rel="stylesheet">
-
-    <!-- Icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-
-    <style>
-        :root {
-            --primary: #3b82f6;
-            --primary-dark: #2563eb;
-            --bg-color: #f8fafc;
-            --card-bg: #ffffff;
-            --text-main: #0f172a;
-            --text-secondary: #475569;
-            --border-color: #e2e8f0;
-            --nav-glass: rgba(255, 255, 255, 0.8);
-            --accent-glow: rgba(59, 130, 246, 0.1);
-        }
-
-        [data-theme="dark"] {
-            --bg-color: #0f172a;
-            --card-bg: #1e293b;
-            --text-main: #f1f5f9;
-            --text-secondary: #94a3b8;
-            --border-color: #334155;
-            --nav-glass: rgba(15, 23, 42, 0.8);
-            --accent-glow: rgba(59, 130, 246, 0.15);
-        }
-
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            scroll-behavior: smooth;
-        }
-
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text-main);
-            line-height: 1.6;
-            transition: background-color 0.3s ease, color 0.3s ease;
-            overflow-x: hidden;
-        }
-
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 0 24px;
-        }
-
-        /* Navbar */
-        .navbar {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            z-index: 1000;
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            background-color: var(--nav-glass);
-            border-bottom: 1px solid var(--border-color);
-            padding: 16px 0;
-        }
-
-        .nav-content {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .nav-logo {
-            font-family: 'Poppins', sans-serif;
-            font-weight: 700;
-            font-size: 1.5rem;
-            color: var(--text-main);
-            text-decoration: none;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .nav-logo i {
-            color: var(--primary);
-            filter: drop-shadow(0 0 8px var(--accent-glow));
-        }
-
-        .nav-actions {
-            display: flex;
-            align-items: center;
-            gap: 20px;
-        }
-
-        .theme-toggle {
-            background: none;
-            border: none;
-            color: var(--text-main);
-            cursor: pointer;
-            font-size: 1.2rem;
-            padding: 8px;
-            border-radius: 12px;
-            transition: background 0.2s;
-        }
-
-        .theme-toggle:hover {
-            background: var(--border-color);
-        }
-
-        .btn-launch {
-            background: var(--primary);
-            color: white;
-            padding: 10px 24px;
-            border-radius: 12px;
-            text-decoration: none;
-            font-weight: 600;
-            transition: transform 0.2s, box-shadow 0.2s;
-            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
-        }
-
-        .btn-launch:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
-            background: var(--primary-dark);
-        }
-
-        /* Hero Section */
-        .hero {
-            padding: 160px 0 100px;
-            text-align: center;
-            background: radial-gradient(circle at center, var(--accent-glow) 0%, transparent 70%);
-        }
-
-        .hero h1 {
-            font-family: 'Poppins', sans-serif;
-            font-size: clamp(2.5rem, 8vw, 4.5rem);
-            line-height: 1.1;
-            margin-bottom: 24px;
-            background: linear-gradient(to right, var(--text-main), var(--primary));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-
-        .hero p {
-            font-size: clamp(1.1rem, 3vw, 1.4rem);
-            color: var(--text-secondary);
-            max-width: 700px;
-            margin: 0 auto 40px;
-        }
-
-        .hero-btns {
-            display: flex;
-            justify-content: center;
-            gap: 16px;
-            flex-wrap: wrap;
-        }
-
-        /* Feature Section */
-        .features {
-            padding: 80px 0;
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 32px;
-        }
-
-        .feature-card {
-            background: var(--card-bg);
-            padding: 40px;
-            border-radius: 24px;
-            border: 1px solid var(--border-color);
-            transition: transform 0.3s, box-shadow 0.3s;
-        }
-
-        .feature-card:hover {
-            transform: translateY(-10px);
-            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
-        }
-
-        .feature-icon {
-            width: 60px;
-            height: 60px;
-            background: var(--accent-glow);
-            color: var(--primary);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 16px;
-            font-size: 1.5rem;
-            margin-bottom: 24px;
-        }
-
-        /* Platform Grid */
-        .platform-grid {
-            padding: 80px 0;
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
-            gap: 24px;
-        }
-
-        .platform-card {
-            background: var(--card-bg);
-            border-radius: 24px;
-            padding: 32px;
-            border: 1px solid var(--border-color);
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-        }
-
-        .platform-info {
-            display: flex;
-            align-items: center;
-            gap: 16px;
-        }
-
-        .platform-icon {
-            font-size: 2.5rem;
-            color: var(--primary);
-        }
-
-        .platform-actions {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 12px;
-            margin-top: auto;
-        }
-
-        .btn-small {
-            padding: 12px;
-            border-radius: 10px;
-            text-decoration: none;
-            font-weight: 600;
-            text-align: center;
-            font-size: 0.9rem;
-            transition: 0.2s;
-        }
-
-        .btn-outline {
-            border: 1px solid var(--border-color);
-            color: var(--text-main);
-        }
-
-        .btn-outline:hover {
-            background: var(--border-color);
-        }
-
-        .btn-fill {
-            background: var(--text-main);
-            color: var(--bg-color);
-        }
-
-        /* Footer */
-        footer {
-            padding: 60px 0;
-            border-top: 1px solid var(--border-color);
-            text-align: center;
-            margin-top: 80px;
-        }
-
-        .social-links {
-            margin-bottom: 24px;
-            display: flex;
-            justify-content: center;
-            gap: 20px;
-        }
-
-        .social-links a {
-            color: var(--text-secondary);
-            font-size: 1.5rem;
-            transition: color 0.2s;
-        }
-
-        .social-links a:hover {
-            color: var(--primary);
-        }
-
-        @media (max-width: 640px) {
-            .hero { padding-top: 120px; }
-            .platform-actions { grid-template-columns: 1fr; }
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="README Creator is a Flutter workspace for creating, structuring, previewing, and improving GitHub README files.">
+  <meta property="og:title" content="README Creator">
+  <meta property="og:description" content="Visual README editing, reusable components, GitHub workflows, and optional AI-assisted writing.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://www.readmecreator.studio/">
+  <title>README Creator</title>
+  <style>
+    :root {
+      color-scheme: light dark;
+      --bg: #0d1117;
+      --card: #161b22;
+      --text: #f0f6fc;
+      --muted: #8b949e;
+      --line: #30363d;
+      --accent: #58a6ff;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font: 16px/1.6 Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: radial-gradient(circle at top, #10243d 0, var(--bg) 44%);
+      color: var(--text);
+    }
+    a { color: inherit; }
+    .wrap { width: min(1040px, calc(100% - 40px)); margin: 0 auto; }
+    nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 24px 0;
+    }
+    .brand { font-weight: 800; text-decoration: none; letter-spacing: -.02em; }
+    .nav-links { display: flex; gap: 18px; align-items: center; }
+    .nav-links a { color: var(--muted); text-decoration: none; }
+    .hero { padding: 100px 0 74px; max-width: 820px; }
+    .eyebrow { color: var(--accent); font-size: .8rem; font-weight: 800; letter-spacing: .12em; }
+    h1 { font-size: clamp(3rem, 8vw, 5.8rem); line-height: .98; letter-spacing: -.055em; margin: 18px 0 24px; }
+    .lead { color: #b7c5d3; font-size: 1.2rem; max-width: 720px; }
+    .actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 34px; }
+    .btn { padding: 12px 18px; border: 1px solid var(--line); border-radius: 10px; text-decoration: none; font-weight: 700; }
+    .btn-primary { background: var(--accent); border-color: var(--accent); color: #07111f; }
+    .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; padding: 0 0 90px; }
+    .card { background: rgba(22,27,34,.88); border: 1px solid var(--line); border-radius: 16px; padding: 24px; }
+    .card h2 { margin: 0 0 10px; font-size: 1.08rem; }
+    .card p { margin: 0; color: var(--muted); }
+    footer { border-top: 1px solid var(--line); padding: 26px 0 40px; color: var(--muted); font-size: .9rem; }
+    @media (max-width: 760px) {
+      .grid { grid-template-columns: 1fr; }
+      .hero { padding-top: 64px; }
+      .nav-links a:not(:last-child) { display: none; }
+    }
+  </style>
 </head>
-<body data-theme="light">
-    <nav class="navbar">
-        <div class="container nav-content">
-            <a href="#" class="nav-logo">
-                <i class="fa-solid fa-bolt-lightning"></i>
-                <span>Readme Creator</span>
-            </a>
-            <div class="nav-actions">
-                <button class="theme-toggle" id="themeBtn">
-                    <i class="fa-solid fa-moon"></i>
-                </button>
-                <a href="index.html" class="btn-launch">Launch Editor</a>
-            </div>
-        </div>
+<body>
+  <div class="wrap">
+    <nav>
+      <a class="brand" href="https://www.readmecreator.studio/">README Creator</a>
+      <div class="nav-links">
+        <a href="https://github.com/mhmdwaelanwr/Markdown-Creator-Dart">Flutter source</a>
+        <a href="https://github.com/mhmdwaelanwr/Readme-Creator-Web">Web distribution</a>
+      </div>
     </nav>
 
-    <main class="container">
-        <section class="hero">
-            <h1>Beautiful READMEs,<br>Zero Effort.</h1>
-            <p>The developer-first tool to create stunning GitHub documentation. Drag elements, customize styles, and export instantly.</p>
-            <div class="hero-btns">
-                <a href="index.html" class="btn-launch" style="padding: 16px 40px; font-size: 1.1rem;">Get Started — It's Free</a>
-                <a href="https://github.com/mhmdwaelanwr/Readme-Creator" target="_blank" class="btn-small btn-outline" style="padding: 16px 32px; font-size: 1.1rem; border-radius: 12px;">
-                    <i class="fa-brands fa-github"></i> Star on GitHub
-                </a>
-            </div>
-        </section>
+    <main>
+      <section class="hero">
+        <div class="eyebrow">FLUTTER · GITHUB · DOCUMENTATION TOOLING</div>
+        <h1>Build better project documentation.</h1>
+        <p class="lead">README Creator is a cross-platform workspace for structuring README files, previewing Markdown, reusing documentation components, and optionally using AI-assisted writing and GitHub workflows.</p>
+        <div class="actions">
+          <a class="btn btn-primary" href="https://www.readmecreator.studio/app/">Open web app</a>
+          <a class="btn" href="https://github.com/mhmdwaelanwr/Markdown-Creator-Dart">View source</a>
+          <a class="btn" href="https://github.com/mhmdwaelanwr/Markdown-Creator-Dart/releases">Releases</a>
+        </div>
+      </section>
 
-        <section class="features">
-            <div class="feature-card">
-                <div class="feature-icon"><i class="fa-solid fa-wand-magic-sparkles"></i></div>
-                <h3>Visual Editor</h3>
-                <p>No more guessing Markdown syntax. Build your README visually with real-time preview.</p>
-            </div>
-            <div class="feature-card">
-                <div class="feature-icon"><i class="fa-solid fa-robot"></i></div>
-                <h3>AI Powered</h3>
-                <p>Generate project descriptions and improve your text using the latest Gemini AI models.</p>
-            </div>
-            <div class="feature-card">
-                <div class="feature-icon"><i class="fa-solid fa-cubes"></i></div>
-                <h3>Rich Components</h3>
-                <p>From social badges to dynamic stats cards and Mermaid diagrams, we have it all.</p>
-            </div>
-        </section>
-
-        <h2 style="text-align: center; margin: 60px 0 20px; font-family: 'Poppins'; font-size: 2.5rem;">Available Everywhere</h2>
-        <p style="text-align: center; color: var(--text-secondary); margin-bottom: 40px;">Native performance on your favorite operating system.</p>
-
-        <section class="platform-grid">
-            <!-- Web -->
-            <div class="platform-card">
-                <div class="platform-info">
-                    <div class="platform-icon"><i class="fa-brands fa-chrome"></i></div>
-                    <div>
-                        <h3>Web Browser</h3>
-                        <p>No install, cloud sync.</p>
-                    </div>
-                </div>
-                <div class="platform-actions">
-                    <a href="https://github.com/mhmdwaelanwr/Readme-Creator" class="btn-small btn-outline">Source</a>
-                    <a href="index.html" class="btn-small btn-fill">Open App</a>
-                </div>
-            </div>
-
-            <!-- Windows -->
-            <div class="platform-card">
-                <div class="platform-info">
-                    <div class="platform-icon"><i class="fa-brands fa-windows"></i></div>
-                    <div>
-                        <h3>Windows</h3>
-                        <p>Native 10/11 support.</p>
-                    </div>
-                </div>
-                <div class="platform-actions">
-                    <a href="https://github.com/mhmdwaelanwr/Readme-Creator" class="btn-small btn-outline">Source</a>
-                    <a href="https://github.com/mhmdwaelanwr/Readme-Creator/releases" class="btn-small btn-fill">Download</a>
-                </div>
-            </div>
-
-            <!-- Android -->
-            <div class="platform-card">
-                <div class="platform-info">
-                    <div class="platform-icon"><i class="fa-brands fa-android"></i></div>
-                    <div>
-                        <h3>Android</h3>
-                        <p>Optimized for mobile.</p>
-                    </div>
-                </div>
-                <div class="platform-actions">
-                    <a href="https://github.com/mhmdwaelanwr/Readme-Creator" class="btn-small btn-outline">Source</a>
-                    <a href="https://github.com/mhmdwaelanwr/Readme-Creator/releases" class="btn-small btn-fill">Get APK</a>
-                </div>
-            </div>
-        </section>
+      <section class="grid" aria-label="Project highlights">
+        <article class="card">
+          <h2>Visual composition</h2>
+          <p>Build README structures from reusable sections and preview the generated Markdown as the project changes.</p>
+        </article>
+        <article class="card">
+          <h2>Developer workflows</h2>
+          <p>Work with public repository context and generate supporting documentation and GitHub-oriented project files.</p>
+        </article>
+        <article class="card">
+          <h2>Optional AI assistance</h2>
+          <p>Use Gemini-backed writing tools for description drafts and text improvement when configured by the user.</p>
+        </article>
+      </section>
     </main>
 
     <footer>
-        <div class="container">
-            <div class="social-links">
-                <a href="https://github.com/mhmdwaelanwr" target="_blank"><i class="fa-brands fa-github"></i></a>
-                <a href="#"><i class="fa-brands fa-twitter"></i></a>
-                <a href="#"><i class="fa-brands fa-linkedin"></i></a>
-            </div>
-            <p>Made with ❤️ for the open-source community.</p>
-            <p style="font-size: 0.85rem; margin-top: 10px; opacity: 0.6;">&copy; 2024 Readme Creator by Mohamed Anwar</p>
-        </div>
+      <span>README Creator · Open-source project by Mohamed Anwar</span>
     </footer>
-
-    <script>
-        const themeBtn = document.getElementById('themeBtn');
-        const icon = themeBtn.querySelector('i');
-        const body = document.body;
-
-        // Load preference
-        const currentTheme = localStorage.getItem('theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
-        setTheme(currentTheme);
-
-        themeBtn.addEventListener('click', () => {
-            const newTheme = body.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
-            setTheme(newTheme);
-        });
-
-        function setTheme(theme) {
-            body.setAttribute('data-theme', theme);
-            localStorage.setItem('theme', theme);
-            icon.className = theme === 'dark' ? 'fa-solid fa-sun' : 'fa-solid fa-moon';
-        }
-    </script>
+  </div>
 </body>
 </html>
