@@ -1,15 +1,15 @@
-# 🚀 Readme Creator — The Ultimate Documentation Engine
+# README Creator — Flutter Documentation Workspace
 
 <div align="center">
-  <img src="web/icons/Icon-512.png" alt="Readme Creator Logo" width="120" height="120">
+  <img src="web/icons/Icon-512.png" alt="README Creator logo" width="120" height="120">
   <br />
   <p>
-    <b>Craft stunning, professional GitHub README files in minutes.</b>
+    <b>Create, structure, preview, and improve GitHub README files from one cross-platform workspace.</b>
     <br />
-    Powered by AI, synchronized via Cloud, and built for developers.
+    Built with Flutter, Firebase, and optional AI-assisted writing tools.
   </p>
 
-  [![Version](https://img.shields.io/badge/version-1.0.0--stable-blue.svg?style=for-the-badge)](https://github.com/mhmdwaelanwr/Readme-Creator)
+  [![Version](https://img.shields.io/badge/version-1.0.0--stable-blue.svg?style=for-the-badge)](https://github.com/mhmdwaelanwr/Markdown-Creator-Dart/releases)
   [![License](https://img.shields.io/badge/license-MIT-green.svg?style=for-the-badge)](LICENSE)
   [![Flutter](https://img.shields.io/badge/Built%20with-Flutter-02569B?style=for-the-badge&logo=flutter)](https://flutter.dev)
   [![Firebase](https://img.shields.io/badge/Cloud-Firebase-FFCA28?style=for-the-badge&logo=firebase&logoColor=black)](https://firebase.google.com)
@@ -17,44 +17,49 @@
 
 ---
 
-## ✨ Features that Empower You
+## Features
 
-### 🤖 AI-Driven Intelligence
-Generate high-quality project descriptions and feature lists using **Google Gemini AI**. Improve your grammar and tone with a single click.
+### AI-assisted writing
+Generate project descriptions and feature drafts with Google Gemini and use assisted editing to improve grammar and tone.
 
-### ☁️ Real-time Cloud Sync
-Never lose your work. With **Firebase integration**, your projects and custom snippets are synchronized across Web, Desktop, and Mobile seamlessly.
+### Cloud sync
+Firebase integration can synchronize projects and custom snippets across supported builds.
 
-### 🏗️ Visual Drag & Drop Editor
-Build your documentation visually. Choose from a library of 20+ professional components including:
-- **Dynamic Widgets**: Spotify status, YouTube cards, and GitHub activity graphs.
-- **Advanced Graphics**: Mermaid.js diagrams and automatic Table of Contents.
-- **Developer Tools**: GitHub stats, contributors' grids, and social badges.
+### Visual editor
+Compose documentation from reusable sections and widgets, including Markdown content, diagrams, tables of contents, GitHub-oriented cards, badges, and developer-focused components.
 
-### 🔍 Repository Engineering
-Point to a local folder or a public GitHub URL. Our system scans your codebase structure and uses AI to "reverse engineer" a comprehensive README for you.
+### Repository-assisted documentation
+The application can use a local folder or public GitHub repository as context when preparing README content.
 
-### 🎨 Premium Design System
-A sleek, modern interface built with **Glassmorphism** and a Slate-Blue palette. Optimized for high performance even on lower-end devices.
+### Cross-platform interface
+The Flutter application targets web and supported desktop/mobile environments from one codebase.
 
 ---
 
-## 🚀 Getting Started
+## Getting started
 
-### Web Version (Instant)
-Access the latest stable version directly in your browser:  
-👉 **[Launch App Now](https://www.readmecreator.studio/)**
+### Web version
 
-### Desktop Installation (Windows)
-1. Go to the [Releases](https://github.com/mhmdwaelanwr/Readme-Creator/releases) page.
-2. Download the `readme_creator_windows.zip`.
-3. Extract and run `readme_creator.exe`.
+**[Open README Creator](https://www.readmecreator.studio/)**
 
-### Android Setup
-Download the latest APK from the releases and install it on your device to create documentation on the go.
+The deployed web distribution is maintained separately in [Readme-Creator-Web](https://github.com/mhmdwaelanwr/Readme-Creator-Web).
 
-### Android Customization (Application ID)
-To change the Android `applicationId`, set `appApplicationId` in `gradle.properties` (project root) or pass it at build time:
+### Source setup
+
+```bash
+git clone https://github.com/mhmdwaelanwr/Markdown-Creator-Dart.git
+cd Markdown-Creator-Dart
+flutter pub get
+flutter run
+```
+
+### Tagged builds
+
+See the repository's [Releases](https://github.com/mhmdwaelanwr/Markdown-Creator-Dart/releases) page for published artifacts when available.
+
+### Android customization
+
+To change the Android `applicationId`, set `appApplicationId` in `gradle.properties` or pass it at build time:
 
 ```properties
 appApplicationId=com.example.readmecreator
@@ -66,37 +71,39 @@ appApplicationId=com.example.readmecreator
 
 ---
 
-## 🛠️ Technology Stack
+## Technology stack
 
-- **Framework**: [Flutter](https://flutter.dev) (Multi-platform UI)
-- **Backend**: [Firebase](https://firebase.google.com) (Auth, Firestore, Analytics)
-- **AI Engine**: [Google Generative AI](https://aistudio.google.com/) (Gemini 1.5 Flash)
-- **State Management**: [Provider](https://pub.dev/packages/provider)
-- **Styling**: Google Fonts (Inter & Poppins)
-
----
-
-## 🤝 Contributing
-
-We love open source! Whether you're fixing bugs, adding new elements, or improving the AI prompts, your contributions are welcome.
-
-Please read our [CONTRIBUTING.md](CONTRIBUTING.md) for details on our code of conduct and the process for submitting pull requests.
+- **Framework:** Flutter / Dart
+- **Cloud services:** Firebase
+- **AI integration:** Google Gemini
+- **State management:** Provider
+- **Web distribution:** Flutter Web / PWA assets
 
 ---
 
-## 🛡️ Security & Support
+## Repository relationship
 
-- **Security**: See [SECURITY.md](SECURITY.md) for reporting vulnerabilities.
-- **Support**: Check [SUPPORT.md](SUPPORT.md) for getting help.
+- **This repository** contains the Flutter application source.
+- **[Readme-Creator-Web](https://github.com/mhmdwaelanwr/Readme-Creator-Web)** contains the deployed web distribution and landing experience.
+- **[readmecreator.studio](https://www.readmecreator.studio/)** is the public web entry point.
 
 ---
 
-## 📄 License
+## Contributing
 
-This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) file for details.
+Contributions, bug fixes, and documentation improvements are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) for the development workflow.
+
+## Security and support
+
+- [Security policy](SECURITY.md)
+- [Support](SUPPORT.md)
+
+## License
+
+Released under the [MIT License](LICENSE).
 
 ---
 
 <div align="center">
-  Developed with ❤️ by <a href="https://github.com/mhmdwaelanwr">Mohamed Anwar</a>
+  Built by <a href="https://github.com/mhmdwaelanwr">Mohamed Anwar</a>
 </div>
